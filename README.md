@@ -1,2 +1,2 @@
 # ChatBot
-a fucking ChatBot on QQ, weChat and GPT
+a fucking ChatBot on QQ, weChat and GPT.
