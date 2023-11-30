@@ -1,5 +1,5 @@
 import logging
-import sys
+import os
 
 
 def on(event: str):
@@ -15,7 +15,6 @@ def register(description: str,
              author: str,
              priority: int = 100,
              enabled: bool = True,
-             can_reload: bool = True,
              **kwargs
              ):
     """注册插件, 此函数作为装饰器使用
@@ -26,13 +25,20 @@ def register(description: str,
         author (str): 插件作者
         priority (int): 插件优先级
         enabled (bool): 插件是否启用
-        can_reload (bool): 是否支持热重载
         kwargs: 剩余参数 所有键值对保存为字典存储在kwargs字段中
 
     Returns:
         None
     """
-    return Plugin.register(description, version, author, priority, enabled, can_reload, **kwargs)
+    return Plugin.register(description, version, author, priority, enabled, **kwargs)
+
+
+def emit(event: str, **kwargs):
+    """触发事件
+    :param
+        event: str 事件名称
+    """
+    return Plugin.emit(event, **kwargs)
 
 
 class Plugin:
@@ -46,12 +52,25 @@ class Plugin:
     先读取, 然后按顺序初始化
     """
 
-    need_initialize: bool = True
-    """是否需要初始化"""
+    hooks_dict: dict[str, list[list[int, callable]]] = {}
+    """事件处理器列表
 
-    hooks_dict: dict[str, list[callable]] = {}
-    """事件处理器列表"""
+    调用请用`emit(str)`
 
+    例如: {
+        "group_normal_message_received": [          # 事件名
+            [0, on_group_normal_message_received],  # 第一项为类的cid标识, 第二项为函数
+            [1, on_group_normal_message_received],
+        ],
+        "person_normal_message_received": [
+            [0, on_person_normal_message_received],
+            [1, on_person_normal_message_received],
+        ]
+    }
+    """
+
+    cid = 0
+    """类id标识"""
     name: str
     """插件名称(自动获取类名)"""
     description: str
@@ -66,12 +85,27 @@ class Plugin:
     """注册的事件"""
     enabled: bool
     """插件是否启用(初始化必执行, 启用请看函数 TODO )"""
-    can_reload: bool
-    """是否支持热重载"""
     path: str
-    """插件路径"""
+    """插件路径(class Y extends Plugin 所在的文件夹)"""
     kwargs: dict = {}
     """插件参数"""
+
+    __first_init__ = True
+    """是否为第一次启动程序(热重载判断)"""
+    __reload_config__: dict = {}
+    """热重载结束后重置此字典(`PluginsReloadFinished`触发前)
+    
+    用 set_reload_config(), get_reload_config() 调用
+
+    内部形如:
+    ```py
+    {
+        f"{plugin.name} {plugin.path}" = {           # 针对每个插件维护一个字典
+            "set_reload_config": set_reload_config,  # 插件保留值
+        }
+    }
+    ```
+    """
 
     __plugin_hooks__ = set()
     """临时变量"""
@@ -87,7 +121,6 @@ class Plugin:
         :return:
             None
         """
-
         def wrapper(func):
             """事件处理器"""
 
@@ -95,11 +128,12 @@ class Plugin:
                 cls.hooks_dict[event] = []
             # 根据优先级加入cls.plugin_hooks[event]
             for index, hook in enumerate(cls.hooks_dict[event]):
-                if cls.get_plugin_by_hook(hook).priority > cls.__plugin_priority__:
-                    cls.hooks_dict[event].insert(index, func)
+                tmp_cls = cls.get_plugin_by_cid(hook[0])
+                if tmp_cls and tmp_cls.priority > cls.__plugin_priority__:
+                    cls.hooks_dict[event].insert(index, [cls.cid, func])
                     break
             else:
-                cls.hooks_dict[event].append(func)
+                cls.hooks_dict[event].append([cls.cid, func])
 
             cls.__plugin_hooks__.add(func)
 
@@ -114,7 +148,6 @@ class Plugin:
                  author: str,
                  priority: int = 100,
                  enabled: bool = True,
-                 can_reload: bool = True,
                  **kwargs
                  ):
         """注册插件, 此函数作为装饰器使用
@@ -125,16 +158,15 @@ class Plugin:
             author (str): 插件作者
             priority (int): 插件优先级
             enabled (bool): 插件是否启用
-            can_reload (bool): 是否支持热重载
             kwargs: 剩余参数 所有键值对保存为字典存储在kwargs字段中
 
         Returns:
             None
         """
-
         cls.__plugin_priority__ = priority
 
         def wrapper(plugin_cls: Plugin):
+            plugin_cls.cid = cls.cid
             plugin_cls.name = plugin_cls.__qualname__.split(".")[0]
             plugin_cls.description = description
             plugin_cls.version = version
@@ -142,11 +174,15 @@ class Plugin:
             plugin_cls.priority = priority
             plugin_cls.hooks = cls.__plugin_hooks__
             plugin_cls.enabled = enabled
-            plugin_cls.can_reload = can_reload
-            plugin_cls.path = plugin_cls.__module__
+            plugin_cls.path = os.path.join(
+                os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                plugin_cls.__module__.replace(
+                    '.', os.path.sep).rsplit(os.path.sep, 1)[0]
+            ).capitalize()
             plugin_cls.kwargs = kwargs
             plugin_cls.enabled = True
 
+            cls.cid += 1
             cls.__plugin_hooks__ = set()
             # 根据优先级加入 plugin_list
             for index, plugin in enumerate(cls.plugin_list):
@@ -156,9 +192,9 @@ class Plugin:
                         plugin_cls
                     )
                     if index > 0 and cls.plugin_list[index - 1].priority == priority:
-                        logging.info("[warning] 插件优先级重复, 插件{}插入到插件{}之前".format(
-                            plugin_cls.name, cls.plugin_list[index - 1].name
-                        ))
+                        logging.warning(
+                            f"插件优先级重复, 插件{plugin_cls.name}插入到插件{cls.plugin_list[index - 1].name}之后"
+                        )
                     break
             else:
                 cls.plugin_list.append(plugin_cls)
@@ -172,42 +208,126 @@ class Plugin:
         return wrapper
 
     @classmethod
-    def get_plugin_by_hook(cls, hook: callable) -> 'Plugin':
-        """根据插件事件函数获取插件类(实例)"""
-        return hook.__globals__[hook.__qualname__.split(".")[0]]
+    def get_plugin_by_cid(cls, cid) -> 'Plugin':
+        """根据插件类标识获取插件类(实例)"""
+        for plugin in cls.plugin_list:
+            if plugin.cid == cid:
+                return plugin
+        return None
 
     @classmethod
-    def emit(cls, event, **kwargs):
+    def get_plugin_by_name(cls, name: str) -> 'Plugin':
+        """根据插件名获取插件类(实例)
+
+        请自行确认插件名不冲突, 否则返回第一个符合条件的值
+
+        找不到则返回 None
+        """
+        for plugin in cls.plugin_list:
+            if plugin.name == name:
+                return plugin
+        return None
+
+    @classmethod
+    def emit(cls, event_name, **kwargs) -> 'EventContext.return_value':
         """触发事件
 
         允许自定义事件
         """
-        if event in cls.hooks_dict:
-            for hook in cls.hooks_dict[event]:
-                tmp_cls = cls.get_plugin_by_hook(hook)
-                if tmp_cls.enabled:
-                    hook(tmp_cls, event, **kwargs)
+        event_context = EventContext(event_name)
+        if event_name in cls.hooks_dict:
+            for hook in cls.hooks_dict[event_name]:
+                tmp_cls = cls.get_plugin_by_cid(hook[0])
+                try:
+                    if tmp_cls.enabled:
+                        hook[1](tmp_cls, event_context, **kwargs)
+                except Exception as e:
+                    logging.error(
+                        f"插件 {tmp_cls.name} 触发事件 {event_name} 时发生错误: {e}")
+                if not event_context.is_prevented_postorder():
+                    logging.debug(
+                        f"事件 {event_name} ({event_context.eid}) 被插件 {tmp_cls.name} 阻止")
+                    break
         else:
-            logging.error(f"未注册事件: {event}")
+            logging.debug(f"事件'{event_name}'无人应答")
+        logging.debug(
+            f"事件 {event_name} ({event_context.eid}) 处理完毕, 返回值: {event_context.return_value}")
+
+        return event_context.return_value
+
+    def get_reload_config(self, key=None):
+        """每个插件拥有自己的 kwargs 字典, 有key返回值, 无key返回整个字典"""
+        tmp_cls_name = f"{self.name=} {self.path=}"
+        if tmp_cls_name not in Plugin.__reload_config__:
+            return None
+        if key:
+            if key not in Plugin.__reload_config__[tmp_cls_name]:
+                return None
+            return Plugin.__reload_config__[tmp_cls_name][key]
+        return Plugin.__reload_config__[tmp_cls_name]
+
+    def set_reload_config(self, key, value):
+        """每个插件拥有自己的 kwargs 字典"""
+        tmp_cls_name = f"{self.name=} {self.path=}"
+        if tmp_cls_name in Plugin.__reload_config__:
+            Plugin.__reload_config__[tmp_cls_name][key] = value
+        else:
+            Plugin.__reload_config__[tmp_cls_name] = {key: value}
 
     @classmethod
     def _initialize_plugins(cls):
         """初始化插件"""
         for index, plugin in enumerate(cls.plugin_list):
-            if not plugin.need_initialize:
-                continue
             try:
-                cls.plugin_list[index] = plugin(cls.plugin_list)
-            except:
-                try:
-                    cls.plugin_list[index] = plugin()
-                except:
-                    logging.error(f"插件{plugin.name}初始化时发生错误: {sys.exc_info()}")
+                cls.plugin_list[index] = plugin()
+            except Exception as e:
+                if plugin.__first_init__:
+                    logging.error(f"插件{plugin.name}初始化时发生错误: {e}")
+                else:
+                    logging.error(f"插件{plugin.name}热重载时发生错误: {e}")
 
     def __init__(self):
         """Plugin不初始化, 子类自行实现该方法"""
         pass
 
-    def __del__(self):
-        """程序异常时尝试释放资源"""
+    def __del__(cls):
+        """程序异常时尝试释放资源, 子类自行实现该方法"""
         pass
+
+    @classmethod
+    def _reload(cls):
+        cls.__first_init__ = False
+        cls.cid = 0
+        cls.plugin_list = []
+        cls.hooks_dict = {}
+        cls.__plugin_hooks__ = set()
+
+
+class EventContext:
+    """事件上下文"""
+    eid = 0
+    """事件编号"""
+
+    name = ""
+    """事件名( Events.py 中存放的字段)"""
+
+    __prevent_postorder__ = False
+    """是否阻止后续插件的执行"""
+
+    return_value = None
+    """返回值参考 Event.py"""
+
+    def prevent_postorder(self):
+        """阻止后续插件执行"""
+        self.__prevent_postorder__ = True
+
+    def is_prevented_postorder(self):
+        """是否阻止后序插件执行"""
+        return self.__prevent_postorder__
+
+    def __init__(self, name: str):
+        self.name = name
+        self.eid = EventContext.eid
+        self.__prevent_postorder__ = False
+        self.return_value = None
+        EventContext.eid += 1

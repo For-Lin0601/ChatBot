@@ -4,21 +4,17 @@ from Models.Plugins import *
 
 
 @register(
-    description="和ChatGPT聊天",
-    version="1.0",
+    description="GBT链接类",
+    version="1.0.0",
     author="For_Lin0601",
-    priority=100
+    priority=10,
 )
-class ChatModel(Plugin):
+class GPTBot(Plugin):
 
     # 插件加载时触发
     # plugin_list 提供了全部插件列表，详细请查看其源码
     def __init__(self):
-        print("插件 Chat 已加载")
-
-    @on("PersonMessage")
-    def _3(self, event: EventContext,  **kwargs):
-        print("GPT好友消息")
+        print("插件 GBT 已加载")
 
     # 插件卸载时触发
     def __del__(self):

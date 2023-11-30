@@ -1,2 +1,0 @@
-class ConfigList:
-    pass

@@ -12,11 +12,10 @@ from Models.Plugins import *
 class TimeReminderPlugin(Plugin):
 
     # 插件加载时触发
-    # plugin_host (pkg.plugin.host.PluginHost) 提供了与主程序交互的一些方法，详细请查看其源码
-    def __init__(self, plugin_list):
+    # plugin_list 提供了全部插件列表，详细请查看其源码
+    def __init__(self):
         print("插件 TimedReminder 已加载")
 
-    @on("timed_reminder")
     @on("fuck")
     def _1(self, event):
         print("定时提醒")
