@@ -24,21 +24,13 @@ def register(description: str,
         version (str): 插件版本
         author (str): 插件作者
         priority (int): 插件优先级
-        enabled (bool): 插件是否启用
-        kwargs: 剩余参数 所有键值对保存为字典存储在kwargs字段中
+        enabled (bool): 插件是否启用(只影响`Plugin.emit`的调用, 即插件会被实例化)
+        kwargs: 剩余参数 所有键值对保存为字典存储在`kwargs`字段中
 
     Returns:
         None
     """
     return Plugin.register(description, version, author, priority, enabled, **kwargs)
-
-
-def emit(event: str, **kwargs):
-    """触发事件
-    :param
-        event: str 事件名称
-    """
-    return Plugin.emit(event, **kwargs)
 
 
 class Plugin:
@@ -55,22 +47,22 @@ class Plugin:
     hooks_dict: dict[str, list[list[int, callable]]] = {}
     """事件处理器列表
 
-    调用请用`emit(str)`
+    调用请用`Plugin.emit(str)`
 
     例如: {
-        "group_normal_message_received": [          # 事件名
-            [0, on_group_normal_message_received],  # 第一项为类的cid标识, 第二项为函数
-            [1, on_group_normal_message_received],
+        "group_normal_message_received": [              # 事件名
+            [0, <function check_message at 0x000001>],  # 第一项为类的`cid`标识, 第二项为函数
+            [1, <function reply_group at 0x000002>],    # 注意`cid`标识不等同于`priority`优先级, 故此处日志较为奇怪
         ],
         "person_normal_message_received": [
-            [0, on_person_normal_message_received],
-            [1, on_person_normal_message_received],
+            [0, <function check_message at 0x000003>],
+            [1, <function reply_person at 0x000004>],
         ]
     }
     """
 
     cid = 0
-    """类id标识"""
+    """类id标识, 自动获取, 用作抽象函数寻找对应类实例的标识"""
     name: str
     """插件名称(自动获取类名)"""
     description: str
@@ -90,11 +82,14 @@ class Plugin:
     kwargs: dict = {}
     """插件参数"""
 
-    __first_init__ = True
-    """是否为第一次启动程序(热重载判断)"""
+    __is_first_init__ = True
+    """是否为首次加载(热重载判断)
+
+    调用: `self.is_first_init()` -> bool
+    """
     __reload_config__: dict = {}
     """热重载结束后重置此字典(`PluginsReloadFinished`触发前)
-    
+
     用 set_reload_config(), get_reload_config() 调用
 
     内部形如:
@@ -157,8 +152,8 @@ class Plugin:
             version (str): 插件版本
             author (str): 插件作者
             priority (int): 插件优先级
-            enabled (bool): 插件是否启用
-            kwargs: 剩余参数 所有键值对保存为字典存储在kwargs字段中
+            enabled (bool): 插件是否启用(只影响`Plugin.emit`的调用, 即插件会被实例化)
+            kwargs: 剩余参数 所有键值对保存为字典存储在`kwargs`字段中
 
         Returns:
             None
@@ -180,7 +175,6 @@ class Plugin:
                     '.', os.path.sep).rsplit(os.path.sep, 1)[0]
             ).capitalize()
             plugin_cls.kwargs = kwargs
-            plugin_cls.enabled = True
 
             cls.cid += 1
             cls.__plugin_hooks__ = set()
@@ -208,31 +202,10 @@ class Plugin:
         return wrapper
 
     @classmethod
-    def get_plugin_by_cid(cls, cid) -> 'Plugin':
-        """根据插件类标识获取插件类(实例)"""
-        for plugin in cls.plugin_list:
-            if plugin.cid == cid:
-                return plugin
-        return None
-
-    @classmethod
-    def get_plugin_by_name(cls, name: str) -> 'Plugin':
-        """根据插件名获取插件类(实例)
-
-        请自行确认插件名不冲突, 否则返回第一个符合条件的值
-
-        找不到则返回 None
-        """
-        for plugin in cls.plugin_list:
-            if plugin.name == name:
-                return plugin
-        return None
-
-    @classmethod
     def emit(cls, event_name, **kwargs) -> 'EventContext.return_value':
         """触发事件
 
-        允许自定义事件
+        允许自定义事件(可以用`self.emit()`, 但希望用`Plugin.emit()`)
         """
         event_context = EventContext(event_name)
         if event_name in cls.hooks_dict:
@@ -255,6 +228,47 @@ class Plugin:
 
         return event_context.return_value
 
+    @classmethod
+    def get_plugin_by_cid(cls, cid) -> 'Plugin':
+        """根据插件类标识获取插件类(实例)"""
+        for plugin in cls.plugin_list:
+            if plugin.cid == cid:
+                return plugin
+        return None
+
+    @classmethod
+    def get_plugin_by_name(cls, name: str) -> 'Plugin':
+        """根据插件名获取插件类(实例) [不安全函数!]
+
+        请自行确认插件名不冲突, 否则返回第一个符合条件的值
+
+        找不到则返回 None
+        """
+        for plugin in cls.plugin_list:
+            if plugin.name == name:
+                return plugin
+        return None
+
+    def is_first_init(self) -> bool:
+        """是否为首次加载"""
+        return self.__is_first_init__
+
+    def is_enabled(self) -> bool:
+        """是否启用"""
+        return self.enabled
+
+    def set_enabled(self, enabled: bool):
+        """是否启用"""
+        self.enabled = enabled
+
+    def set_reload_config(self, key, value):
+        """每个插件拥有自己的 kwargs 字典"""
+        tmp_cls_name = f"{self.name=} {self.path=}"
+        if tmp_cls_name in Plugin.__reload_config__:
+            Plugin.__reload_config__[tmp_cls_name][key] = value
+        else:
+            Plugin.__reload_config__[tmp_cls_name] = {key: value}
+
     def get_reload_config(self, key=None):
         """每个插件拥有自己的 kwargs 字典, 有key返回值, 无key返回整个字典"""
         tmp_cls_name = f"{self.name=} {self.path=}"
@@ -266,13 +280,17 @@ class Plugin:
             return Plugin.__reload_config__[tmp_cls_name][key]
         return Plugin.__reload_config__[tmp_cls_name]
 
-    def set_reload_config(self, key, value):
-        """每个插件拥有自己的 kwargs 字典"""
-        tmp_cls_name = f"{self.name=} {self.path=}"
-        if tmp_cls_name in Plugin.__reload_config__:
-            Plugin.__reload_config__[tmp_cls_name][key] = value
-        else:
-            Plugin.__reload_config__[tmp_cls_name] = {key: value}
+    def __init__(self):
+        """Plugin不初始化, 子类自行实现该方法"""
+        pass
+
+    def __del__(self):
+        """热重载时触发, 配置可保留到`Plugin.__reload_config__`中, 详情请查看源码, 子类自行实现该方法"""
+        pass
+
+    def __stop__(self):
+        """程序异常退出时尝试触发, 子类自行实现该方法"""
+        pass
 
     @classmethod
     def _initialize_plugins(cls):
@@ -281,26 +299,26 @@ class Plugin:
             try:
                 cls.plugin_list[index] = plugin()
             except Exception as e:
-                if plugin.__first_init__:
+                if plugin.is_first_init():
                     logging.error(f"插件{plugin.name}初始化时发生错误: {e}")
                 else:
                     logging.error(f"插件{plugin.name}热重载时发生错误: {e}")
 
-    def __init__(self):
-        """Plugin不初始化, 子类自行实现该方法"""
-        pass
-
-    def __del__(cls):
-        """程序异常时尝试释放资源, 子类自行实现该方法"""
-        pass
-
     @classmethod
     def _reload(cls):
-        cls.__first_init__ = False
+        cls.__is_first_init__ = False
         cls.cid = 0
         cls.plugin_list = []
         cls.hooks_dict = {}
         cls.__plugin_hooks__ = set()
+
+    @classmethod
+    def _stop(cls):
+        for plugin in cls.plugin_list:
+            try:
+                plugin.__stop__(plugin)
+            except:
+                logging.warning(f"插件 {plugin.name} 停止时发生错误")
 
 
 class EventContext:

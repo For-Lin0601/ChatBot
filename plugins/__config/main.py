@@ -9,8 +9,6 @@ from plugins.__config.Events import *
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# 注册插件
-
 
 @register(
     description="敏感词屏蔽",
@@ -20,8 +18,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 )
 class Config(Plugin):
 
-    # 插件加载时触发
-    # plugin_list 提供了全部插件列表，详细请查看其源码
     def __init__(self):
         self._save_files("config-template.py")
         self._save_files("Events.py")
@@ -35,7 +31,7 @@ class Config(Plugin):
             sys.exit(0)
 
         is_integrity = True
-        if self.__first_init__:
+        if self.is_first_init():
             # 完整性校验
             self.config_template = importlib.import_module('config-template')
             config = importlib.import_module('config')
@@ -115,10 +111,8 @@ class Config(Plugin):
         with open(main_file_name, "w", encoding="utf-8") as file:
             file.write(updated_content.lstrip())
 
-    # 插件卸载时触发
     def __del__(self):
         pass
 
-
-if __name__ == '__main__':
-    config = Config()
+    def __stop__(self):
+        pass

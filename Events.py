@@ -1,23 +1,38 @@
 ########## 主线程必选项 ##########
 
 PluginsLoadingFinished = "plugins_loading_finished"
-"""插件加载完成时触发
+"""插件首次加载时触发(程序启动时)
 
     kwargs:
-        plugins: list[Plugin] 插件列表
+        None
+
+    returns:
+        None
 """
 
 PluginsReloadFinished = "plugins_reload_finished"
 """插件重载完成时触发
 
     kwargs:
-        plugins: list[Plugin] 插件列表
+        None
+
+    returns:
+        None
 """
+
+# 若希望程序启动和重载完后都触发, 可以使用
+# @on(PluginsLoadingFinished)
+# @on(PluginsReloadFinished)
+# def your_function(self, event: EventContext, **kwargs):
+#   ...
 
 Reload = "reload"
 """重载插件时触发
 
     kwargs:
+        None
+
+    returns:
         None
 """
 
@@ -30,15 +45,22 @@ GetConfig__ = "get_config__"
         config_name: str 配置名称(为空则返回配置字典)
 
     returns:
-        config: any 配置对象
+        config: ModuleType 配置模块(以 value = config.key 读取)
 """
 
 SetConfig__ = "set_config__"
-"""设置配置(不写入 config.py)
+"""设置配置(暂存到 __config.config 中，不写入 config.py)
 
     kwargs:
         config: dict 配置字典
 """
+
+
+########## plugin.name='ThreadCtlPlugin' plugin.path='D://workspace ai//chatbot//plugins//__threadctl' ##########
+SubmitAdminTask = "SubmitAdminTask"
+"""提交后台任务
+"""
+
 
 
 ########## plugin.name='GPTBot' plugin.path='D://workspace ai//chatbot//plugins//gpt' ##########

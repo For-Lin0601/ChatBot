@@ -43,7 +43,7 @@ class banWordsUtil(Plugin):
     @on(PluginsLoadingFinished)
     def get_config(self, event: EventContext, **kwargs):
         from Events import GetConfig__
-        config = self.emit(GetConfig__)
+        config = Plugin.emit(GetConfig__)
         self.baidu_check = config.baidu_check
         self.baidu_api_key = config.baidu_api_key
         self.baidu_secret_key = config.baidu_secret_key

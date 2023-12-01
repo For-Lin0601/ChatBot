@@ -11,4 +11,4 @@ baidu_secret_key = ""
 # 不合规消息自定义返回
 inappropriate_message_tips = "[百度云]请珍惜机器人，当前返回内容不合规"
 
-# 屏蔽词请前往 plugins/banWords/sensitive.json 中修改!!!
+##### 屏蔽词请前往 plugins/banWords/sensitive.json 中修改!!!

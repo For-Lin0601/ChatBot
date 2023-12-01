@@ -1,8 +1,10 @@
 # 插件管理模块
 import logging
 import importlib
+import os
 import pkgutil
 import sys
+import time
 import traceback
 from Events import PluginsLoadingFinished
 
@@ -31,6 +33,19 @@ def walk_plugin_path(module, prefix='', path_prefix=''):
                 traceback.print_exc()
 
 
+def logging_test():
+    res = "插件列表:"
+    for plugin in Plugin.plugin_list:
+        res += f"\n\n{plugin=}"
+        res += f"\n{plugin.cid=}, {plugin.name=},{plugin.priority=}, {plugin.description=}, {plugin.version=}, {plugin.author=}"
+        res += f"\n{plugin.enabled=}, {plugin.path=}"
+        res += f"\n{plugin.hooks=}"
+    res += "\n\n\nPlugin.hooks_dict: "
+    for key in Plugin.hooks_dict:
+        res += f"\n{key}: {Plugin.hooks_dict[key]}"
+    return res
+
+
 def load_plugins():
     """加载插件"""
     try:
@@ -42,22 +57,24 @@ def load_plugins():
 
     walk_plugin_path(__import__('plugins'))
 
-    def logging_debug():
-        res = f"{Plugin.plugin_list}"
-        for plugin in Plugin.plugin_list:
-            res += f"{plugin.hooks, plugin.path, plugin.priority}"
-        res += f"{Plugin.hooks_dict}"
-        return res
-
     Plugin._initialize_plugins()
-    logging.debug(logging_debug())
+    logging.debug(logging_test())  # TODO
 
-    Plugin.emit(PluginsLoadingFinished, plugins=Plugin.plugin_list)
-    import Models.reload as reload
-    while 1:
-        reload.reload()
-        logging.debug(logging_debug())
-        1
+    Plugin.emit(PluginsLoadingFinished)
+
+    # 主线程循环
+    while True:
+        try:
+            time.sleep(0xFF)
+        except:
+            Plugin._stop()
+            import platform
+            if platform.system() == 'Windows':
+                cmd = "taskkill /F /PID {}".format(os.getpid())
+            elif platform.system() in ['Linux', 'Darwin']:
+                cmd = "kill -9 {}".format(os.getpid())
+            os.system(cmd)
+
 
 
 if __name__ == '__main__':

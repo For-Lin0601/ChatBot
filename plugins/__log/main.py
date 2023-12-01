@@ -30,13 +30,11 @@ class Log(Plugin):
 
     logging_level = None
 
-    # 插件加载时触发
-    # plugin_list 提供了全部插件列表，详细请查看其源码
     def __init__(self):
         """为此次运行生成日志文件
         格式: chatbot-yyyy-MM-dd-HH-mm-ss.log
         """
-        if self.__first_init__:
+        if self.is_first_init():
             try:
                 import log_start
                 self.log_file_name = log_start.LogStart.log_file_name
@@ -52,15 +50,12 @@ class Log(Plugin):
         else:
             self.log_file_name = self.get_reload_config("log_file_name")
 
-        try:
-            self.logger_handler = self.get_reload_config("logger_handler")
-            if self.logger_handler is not None:
-                logging.getLogger().removeHandler(self.logger_handler)
+        self.logger_handler = self.get_reload_config("logger_handler")
+        if self.logger_handler is not None:
+            logging.getLogger().removeHandler(self.logger_handler)
 
-            for handler in logging.getLogger().handlers:
-                logging.getLogger().removeHandler(handler)
-        except:
-            pass
+        for handler in logging.getLogger().handlers:
+            logging.getLogger().removeHandler(handler)
         self.reset_logging(None)
 
     def get_logging_level(self):
@@ -101,7 +96,9 @@ class Log(Plugin):
         logging.getLogger().addHandler(sh)
         self.logger_handler = sh
 
-    # 插件卸载时触发
     def __del__(self):
         self.set_reload_config("logger_handler", self.logger_handler)
         self.set_reload_config("log_file_name", self.log_file_name)
+
+    def __stop__(self):
+        pass

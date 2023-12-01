@@ -1,7 +1,9 @@
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
+from Events import PluginsLoadingFinished
 
+from Models.Plugins import *
 from plugins.__threadctl.Events import *
 
 
@@ -31,12 +33,39 @@ class Pool:
             time.sleep(1)
 
 
+class BackGroundTask:
+    def __init__(self, cls, /, *args, **kwargs):
+        self.running = False
+        self.ctl = ThreadPoolExecutor(max_workers=1)
+        self.cls = cls(*args, **kwargs)
+
+    def start_task(self):
+        if not self.running:
+            self.running = True
+            self.ctl.submit(self._run_task)
+
+    def stop_task(self):
+        self.running = False
+        self.cls._del()
+
+    def _run_task(self):
+        while self.running:
+            self.cls.run()
+            time.sleep(1)
+
+
 class ThreadCtl:
     def __init__(self, sys_pool_num, admin_pool_num, user_pool_num):
         """线程池控制类
-        sys_pool_num：分配系统使用的线程池数量(>=8)
-        admin_pool_num：用于处理管理员消息的线程池数量(>=1)
-        user_pool_num：分配用于处理用户消息的线程池的数量(>=1)
+
+        sys_pool_num: 分配系统使用的线程池数量(>=8)
+
+        admin_pool_num: 用于处理管理员消息的线程池数量(>=1)
+
+        user_pool_num: 分配用于处理用户消息的线程池的数量(>=1)
+
+        背景任务:
+            详见`ThreadCtl.submit_back_ground_task`
         """
         if sys_pool_num < 5:
             raise Exception(
@@ -50,6 +79,7 @@ class ThreadCtl:
         self.__sys_pool__ = Pool(sys_pool_num)
         self.__admin_pool__ = Pool(admin_pool_num)
         self.__user_pool__ = Pool(user_pool_num)
+        self.__back_ground_pool__: list[BackGroundTask] = []
         self.submit_sys_task(self.__sys_pool__.__thread_monitor__)
         self.submit_sys_task(self.__admin_pool__.__thread_monitor__)
         self.submit_sys_task(self.__user_pool__.__thread_monitor__)
@@ -79,11 +109,47 @@ class ThreadCtl:
             fn, *args, **kwargs
         )
 
+    def submit_back_ground_task(self, cls, /, *args, **kwargs) -> callable:
+        """创建背景任务(每秒执行一次, 内存负荷大, 谨慎使用, 不支持热重载)
+
+            cls: 要执行的类, 在内部初始化
+                `cls`应当拥有`__init__`, `run`, `_del`方法
+
+            returns:
+                返回一个用于停止任务的函数, 调用后停止循环并执行`cls._del`
+
+                热重载不停止, 若要支持热重载请在插件`Plugin.__del__`时删除任务, 在`@on(PluginsReloadFinished)`中重新添加任务
+        ```python
+
+        class example:
+            def __init__(self, a):
+                self.a = a
+
+            def run(self):
+                print(f"[example {self.a}] running")
+                self.a += 1
+
+            def _del(self):
+                print(f"[example {self.a}] del!")
+        ```
+        """
+        tmp = BackGroundTask(cls, *args, **kwargs)
+        self.__back_ground_pool__.append(tmp)
+        tmp.start_task()
+
+        def stop_task():
+            tmp.stop_task()
+            self.__back_ground_pool__.remove(tmp)
+        return stop_task
+
     def shutdown(self):
         self.__user_pool__.ctl.shutdown(cancel_futures=True)
         self.__user_pool__.monitor_type = False
         self.__admin_pool__.ctl.shutdown(cancel_futures=True)
         self.__admin_pool__.monitor_type = False
+        for i in self.__back_ground_pool__:
+            i.stop_task()
+        self.__back_ground_pool__ = []
         self.__sys_pool__.monitor_type = False
         self.__sys_pool__.ctl.shutdown(wait=True, cancel_futures=False)
 
@@ -96,3 +162,33 @@ class ThreadCtl:
         self.__user_pool__ = Pool(user_pool_num)
         self.submit_sys_task(self.__admin_pool__.__thread_monitor__)
         self.submit_sys_task(self.__user_pool__.__thread_monitor__)
+
+
+@register(
+    description="线程池控制",
+    version="1.0.0",
+    author="For_Lin0601",
+    priority=-98,
+)
+class ThreadCtlPlugin(Plugin):
+
+    def __init__(self):
+        pass
+
+    @on(PluginsLoadingFinished)
+    def get_config(self, event: EventContext, **kwargs):
+        if self.is_first_init():
+            from Events import GetConfig__
+            config = Plugin.emit(GetConfig__)
+            self.ctl = ThreadCtl(
+                sys_pool_num=config.sys_pool_num,
+                admin_pool_num=config.admin_pool_num,
+                user_pool_num=config.user_pool_num
+            )
+        else:
+            self.ctl = self.get_reload_config("ctl")
+
+    # @on(SubmitAdminTask)
+
+    def __del__(self):
+        self.set_reload_config("ctl", self.ctl)
