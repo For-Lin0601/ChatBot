@@ -16,6 +16,6 @@ class GPTBot(Plugin):
     def __init__(self):
         print("插件 GBT 已加载")
 
-    # 插件卸载时触发
-    def __del__(self):
+    # 插件热重载时触发
+    def on_reload(self):
         pass

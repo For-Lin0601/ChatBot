@@ -70,7 +70,7 @@ class LogStart:
         cls.logger_handler = sh
 
     @classmethod
-    def __del__(cls):
+    def on_stop(cls):
         if cls.logger_handler is not None:
             logging.getLogger().removeHandler(cls.logger_handler)
 

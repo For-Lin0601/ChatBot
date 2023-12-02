@@ -6,7 +6,6 @@ import pkgutil
 import sys
 import time
 import traceback
-from Events import PluginsLoadingFinished
 
 from Models.Plugins import Plugin
 
@@ -58,9 +57,10 @@ def load_plugins():
     walk_plugin_path(__import__('plugins'))
 
     Plugin._initialize_plugins()
-    logging.debug(logging_test())  # TODO
+    # logging.debug(logging_test())  # TODO
 
-    Plugin.emit(PluginsLoadingFinished)
+    Plugin._reload()
+    # logging.debug(logging_test())  # TODO
 
     # 主线程循环
     while True:
@@ -74,7 +74,6 @@ def load_plugins():
             elif platform.system() in ['Linux', 'Darwin']:
                 cmd = "kill -9 {}".format(os.getpid())
             os.system(cmd)
-
 
 
 if __name__ == '__main__':

@@ -20,6 +20,6 @@ class ChatModel(Plugin):
     def _3(self, event: EventContext,  **kwargs):
         print("GPT好友消息")
 
-    # 插件卸载时触发
-    def __del__(self):
+    # 插件热重载时触发
+    def on_reload(self):
         pass

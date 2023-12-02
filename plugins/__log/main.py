@@ -38,7 +38,7 @@ class Log(Plugin):
             try:
                 import log_start
                 self.log_file_name = log_start.LogStart.log_file_name
-                log_start.LogStart.__del__()
+                log_start.LogStart.on_stop()
             except:
                 # 检查logs目录是否存在
                 if not os.path.exists("logs"):
@@ -63,7 +63,7 @@ class Log(Plugin):
             self.logging_level = importlib.reload(
                 __import__('config')).logging_level
         except:
-            self.logging_level = logging.DEBUG  # TODO
+            self.logging_level = logging.DEBUG  # 防呆, 默认启用DEBUG
             raise Exception("请先配置logging_level")
 
     @on(SetLogs__)
@@ -96,9 +96,9 @@ class Log(Plugin):
         logging.getLogger().addHandler(sh)
         self.logger_handler = sh
 
-    def __del__(self):
+    def on_reload(self):
         self.set_reload_config("logger_handler", self.logger_handler)
         self.set_reload_config("log_file_name", self.log_file_name)
 
-    def __stop__(self):
+    def on_stop(self):
         pass

@@ -6,7 +6,10 @@ import logging
 
 from Models.Plugins import *
 from plugins.banWords.Events import *
-from Events import PluginsLoadingFinished
+from Events import (
+    PluginsLoadingFinished,
+    GetConfig__
+)
 
 # 注册插件
 
@@ -42,8 +45,7 @@ class banWordsUtil(Plugin):
 
     @on(PluginsLoadingFinished)
     def get_config(self, event: EventContext, **kwargs):
-        from Events import GetConfig__
-        config = Plugin.emit(GetConfig__)
+        config = self.emit(GetConfig__)
         self.baidu_check = config.baidu_check
         self.baidu_api_key = config.baidu_api_key
         self.baidu_secret_key = config.baidu_secret_key
@@ -96,15 +98,15 @@ class banWordsUtil(Plugin):
 
             if "error_code" in response_dict:
                 error_msg = response_dict.get("error_msg")
-                logging.warning(f"百度云判定出错，错误信息：{error_msg}")
-                conclusion = f"百度云判定出错，错误信息：{error_msg}\n以下是原消息：{message}"
+                logging.warning(f"百度云判定出错，错误信息: {error_msg}")
+                conclusion = f"百度云判定出错，错误信息: {error_msg}\n以下是原消息: {message}"
             else:
                 conclusion = response_dict["conclusion"]
                 if conclusion in ("合规"):
-                    logging.info(f"百度云判定结果：{conclusion}")
+                    logging.info(f"百度云判定结果: {conclusion}")
                     return message
                 else:
-                    logging.warning(f"百度云判定结果：{conclusion}")
+                    logging.warning(f"百度云判定结果: {conclusion}")
                     conclusion = self.inappropriate_message_tips
             # 返回百度云审核结果
             return conclusion

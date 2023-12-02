@@ -11,7 +11,7 @@ PluginsLoadingFinished = "plugins_loading_finished"
 """
 
 PluginsReloadFinished = "plugins_reload_finished"
-"""插件重载完成时触发
+"""插件重载完成时触发, 等同于在`plugin.__init__`中判断`not self.is_first_init()`后的代码块
 
     kwargs:
         None
@@ -37,7 +37,20 @@ Reload = "reload"
 """
 
 
-########## plugin.name='Config' plugin.path='D://workspace ai//chatbot//plugins//__config' ##########
+
+########## plugin.name='Log' plugin.path='//plugins//__log//main' ##########
+SetLogs__ = "set_logs__"
+"""设置日志(在有插件修改了日志之后)
+
+    kwargs:
+        None
+
+    returns:
+        None
+"""
+
+
+########## plugin.name='Config' plugin.path='//plugins//__config//main' ##########
 GetConfig__ = "get_config__"
 """获取配置
 
@@ -56,14 +69,15 @@ SetConfig__ = "set_config__"
 """
 
 
-########## plugin.name='ThreadCtlPlugin' plugin.path='D://workspace ai//chatbot//plugins//__threadctl' ##########
+
+########## plugin.name='ThreadCtlPlugin' plugin.path='//plugins//__threadctl//main' ##########
 SubmitAdminTask = "SubmitAdminTask"
 """提交后台任务
 """
 
 
 
-########## plugin.name='GPTBot' plugin.path='D://workspace ai//chatbot//plugins//gpt' ##########
+########## plugin.name='GPTBot' plugin.path='//plugins//GPT//main' ##########
 SessionExpired = "session_expired"
 """会话过期时触发
 
@@ -92,7 +106,7 @@ KeySwitched = "key_switched"
 
 
 
-########## plugin.name='banWordsUtil' plugin.path='D://workspace ai//chatbot//plugins//banwords' ##########
+########## plugin.name='banWordsUtil' plugin.path='//plugins//banWords//main' ##########
 BanWordCheck__ = "ban_word_check__"
 """检查是否包含敏感词
 

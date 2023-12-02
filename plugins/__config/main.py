@@ -6,6 +6,7 @@ import sys
 
 from Models.Plugins import *
 from plugins.__config.Events import *
+from Events import PluginsLoadingFinished
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -34,21 +35,27 @@ class Config(Plugin):
         if self.is_first_init():
             # 完整性校验
             self.config_template = importlib.import_module('config-template')
-            config = importlib.import_module('config')
+            self.config = importlib.import_module('config')
         else:
             self.config_template = importlib.reload(
                 __import__('config-template'))
-            config = importlib.reload(__import__('config'))
+            self.config = importlib.reload(__import__('config'))
         for key in dir(self.config_template):
-            if not key.startswith("__") and not hasattr(config, key):
-                setattr(config, key, getattr(self.config_template, key))
+            if not key.startswith("__") and not hasattr(self.config, key):
+                setattr(self.config, key, getattr(self.config_template, key))
                 logging.warning(f"[{key}]不存在")
                 is_integrity = False
 
         if not is_integrity:
             logging.warning(
                 "配置文件不完整, 您可以依据 config-template.py 检查 config.py. 已设为默认值")
-        self.config = config
+
+    @on(PluginsLoadingFinished)
+    def reset_config(self, event: EventContext, **kwargs):
+        """重置配置"""
+        importlib.reload(__import__('config-template'))
+        importlib.reload(__import__('config'))
+        importlib.reload(__import__('Events'))
 
     @on(GetConfig__)
     def get_config(self, event: EventContext,  **kwargs):
@@ -70,11 +77,12 @@ class Config(Plugin):
         系元编程
         """
         logging.info(f"设置并写入 {main_file_name}")
-        imports = set()
 
-        def update_content(main_file_name, plugin: Plugin):
-            file_path = os.path.join(
-                plugin.path, main_file_name)
+        def update_content(plugin: Plugin):
+
+            file_path = \
+                os.path.dirname(os.path.dirname(os.path.dirname(__file__))) + \
+                os.path.join(os.path.dirname(plugin.path), main_file_name)
             if not os.path.exists(file_path):
                 return
 
@@ -98,7 +106,7 @@ class Config(Plugin):
 
         # 遍历插件列表
         for plugin in self.plugin_list:
-            update_content(main_file_name, plugin)
+            update_content(plugin)
 
         # 提升 import 语句
         with open(main_file_name, "r", encoding="utf-8") as file:
@@ -111,8 +119,8 @@ class Config(Plugin):
         with open(main_file_name, "w", encoding="utf-8") as file:
             file.write(updated_content.lstrip())
 
-    def __del__(self):
+    def on_reload(self):
         pass
 
-    def __stop__(self):
+    def on_stop(self):
         pass

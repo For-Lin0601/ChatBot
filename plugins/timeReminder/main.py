@@ -25,5 +25,5 @@ class TimeReminderPlugin(Plugin):
         print("好友消息")
 
     # 插件卸载时触发
-    def __del__(self):
+    def on_reload(self):
         pass

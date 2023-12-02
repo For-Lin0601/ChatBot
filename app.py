@@ -7,10 +7,10 @@ app = Flask(__name__)
 def sign():
     # 在这里实现签名逻辑，这里只是一个简单的示例
     api_key = '114514'
-    authorization = 'Bearer xxxx'
+    authorization = 'Bearer 114514'
     return jsonify({'api_key': api_key, 'authorization': authorization})
 
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=8080)
+    app.run(host='127.0.0.1', port=5700)
     # 阻塞
