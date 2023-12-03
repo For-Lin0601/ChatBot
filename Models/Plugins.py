@@ -101,7 +101,7 @@ class Plugin:
     ```py
     {
         f"{plugin.name} {plugin.path}" = {           # 针对每个插件维护一个字典
-            "set_reload_config": set_reload_config,  # 插件保留值
+            "set_reload_config": set_reload_config,  # 插件设定的保留值
         }
     }
     ```
@@ -217,31 +217,31 @@ class Plugin:
         """
         event_context = EventContext(self, event_name)
         logging.debug(
-            f"插件 {self.name} 触发事件 {event_name} ({event_context.eid})")
+            f"({event_context.eid})start事件[{event_name}]: 插件[{self.name}]触发事件")
         if event_name in self.hooks_dict:
             for hook in self.hooks_dict[event_name]:
                 tmp_cls = self.get_plugin_by_cid(hook[0])
                 try:
                     if tmp_cls.enabled:
                         logging.debug(
-                            f"事件 {event_name} ({event_context.eid}) 被插件 {tmp_cls.name} 获取")
+                            f"({event_context.eid})跟踪事件[{event_name}]: 插件[{tmp_cls.name}]已获取, 继续跟踪。")
                         hook[1](tmp_cls, event_context, **kwargs)
                         logging.debug(
-                            f"插件 {tmp_cls.name} 归还 {event_name} ({event_context.eid}) 当前返回值为 {event_context.return_value}")
+                            f"({event_context.eid})跟踪事件[{event_name}]: 插件[{tmp_cls.name}]已归还, 继续跟踪。当前返回值: {event_context.return_value}")
                     else:
                         logging.debug(
-                            f"插件 {tmp_cls.name} 已禁用。事件 {event_name} ({event_context.eid}) 不响应")
+                            f"({event_context.eid})跟踪事件[{event_name}]: 插件[{tmp_cls.name}]已禁用, 继续跟踪。")
                 except Exception as e:
                     logging.error(
-                        f"插件 {tmp_cls.name} 响应事件 {event_name} 时发生错误: {e}")
+                        f"({event_context.eid})跟踪事件[{event_name}]: 插件[{tmp_cls.name}]响应事件时发生错误, 继续跟踪: \n{e}")
                 if event_context.is_prevented_postorder():
                     logging.debug(
-                        f"事件 {event_name} ({event_context.eid}) 被插件 {tmp_cls.name} 阻止")
+                        f"({event_context.eid})跟踪事件[{event_name}]: 被插件[{tmp_cls.name}]阻止。")
                     break
         else:
-            logging.debug(f"事件'{event_name}'无人监听")
+            logging.debug(f"({event_context.eid})跟踪事件[{event_name}]: 无人监听")
         logging.debug(
-            f"事件 {event_name} ({event_context.eid}) 处理完毕, 返回值: {event_context.return_value}")
+            f"({event_context.eid})跟踪事件[{event_name}]: 处理完毕, 停止跟踪。\n返回值: {event_context.return_value}")
 
         return event_context.return_value
 
