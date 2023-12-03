@@ -1,8 +1,9 @@
-from ast import walk
 import importlib
 import logging
 import os
 import pkgutil
+import sys
+import traceback
 
 from Events import PluginsLoadingFinished, PluginsReloadFinished
 
@@ -329,17 +330,22 @@ class Plugin:
         def walk(module, prefix='', path_prefix=''):
             """遍历并重载所有模块"""
             for item in pkgutil.iter_modules(module.__path__):
-                logging.debug(
-                    f"reload module: {prefix + item.name}, path: {path_prefix + item.name + '.py'}")
                 if item.ispkg:
-
+                    logging.debug(
+                        "扫描插件包: plugins/{}".format(path_prefix + item.name))
                     walk(__import__(module.__name__ + '.' + item.name,
-                                    fromlist=['']), prefix + item.name + '.', path_prefix + item.name + '/')
+                         fromlist=['']), prefix + item.name + '.', path_prefix + item.name + '/')
                 else:
-                    logging.info('reload module: {}, path: {}'.format(
-                        prefix + item.name, path_prefix + item.name + '.py'))
-                    importlib.reload(__import__(module.__name__ +
-                                                '.' + item.name, fromlist=['']))
+                    try:
+                        logging.debug('扫描插件模块: {}, 路径: {}'.format(
+                            prefix + item.name, path_prefix + item.name + '.py'))
+                        importlib.reload(__import__(
+                            module.__name__ + '.' + item.name, fromlist=['']))
+                        logging.info('热重载模块: {} 成功'.format(prefix + item.name))
+                    except:
+                        logging.error(
+                            '热重载模块: {} 失败: {}'.format(prefix + item.name, sys.exc_info()))
+                        traceback.print_exc()
 
         logging.info("开始重载插件")
         for plugin in cls.plugin_list:
