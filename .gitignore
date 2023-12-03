@@ -161,7 +161,9 @@ cython_debug/
 .vscode/
 ATRI-main/
 GO-CQHTTP-YesBot-master/
-go-cqhttp/
-config.*
-device.*
+data/
+nakuru-project-master/
+logs/
+config.py
 *.zip
+session.token

@@ -5,7 +5,7 @@ import pkgutil
 import sys
 import traceback
 
-from Events import PluginsLoadingFinished, PluginsReloadFinished
+from Events import *
 
 
 def on(event: str):
@@ -108,39 +108,12 @@ class Plugin:
     ```
     """
 
+    _hooks_dict = {}
+    """临时变量"""
     __plugin_hooks__ = set()
     """临时变量"""
     __plugin_priority__: int
     """临时变量, on()在注册的时候不会保存父类class的实例, 故在此临时保存"""
-
-    @classmethod
-    def on(cls, event: str):
-        """事件处理器装饰器
-
-        :param
-            event: 事件类型
-        :return:
-            None
-        """
-        def wrapper(func):
-            """事件处理器"""
-
-            if event not in cls.hooks_dict:
-                cls.hooks_dict[event] = []
-            # 根据优先级加入cls.plugin_hooks[event]
-            for index, hook in enumerate(cls.hooks_dict[event]):
-                tmp_cls = cls.get_plugin_by_cid(hook[0])
-                if tmp_cls and tmp_cls.priority > cls.__plugin_priority__:
-                    cls.hooks_dict[event].insert(index, [cls.cid, func])
-                    break
-            else:
-                cls.hooks_dict[event].append([cls.cid, func])
-
-            cls.__plugin_hooks__.add(func)
-
-            return func
-
-        return wrapper
 
     @classmethod
     def register(cls,
@@ -167,17 +140,23 @@ class Plugin:
         cls.__plugin_priority__ = priority
 
         def wrapper(plugin_cls: Plugin):
-            plugin_cls.cid = cls.cid
-            cls.cid += 1
-
-            plugin_cls.hooks = cls.__plugin_hooks__
-            cls.__plugin_hooks__ = set()
 
             root_directory = os.path.dirname(
                 os.path.dirname(os.path.abspath(__file__)))
             module_path = os.path.abspath(
                 plugin_cls.__module__.replace('.', os.path.sep))
             plugin_cls.path = module_path.replace(root_directory, "")
+            for tmp_cls in cls.plugin_list:
+                if plugin_cls.path == tmp_cls.path:
+                    logging.warning(
+                        f"插件重复注册, 插件{plugin_cls.name}已被注册(若为'尝试重新加载'则忽略)")
+                    return
+
+            plugin_cls.cid = cls.cid
+            cls.cid += 1
+
+            plugin_cls.hooks = cls.__plugin_hooks__
+            cls.__plugin_hooks__ = set()
 
             plugin_cls.name = plugin_cls.__qualname__.split(".")[0]
             plugin_cls.description = description
@@ -202,11 +181,57 @@ class Plugin:
             else:
                 cls.plugin_list.append(plugin_cls)
 
+            # 根据优先级加入cls.plugin_hooks[event]
+            for event, lst in cls._hooks_dict.items():
+                if event not in cls.hooks_dict:
+                    cls.hooks_dict[event] = []
+                for index, item in enumerate(cls.hooks_dict[event]):
+                    tmp_cls = cls.get_plugin_by_cid(item[0])
+                    if tmp_cls and tmp_cls.priority > cls.__plugin_priority__:
+                        for _lst in lst:
+                            cls.hooks_dict[event].insert(index, _lst)
+                        break
+                else:
+                    for _lst in lst:
+                        cls.hooks_dict[event].append(_lst)
+
+                cls._hooks_dict = {}
+                cls.__plugin_hooks__.add(plugin_cls)
+
             logging.info(
                 f"插件注册完成: {plugin_cls.name=}, {description=}, {version=}, {author=}, {priority=}, ({plugin_cls})"
             )
 
             return plugin_cls
+
+        return wrapper
+
+    @classmethod
+    def on(cls, event: str):
+        """事件处理器装饰器
+
+        :param
+            event: 事件类型
+        :return:
+            None
+        """
+        def wrapper(func):
+            """事件处理器"""
+            item = [cls.cid, func]  # [插件cid, 函数]
+            if event not in cls._hooks_dict:
+                cls._hooks_dict[event] = []
+            cls._hooks_dict[event].append(item)
+            # for index, hook in enumerate(cls._hooks_dict[event]):
+            #     tmp_cls = cls.get_plugin_by_cid(hook[0])
+            #     if tmp_cls and tmp_cls.priority > cls.__plugin_priority__:
+            #         cls._hooks_dict[event].insert(index, item)
+            #         break
+            # else:
+            #     cls._hooks_dict[event].append(item)
+
+            # cls.__plugin_hooks__.add(func)
+
+            return func
 
         return wrapper
 
@@ -217,7 +242,7 @@ class Plugin:
         允许自定义事件(用`self.emit()`调用)
         """
         event_context = EventContext(self, event_name)
-        logging.debug(
+        logging.info(
             f"({event_context.eid})start事件[{event_name}]: 插件[{self.name}]触发事件")
         if event_name in self.hooks_dict:
             for hook in self.hooks_dict[event_name]:
@@ -241,7 +266,7 @@ class Plugin:
                     break
         else:
             logging.debug(f"({event_context.eid})跟踪事件[{event_name}]: 无人监听")
-        logging.debug(
+        logging.info(
             f"({event_context.eid})跟踪事件[{event_name}]: 处理完毕, 停止跟踪。\n返回值: {event_context.return_value}")
 
         return event_context.return_value
@@ -360,8 +385,8 @@ class Plugin:
         cls.__plugin_hooks__ = set()
         walk(__import__('plugins'))
         Plugin._initialize_plugins()
-        Plugin.__reload_config__ = {}
         Plugin.emit(PluginsReloadFinished)
+        Plugin.__reload_config__ = {}
 
     @classmethod
     def _stop(cls):

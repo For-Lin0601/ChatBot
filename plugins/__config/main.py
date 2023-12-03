@@ -1,4 +1,3 @@
-import importlib
 import os
 import re
 import shutil
@@ -6,7 +5,7 @@ import sys
 
 from Models.Plugins import *
 from plugins.__config.Events import *
-from Events import PluginsLoadingFinished
+from plugins.__config.save_files import save_files
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -20,9 +19,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 class Config(Plugin):
 
     def __init__(self):
-        self._save_files("config-template.py")
-        self._save_files("Events.py")
-        self._save_files("requirements.txt")
+        save_files(self, "config-template.py")
+        save_files(self, "Events.py")
+        save_files(self, "requirements.txt")
         logging.info("检查 config 模块完整性.")
 
         # 配置文件存在性校验
@@ -45,12 +44,14 @@ class Config(Plugin):
                 setattr(self.config, key, getattr(self.config_template, key))
                 logging.warning(f"[{key}]不存在")
                 is_integrity = False
+        importlib.reload(__import__('Events'))
 
         if not is_integrity:
             logging.warning(
                 "配置文件不完整, 您可以依据 config-template.py 检查 config.py. 已设为默认值")
 
     @on(PluginsLoadingFinished)
+    @on(PluginsReloadFinished)
     def reset_config(self, event: EventContext, **kwargs):
         """重置配置"""
         importlib.reload(__import__('config-template'))
@@ -65,59 +66,16 @@ class Config(Plugin):
 
     @on(SetConfig__)
     def check_and_add_to_config(self, event: EventContext,  **kwargs):
-        """设置配置(暂存到 __config.config 中，不写入 config.py)"""
+        """设置配置
+
+        暂存到 __config.config 中, 不写入 config.py
+
+        热重载可能丢失, 请谨慎使用
+        """
         event.prevent_postorder()
         for item in kwargs["config"]:
             if not hasattr(self.config, item):
                 setattr(self.config, item, kwargs["config"][item])
-
-    def _save_files(self, main_file_name):
-        """设置并写入 main_file_name.py 中
-
-        系元编程
-        """
-        logging.info(f"设置并写入 {main_file_name}")
-
-        def update_content(plugin: Plugin):
-
-            file_path = \
-                os.path.dirname(os.path.dirname(os.path.dirname(__file__))) + \
-                os.path.join(os.path.dirname(plugin.path), main_file_name)
-            if not os.path.exists(file_path):
-                return
-
-            with open(file_path, "r", encoding="utf-8") as file:
-                file_content = file.read()
-            with open(main_file_name, "r", encoding="utf-8") as file:
-                main_file_content = file.read()
-
-            marker = f"########## {plugin.name=} {plugin.path=} ##########".replace(
-                "\\", "/")
-            pattern = f"{marker}(.*)(?=(########## plugin.name=(.*) plugin.path=(.*) ##########)|$)"
-            match = re.search(pattern, main_file_content, re.DOTALL)
-            if match:
-                main_file_content = main_file_content.replace(
-                    match.group(), marker + "\n" + file_content.rstrip())
-            else:
-                main_file_content += f"\n\n\n{marker}\n{file_content}"
-
-            with open(main_file_name, "w", encoding="utf-8") as file:
-                file.write(main_file_content)
-
-        # 遍历插件列表
-        for plugin in self.plugin_list:
-            update_content(plugin)
-
-        # 提升 import 语句
-        with open(main_file_name, "r", encoding="utf-8") as file:
-            content = file.read()
-        existing_imports = re.findall(r"^\s*import .*$", content, re.MULTILINE)
-        imports = set(existing_imports)
-        for existing_import in imports:
-            content = content.replace(existing_import+"\n", "")
-        updated_content = "\n".join(imports) + "\n" + content
-        with open(main_file_name, "w", encoding="utf-8") as file:
-            file.write(updated_content.lstrip())
 
     def on_reload(self):
         pass

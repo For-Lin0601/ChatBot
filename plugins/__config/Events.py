@@ -9,7 +9,7 @@ GetConfig__ = "get_config__"
 """
 
 SetConfig__ = "set_config__"
-"""设置配置(暂存到 __config.config 中，不写入 config.py)
+"""设置配置(暂存到 __config.config 中, 不写入 config.py)
 
     kwargs:
         config: dict 配置字典

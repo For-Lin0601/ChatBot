@@ -4,6 +4,7 @@ import time
 import logging
 import shutil
 
+import Events
 from Models.Plugins import *
 from plugins.__log.Events import *
 
@@ -43,7 +44,7 @@ class Log(Plugin):
                 # 检查logs目录是否存在
                 if not os.path.exists("logs"):
                     os.mkdir("logs")
-                # 检查本目录是否有chatbot.log，若有，移动到logs目录
+                # 检查本目录是否有chatbot.log, 若有, 移动到logs目录
                 if os.path.exists("chatbot.log"):
                     shutil.move("chatbot.log", "logs/chatbot.legacy.log")
                 self.log_file_name = f"logs/chatbot-{time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())}.log"
@@ -63,13 +64,15 @@ class Log(Plugin):
             self.logging_level = importlib.reload(
                 __import__('config')).logging_level
         except:
-            self.logging_level = logging.DEBUG  # 防呆, 默认启用DEBUG
-            raise Exception("请先配置logging_level")
+            self.logging_level = importlib.reload(
+                __import__('config-template')).logging_level
+            return True
+        return False
 
     @on(SetLogs__)
     def reset_logging(self, event: EventContext,  **kwargs):
         import colorlog
-        self.get_logging_level()
+        tmp_flag = self.get_logging_level()
 
         if self.logger_handler is not None:
             logging.getLogger().removeHandler(self.logger_handler)
@@ -81,7 +84,7 @@ class Log(Plugin):
                             filename=self.log_file_name,  # log日志输出的文件位置和文件名
                             format="[%(asctime)s.%(msecs)03d] %(pathname)s (%(lineno)d) - [%(levelname)s] :\n%(message)s",
                             # 日志输出的格式
-                            # -8表示占位符，让输出左对齐，输出长度都为8位
+                            # -8表示占位符, 让输出左对齐, 输出长度都为8位
                             datefmt="%Y-%m-%d %H:%M:%S",  # 时间输出的格式
                             encoding="utf-8"
                             )
@@ -95,6 +98,8 @@ class Log(Plugin):
         ))
         logging.getLogger().addHandler(sh)
         self.logger_handler = sh
+        if tmp_flag:
+            logging.error("请配置logging_level!启用默认配置[DEBUG]")
 
     def on_reload(self):
         self.set_reload_config("logger_handler", self.logger_handler)

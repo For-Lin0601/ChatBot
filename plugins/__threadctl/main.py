@@ -2,12 +2,9 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 
+import Events
 from Models.Plugins import *
 from plugins.__threadctl.Events import *
-from Events import (
-    PluginsLoadingFinished,
-    GetConfig__
-)
 
 
 class Pool:
@@ -118,9 +115,10 @@ class ThreadCtlPlugin(Plugin):
         pass
 
     @on(PluginsLoadingFinished)
+    @on(PluginsReloadFinished)
     def get_config(self, event: EventContext, **kwargs):
+        config = self.emit(Events.GetConfig__)
         if self.is_first_init():
-            config = self.emit(GetConfig__)
             self.ctl = ThreadCtl(
                 sys_pool_num=config.sys_pool_num,
                 admin_pool_num=config.admin_pool_num,
@@ -128,8 +126,37 @@ class ThreadCtlPlugin(Plugin):
             )
         else:
             self.ctl = self.get_reload_config("ctl")
+            self.ctl.reload(config.admin_pool_num, config.user_pool_num)
 
-    # @on(SubmitAdminTask)
+    @on(SubmitSysTask__)
+    def submit_sys_task(self, event: EventContext, **kwargs):
+        logging.debug(f"提交系统任务: {kwargs}")
+        event.prevent_postorder()
+        fn = kwargs["fn"]
+        args = kwargs["args"] if "args" in kwargs else ()
+        kwargs = kwargs["kwargs"] if "kwargs" in kwargs else {}
+        event.return_value = self.ctl.submit_sys_task(fn, *args, **kwargs)
+
+    @on(SubmitAdminTask__)
+    def submit_admin_task(self, event: EventContext, **kwargs):
+        logging.debug(f"提交管理员任务: {kwargs}")
+        event.prevent_postorder()
+        fn = kwargs["fn"]
+        args = kwargs["args"] if "args" in kwargs else ()
+        kwargs = kwargs["kwargs"] if "kwargs" in kwargs else {}
+        event.return_value = self.ctl.submit_admin_task(fn, *args, **kwargs)
+
+    @on(SubmitUserTask__)
+    def submit_user_task(self, event: EventContext, **kwargs):
+        logging.debug(f"提交用户任务: {kwargs}")
+        event.prevent_postorder()
+        fn = kwargs["fn"]
+        args = kwargs["args"] if "args" in kwargs else ()
+        kwargs = kwargs["kwargs"] if "kwargs" in kwargs else {}
+        event.return_value = self.ctl.submit_user_task(fn, *args, **kwargs)
 
     def on_reload(self):
         self.set_reload_config("ctl", self.ctl)
+
+    def on_stop(self):
+        self.ctl.shutdown()

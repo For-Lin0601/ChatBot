@@ -2,16 +2,10 @@
 import re
 import requests
 import json
-import logging
 
+import Events
 from Models.Plugins import *
 from plugins.banWords.Events import *
-from Events import (
-    PluginsLoadingFinished,
-    GetConfig__
-)
-
-# 注册插件
 
 
 @register(
@@ -30,10 +24,10 @@ class banWordsUtil(Plugin):
     baidu_check = False
     baidu_api_key = ""
     baidu_secret_key = ""
-    inappropriate_message_tips = "[百度云]请珍惜机器人，当前返回内容不合规"
+    inappropriate_message_tips = "[百度云]请珍惜机器人, 当前返回内容不合规"
 
     # 插件加载时触发
-    # plugin_list 提供了全部插件列表，详细请查看其源码
+    # plugin_list 提供了全部插件列表, 详细请查看其源码
     def __init__(self):
         json_file_path = os.path.join(os.path.dirname(
             os.path.abspath(__file__)), "sensitive.json")
@@ -45,7 +39,7 @@ class banWordsUtil(Plugin):
 
     @on(PluginsLoadingFinished)
     def get_config(self, event: EventContext, **kwargs):
-        config = self.emit(GetConfig__)
+        config = self.emit(Events.GetConfig__)
         self.baidu_check = config.baidu_check
         self.baidu_api_key = config.baidu_api_key
         self.baidu_secret_key = config.baidu_secret_key
@@ -98,8 +92,8 @@ class banWordsUtil(Plugin):
 
             if "error_code" in response_dict:
                 error_msg = response_dict.get("error_msg")
-                logging.warning(f"百度云判定出错，错误信息: {error_msg}")
-                conclusion = f"百度云判定出错，错误信息: {error_msg}\n以下是原消息: {message}"
+                logging.warning(f"百度云判定出错, 错误信息: {error_msg}")
+                conclusion = f"百度云判定出错, 错误信息: {error_msg}\n以下是原消息: {message}"
             else:
                 conclusion = response_dict["conclusion"]
                 if conclusion in ("合规"):

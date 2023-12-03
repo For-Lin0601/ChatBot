@@ -39,7 +39,7 @@ class LogStart:
         # 检查logs目录是否存在
         if not os.path.exists("logs"):
             os.mkdir("logs")
-        # 检查本目录是否有chatbot.log，若有，移动到logs目录
+        # 检查本目录是否有chatbot.log, 若有, 移动到logs目录
         if os.path.exists("chatbot.log"):
             shutil.move("chatbot.log", "logs/chatbot.legacy.log")
         cls.log_file_name = f"logs/chatbot-{time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime())}.log" if cls.log_file_name == "chatbot.log" else cls.log_file_name
@@ -54,7 +54,7 @@ class LogStart:
                             filename=cls.log_file_name,  # log日志输出的文件位置和文件名
                             format="[%(asctime)s.%(msecs)03d] %(pathname)s (%(lineno)d) - [%(levelname)s] :\n%(message)s",
                             # 日志输出的格式
-                            # -8表示占位符，让输出左对齐，输出长度都为8位
+                            # -8表示占位符, 让输出左对齐, 输出长度都为8位
                             datefmt="%Y-%m-%d %H:%M:%S",  # 时间输出的格式
                             encoding="utf-8"
                             )

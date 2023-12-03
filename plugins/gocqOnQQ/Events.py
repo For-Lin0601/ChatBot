@@ -1,5 +1,5 @@
 PersonMessageReceived = "person_message_received"
-"""收到私聊消息时，在判断是否应该响应前触发
+"""收到私聊消息时, 在判断是否应该响应前触发
 
     kwargs:
         launcher_type: str 发起对象类型(group/person)
@@ -9,7 +9,7 @@ PersonMessageReceived = "person_message_received"
 """
 
 GroupMessageReceived = "group_message_received"
-"""收到群聊消息时，在判断是否应该响应前触发（所有群消息）
+"""收到群聊消息时, 在判断是否应该响应前触发（所有群消息）
 
     kwargs:
         launcher_type: str 发起对象类型(group/person)
@@ -106,7 +106,7 @@ SessionFirstMessageReceived = "session_first_message_received"
 """
 
 SessionExplicitReset = "session_reset"
-"""会话被用户手动重置时触发，此事件不支持阻止默认行为
+"""会话被用户手动重置时触发, 此事件不支持阻止默认行为
 
     kwargs:
         session_name: str 会话名称(<launcher_type>_<launcher_id>)
