@@ -2,12 +2,10 @@ import logging
 ########## 主线程必选项 ##########
 
 
-
 ########## plugin.name='Log' plugin.path='//plugins//__log//main' ##########
 
 # 日志级别
 logging_level = logging.DEBUG
-
 
 
 ########## plugin.name='ThreadCtlPlugin' plugin.path='//plugins//__threadctl//main' ##########
@@ -22,9 +20,16 @@ user_pool_num = 6
 
 ########## plugin.name='QQbot' plugin.path='//plugins//gocqOnQQ//main' ##########
 ##### QQ设置 #####
+# go-cq设置不支持热重载
 
-# QQ号 必改！
+# QQ 号 必改！
 qq = 3457195338  # 测试用QQ号, 请务必修改!
+
+# QQ 管理员列表, 强烈建议有一个, 否则大量指令无法使用
+# QQ 管理员不登入账号, 仅做后台发送管理员数据使用
+admin_list = [
+    1636708665,  # 作者 QQ
+]
 
 # 使用手表协议, 扫码登入, 无需密码
 # 服务器搭载请在本地运行 ./go-cqhttp/go-cqhttp.exe
@@ -40,7 +45,7 @@ qq = 3457195338  # 测试用QQ号, 请务必修改!
 ##### gocqOnQQ 配置文件 #####
 # 没意外此处不用更改, 服务器请开启对应端口的安全组
 # 默认请开启 5700, 6700, 6701 端口
-# 此处不支持热重载
+# go-cq设置不支持热重载
 
 # 签名服务器地址
 host = "127.0.0.1"

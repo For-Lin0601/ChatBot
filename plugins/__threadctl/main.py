@@ -117,16 +117,15 @@ class ThreadCtlPlugin(Plugin):
     @on(PluginsLoadingFinished)
     @on(PluginsReloadFinished)
     def get_config(self, event: EventContext, **kwargs):
-        config = self.emit(Events.GetConfig__)
+        self.config = self.emit(Events.GetConfig__)
         if self.is_first_init():
             self.ctl = ThreadCtl(
-                sys_pool_num=config.sys_pool_num,
-                admin_pool_num=config.admin_pool_num,
-                user_pool_num=config.user_pool_num
+                sys_pool_num=self.config.sys_pool_num,
+                admin_pool_num=self.config.admin_pool_num,
+                user_pool_num=self.config.user_pool_num
             )
         else:
             self.ctl = self.get_reload_config("ctl")
-            self.ctl.reload(config.admin_pool_num, config.user_pool_num)
 
     @on(SubmitSysTask__)
     def submit_sys_task(self, event: EventContext, **kwargs):
@@ -157,6 +156,7 @@ class ThreadCtlPlugin(Plugin):
 
     def on_reload(self):
         self.set_reload_config("ctl", self.ctl)
+        self.ctl.reload(self.config.admin_pool_num, self.config.user_pool_num)
 
     def on_stop(self):
         self.ctl.shutdown()

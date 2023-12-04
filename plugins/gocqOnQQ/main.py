@@ -1,3 +1,4 @@
+import asyncio
 import json
 import re
 import time
@@ -7,6 +8,13 @@ import websockets
 
 import Events
 from Models.Plugins import *
+from plugins.gocqOnQQ.Events import *
+from plugins.gocqOnQQ.QQevents import create_event
+
+
+class RunningFlag:
+    def __init__(self) -> None:
+        self.flag = False
 
 
 @register(
@@ -26,10 +34,13 @@ class QQbot(Plugin):
     @on(PluginsReloadFinished)
     def get_config_and_set_flask(self, event: EventContext, **kwargs):
         self.config = self.emit(Events.GetConfig__)
+        self.admins: list = self.config.admin_list
 
         if self.is_first_init():
+            self.running_flag = RunningFlag()
             # 修改配置文件
-            self.http_url = f'http://{self.config.http_address}'
+            self.ws_url = f'ws://{self.config.ws_address}/'
+            self.http_url = f'http://{self.config.http_address}/'
             config_file_path = os.path.join((os.path.dirname(os.path.dirname(
                 os.path.dirname(os.path.abspath(__file__))))), "config.yml"
             )
@@ -56,18 +67,19 @@ class QQbot(Plugin):
                 os.system(f'"{executable_path}" -faststart')
 
             # 启用新线程运行go-cqhttp
-            self.emit(Events.SubmitSysTask__, fn=run_gocq_exe)
-            self.is_run_flag = False
+            # self.emit(Events.SubmitSysTask__, fn=run_gocq_exe)
 
             def _start_bot():
-                time.sleep(10)
+                time.sleep(3)
                 logging.info(
                     f"QQ: {self.config.qq}, MAH: {self.config.host}:{self.config.port}")
                 logging.critical(
                     f'程序启动完成,如长时间未显示 "CQ WebSocket 服务器已启动: {self.config.ws_address},  CQ HTTP 服务器已启动: {self.config.http_address}" 请检查配置')
-                self.is_run_flag = True
                 self._run()
             self.emit(Events.SubmitSysTask__, fn=_start_bot)
+        else:
+            self.running_flag = self.get_reload_config("running_flag")
+        self.running_flag.flag = True
 
     def _update_config(self, config_file_path,  qq, host, port, api_key, authorization, ws_address, http_address):
         """更改./go-cqhttp/config.yml"""
@@ -125,37 +137,51 @@ servers:
 
     def _run(self):
         async def listen():
+            self.emit(QQClientSuccess)
             async with websockets.connect(self.ws_url) as websocket_event:
 
                 while True:
                     message = await websocket_event.recv()
                     parsed_message = json.loads(message)
 
-                    if self.is_run_flag == False:
+                    if self.running_flag.flag == False:
                         continue
 
-                    if parsed_message["post_type"] == "message":
-                        print(parsed_message["message"])
+                    try:
+                        event_name, QQevents = create_event(
+                            parsed_message)
+                    except Exception as e:
+                        logging.error(e)
+                        continue
+                    # 判断是否为管理员, 加入对应线程池
+                    if event_name in ["QQ_private_message", "QQ_group_message"]:
+                        if QQevents.user_id in self.admins:
+                            self.emit(
+                                Events.SubmitAdminTask__,
+                                fn=self.emit,
+                                kwargs={
+                                    'event_name': event_name,
+                                    'QQevents': QQevents
+                                })
+                    elif event_name not in ["QQ_heartbeat", "QQ_lifecycle"]:
+                        # 这俩太吵了
                         self.emit(
-                            "message_received", parsed_message["message"])
-                        if parsed_message["message"] == "stop":
-                            self.is_run_flag = False
-                    elif parsed_message["post_type"] == "message":
-                        print(parsed_message["message"])
-                    elif parsed_message["post_type"] == "request":
-                        print(parsed_message["request_type"])
-                    elif parsed_message["post_type"] == "notice":
-                        print(parsed_message["notice_type"])
-                    elif parsed_message["post_type"] == "meta_event":
-                        print(parsed_message["meta_event_type"])
-        self.emit(Events.SubmitSysTask__, listen)
+                            Events.SubmitUserTask__,
+                            fn=self.emit,
+                            kwargs={
+                                'event_name': event_name,
+                                'QQevents': QQevents
+                            })
+
+        self.emit(Events.SubmitSysTask__, fn=asyncio.run(listen()))
 
     def sent_post(self, data: json) -> 'requests.Response':
         return requests.post(self.http_url, data=json.dumps(data), headers={
                              "Content-Type": "application/json"})
 
     def on_reload(self):
-        pass
+        self.running_flag.flag = False
+        self.set_reload_config("running_flag", self.running_flag)
 
     def on_stop(self):
-        pass
+        self.is_run_flag = False

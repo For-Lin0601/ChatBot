@@ -4,7 +4,7 @@ BanWordCheck__ = "ban_word_check__"
     kwargs:
         message: str 消息
 
-    return:
+    returns:
         bool 是否包含敏感词
 """
 
@@ -14,6 +14,6 @@ BanWordProcess__ = "ban_word_process__"
     kwargs:
         message: str 消息
 
-    return:
+    returns:
         str 处理后的消息
 """
