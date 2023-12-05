@@ -66,6 +66,9 @@ class QQbot(Plugin):
                     os.path.dirname(config_file_path), "go-cqhttp", "go-cqhttp.exe")
                 os.system(f'"{executable_path}" -faststart')
 
+            # TODO 记得开启, 以及下面time.sleep至少十秒
+            # 编写的时候可以注释掉这两行, 运行主线程后在新命令行开启go-cqhttp
+            # 这样重启机器人不影响go-cqhttp运行, 大大减少机器人被风控的概率
             # 启用新线程运行go-cqhttp
             # self.emit(Events.SubmitSysTask__, fn=run_gocq_exe)
 
