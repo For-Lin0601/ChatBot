@@ -149,7 +149,7 @@ class Plugin:
             for tmp_cls in cls.plugin_list:
                 if plugin_cls.path == tmp_cls.path:
                     logging.warning(
-                        f"插件重复注册, 插件{plugin_cls.name}已被注册(若为'尝试重新加载'则忽略)")
+                        f"插件重复注册, 插件{plugin_cls.__qualname__.split('.')[0]}已被注册(若为'尝试重新加载'则忽略)")
                     return
 
             plugin_cls.cid = cls.cid
@@ -221,15 +221,6 @@ class Plugin:
             if event not in cls._hooks_dict:
                 cls._hooks_dict[event] = []
             cls._hooks_dict[event].append(item)
-            # for index, hook in enumerate(cls._hooks_dict[event]):
-            #     tmp_cls = cls.get_plugin_by_cid(hook[0])
-            #     if tmp_cls and tmp_cls.priority > cls.__plugin_priority__:
-            #         cls._hooks_dict[event].insert(index, item)
-            #         break
-            # else:
-            #     cls._hooks_dict[event].append(item)
-
-            # cls.__plugin_hooks__.add(func)
 
             return func
 
@@ -378,11 +369,11 @@ class Plugin:
                 plugin.on_reload()
             except Exception as e:
                 logging.warning(f"插件 {plugin.name} 热重载时发生错误: {e}")
-        cls.__is_first_init__ = False
         cls.cid = 0
         cls.plugin_list = []
         cls.hooks_dict = {}
         cls.__plugin_hooks__ = set()
+        cls.__is_first_init__ = False
         walk(__import__('plugins'))
         Plugin._initialize_plugins()
         Plugin.emit(PluginsReloadFinished)

@@ -1,38 +1,20 @@
 
-from plugins.gocqOnQQ.QQevents.MessageEvent import (
+from .MessageEvent import (
     PersonMessage, GroupMessage
 )
-from plugins.gocqOnQQ.QQevents.RequestEvent import (
+from .RequestEvent import (
     FriendAdd, GroupAdd
 )
-from plugins.gocqOnQQ.QQevents.NoticeEvent import (
+from .NoticeEvent import (
     ClientStatusChange,
     PersonMessageRecall, FriendAddEvent,
     FriendPoke, OfflineFileupload,
     GroupMessageRecall, GroupIncrease, GroupDecrease, GroupAdmin, GroupUpload, GroupBan,
     GroupPoke, LuckyKing, GroupHonorChange, GroupTitleChange, GroupCardChange, GroupEssenceChange
 )
-from plugins.gocqOnQQ.QQevents.MetaEvent import (
+from .MetaEvent import (
     Heartbeat, LifeCycle
 )
-
-
-# from MessageEvent import (
-#     PersonMessage, GroupMessage
-# )
-# from RequestEvent import (
-#     FriendAdd, GroupAdd
-# )
-# from NoticeEvent import (
-#     ClientStatusChange,
-#     PersonMessageRecall, FriendAddEvent,
-#     FriendPoke, OfflineFileupload,
-#     GroupMessageRecall, GroupIncrease, GroupDecrease, GroupAdmin, GroupUpload, GroupBan,
-#     GroupPoke, LuckyKing, GroupHonorChange, GroupTitleChange, GroupCardChange, GroupEssenceChange
-# )
-# from MetaEvent import (
-#     Heartbeat, LifeCycle
-# )
 
 
 ws_MessageEvent_dict = {
@@ -85,14 +67,14 @@ ws_event_dict = {
 
 def create_event(json: dict):
     """创造事件
-
+    ```python
     Args:
         json (dict): json
 
     Returns:
         str: emit事件
         QQevent: 对应的类
-    """
+    ```"""
     if json["post_type"] not in ws_event_dict:
         return None
     post_type = json["post_type"]
@@ -119,51 +101,3 @@ def create_event(json: dict):
     elif post_type == "meta_event":
         return f'QQ_{json["meta_event_type"]}', \
             ws_MetaEvent_dict[json["meta_event_type"]](**json)
-
-
-# tmp = create_event({
-#     "post_type": "meta_event",
-#     "meta_event_type": "heartbeat",
-#     "time": 123456789,
-#     "self_id": 987654321,
-#     "status": {
-#         "app_initalized": True,
-#         "app_enabled": True,
-#         "app_good": True,
-#         "plugins_good": True,
-#         "online": True,
-#         "stat": {
-#             "packet_received": 12345678,
-#             "packet_sent": 12345678,
-#             "packet_lost": 12345678,
-#             "message_received": 12345678,
-#             "message_sent": 12345678,
-#             "disconnect_times": 12345678,
-#             "lost_times": 12345678,
-#             "heartbeat": 12345678,
-#             "last_message_time": 12345678,
-#         }
-#     },
-#     "interval": 2345678,
-# })
-# print(tmp)
-
-# tmp = create_event({
-    # "time": 1515204254,
-    # "self_id": 10001000,
-    # "post_type": "message",
-    # "message_type": "private",
-    # "sub_type": "friend",
-    # "message_id": 12,
-    # "user_id": 12345678,
-    # "message": 43598,
-    # "raw_message": "你好～",
-    # "font": 456,
-    # "sender": {
-        # "nickname": "小不点",
-        # "sex": "male",
-        # "age": 18
-    # }
-# }
-# )
-# print(tmp)

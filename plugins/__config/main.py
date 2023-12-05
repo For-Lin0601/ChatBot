@@ -1,11 +1,10 @@
 import os
-import re
 import shutil
 import sys
 
 from Models.Plugins import *
-from plugins.__config.Events import *
-from plugins.__config.save_files import save_files
+from .Events import *
+from .save_files import save_files
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 

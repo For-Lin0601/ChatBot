@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import Events
 from Models.Plugins import *
-from plugins.__threadctl.Events import *
+from .Events import *
 
 
 class Pool:

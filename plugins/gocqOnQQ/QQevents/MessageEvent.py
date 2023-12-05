@@ -1,6 +1,8 @@
 
-from typing import Any, Literal, Optional, Union
+from typing import Any, Literal, Optional
 from pydantic import BaseModel
+
+from ..QQmessage.CQperser import CQParser
 
 
 class Message:
@@ -89,8 +91,9 @@ class PersonMessage(MessageEvent):
         "friend", "group", "group_self", "other"]
     """消息的子类型"""
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, message: str, **kwargs):
+        message = CQParser.parseChain(message)
+        super().__init__(message=message, **kwargs)
 
 
 class GroupMessageSender(BaseModel):
@@ -161,5 +164,6 @@ class GroupMessage(MessageEvent):
         "nromal", "anoymous", "notice"]
     """消息的子类型"""
 
-    def __init__(self, **kwargs):
+    def __init__(self, message: str, **kwargs):
+        message = CQParser.parseChain(message)
         super().__init__(**kwargs)

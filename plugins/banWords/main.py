@@ -5,7 +5,7 @@ import json
 
 import Events
 from Models.Plugins import *
-from plugins.banWords.Events import *
+from .Events import *
 
 
 @register(

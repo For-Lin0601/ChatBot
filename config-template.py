@@ -1,5 +1,5 @@
 import logging
-########## 主线程必选项 ##########
+
 
 
 ########## plugin.name='Log' plugin.path='//plugins//__log//main' ##########
@@ -21,13 +21,13 @@ user_pool_num = 6
 
 ########## plugin.name='QQbot' plugin.path='//plugins//gocqOnQQ//main' ##########
 ##### QQ设置 #####
-# go-cq设置不支持热重载
 
 # QQ 号 必改！
-qq = 3457195338  # 测试用QQ号, 请务必修改!
+qq = 3457195338  # 测试用QQ号, 请务必修改!(不支持热重载)
 
 # QQ 管理员列表, 强烈建议有一个, 否则大量指令无法使用
 # QQ 管理员不登入账号, 仅做后台发送管理员数据使用
+# 支持热重载
 admin_list = [
     1636708665,  # 作者 QQ
 ]
@@ -76,7 +76,7 @@ setsth = 123
 # timeReminder
 
 
-########## plugin.name='ChatModel' plugin.path='//plugins//ChatWithGPT//main' ##########
+########## plugin.name='CmdModel' plugin.path='//plugins//CmdModel//main' ##########
 # haha
 
 

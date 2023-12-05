@@ -3,13 +3,13 @@ import json
 import re
 import time
 from flask import Flask, jsonify
-import requests
 import websockets
 
 import Events
 from Models.Plugins import *
-from plugins.gocqOnQQ.Events import *
-from plugins.gocqOnQQ.QQevents import create_event
+from .Events import *
+from .QQevents import create_event
+from .CQHTTP_Protocol.CQHTTP_Protocol import CQHTTP_Protocol
 
 
 class RunningFlag:
@@ -40,7 +40,9 @@ class QQbot(Plugin):
             self.running_flag = RunningFlag()
             # 修改配置文件
             self.ws_url = f'ws://{self.config.ws_address}/'
-            self.http_url = f'http://{self.config.http_address}/'
+            self.http_url = f'http://{self.config.http_address}'
+            self.cqhttp_protocol = CQHTTP_Protocol(self.http_url)
+
             config_file_path = os.path.join((os.path.dirname(os.path.dirname(
                 os.path.dirname(os.path.abspath(__file__))))), "config.yml"
             )
@@ -66,14 +68,15 @@ class QQbot(Plugin):
                     os.path.dirname(config_file_path), "go-cqhttp", "go-cqhttp.exe")
                 os.system(f'"{executable_path}" -faststart')
 
-            # TODO 记得开启, 以及下面time.sleep至少十秒
-            # 编写的时候可以注释掉这两行, 运行主线程后在新命令行开启go-cqhttp
+            # TODO 记得开启, 以及下面time.sleep至少10秒, 推荐12秒
+            # 编写的时候可以注释掉这行, 运行主线程后在新命令行开启go-cqhttp
             # 这样重启机器人不影响go-cqhttp运行, 大大减少机器人被风控的概率
             # 启用新线程运行go-cqhttp
+
             # self.emit(Events.SubmitSysTask__, fn=run_gocq_exe)
 
             def _start_bot():
-                time.sleep(3)
+                time.sleep(10)
                 logging.info(
                     f"QQ: {self.config.qq}, MAH: {self.config.host}:{self.config.port}")
                 logging.critical(
@@ -82,6 +85,9 @@ class QQbot(Plugin):
             self.emit(Events.SubmitSysTask__, fn=_start_bot)
         else:
             self.running_flag = self.get_reload_config("running_flag")
+            self.ws_url = self.get_reload_config("ws_url")
+            self.http_url = self.get_reload_config("http_url")
+            self.cqhttp_protocol = self.get_reload_config("cqhttp_protocol")
         self.running_flag.flag = True
 
     def _update_config(self, config_file_path,  qq, host, port, api_key, authorization, ws_address, http_address):
@@ -139,6 +145,7 @@ servers:
             file.write(config_content)
 
     def _run(self):
+        """监听事件"""
         async def listen():
             self.emit(QQClientSuccess)
             async with websockets.connect(self.ws_url) as websocket_event:
@@ -157,15 +164,15 @@ servers:
                         logging.error(e)
                         continue
                     # 判断是否为管理员, 加入对应线程池
-                    if event_name in ["QQ_private_message", "QQ_group_message"]:
-                        if QQevents.user_id in self.admins:
-                            self.emit(
-                                Events.SubmitAdminTask__,
-                                fn=self.emit,
-                                kwargs={
-                                    'event_name': event_name,
-                                    'QQevents': QQevents
-                                })
+                    if event_name in ["QQ_private_message", "QQ_group_message"] \
+                            and QQevents.user_id in self.admins:
+                        self.emit(
+                            Events.SubmitAdminTask__,
+                            fn=self.emit,
+                            kwargs={
+                                'event_name': event_name,
+                                'QQevents': QQevents
+                            })
                     elif event_name not in ["QQ_heartbeat", "QQ_lifecycle"]:
                         # 这俩太吵了
                         self.emit(
@@ -178,13 +185,17 @@ servers:
 
         self.emit(Events.SubmitSysTask__, fn=asyncio.run(listen()))
 
-    def sent_post(self, data: json) -> 'requests.Response':
-        return requests.post(self.http_url, data=json.dumps(data), headers={
-                             "Content-Type": "application/json"})
+    @on(GetCQHTTP__)
+    def get_cqhttp(self, event: EventContext, **kwargs):
+        event.prevent_postorder()
+        event.return_value = self.cqhttp_protocol
 
     def on_reload(self):
         self.running_flag.flag = False
         self.set_reload_config("running_flag", self.running_flag)
+        self.set_reload_config("ws_url", self.ws_url)
+        self.set_reload_config("http_url", self.http_url)
+        self.set_reload_config("cqhttp_protocol", self.cqhttp_protocol)
 
     def on_stop(self):
         self.is_run_flag = False
