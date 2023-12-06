@@ -1,6 +1,7 @@
-from Models.Plugins import *
 
-# 注册插件
+
+from Events import *
+from Models.Plugins import *
 
 
 @register(

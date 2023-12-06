@@ -33,7 +33,7 @@ def register(description: str,
         enabled (bool): 插件是否启用(只影响`self.emit`的调用, 即插件会被实例化)
         kwargs: 剩余参数 所有键值对保存为字典存储在`kwargs`字段中
 
-    Returns:
+    return:
         None
     """
     return Plugin.register(description, version, author, priority, enabled, **kwargs)
@@ -134,7 +134,7 @@ class Plugin:
             enabled (bool): 插件是否启用(只影响`self.emit`的调用, 即插件会被实例化)
             kwargs: 剩余参数 所有键值对保存为字典存储在`kwargs`字段中
 
-        Returns:
+        return:
             None
         """
         cls.__plugin_priority__ = priority

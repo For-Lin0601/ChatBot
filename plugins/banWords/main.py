@@ -4,8 +4,8 @@ import requests
 import json
 
 import Events
-from Models.Plugins import *
 from .Events import *
+from Models.Plugins import *
 
 
 @register(
@@ -50,8 +50,10 @@ class banWordsUtil(Plugin):
         message = kwargs['message']
         processed = self.process(message)
         if processed != message:
-            return True
-        return False
+            event.return_value = True
+            return
+        event.return_value = False
+        return
 
     @on(BanWordProcess__)
     def process(self, event: EventContext, **kwargs) -> str:
@@ -98,11 +100,14 @@ class banWordsUtil(Plugin):
                 conclusion = response_dict["conclusion"]
                 if conclusion in ("合规"):
                     logging.info(f"百度云判定结果: {conclusion}")
-                    return message
+                    event.return_value = message
+                    return
                 else:
                     logging.warning(f"百度云判定结果: {conclusion}")
                     conclusion = self.inappropriate_message_tips
             # 返回百度云审核结果
-            return conclusion
+            event.return_value = conclusion
+            return
 
-        return message
+        event.return_value = message
+        return

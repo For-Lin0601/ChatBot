@@ -2,8 +2,8 @@ import os
 import shutil
 import sys
 
-from Models.Plugins import *
 from .Events import *
+from Models.Plugins import *
 from .save_files import save_files
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))

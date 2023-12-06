@@ -103,7 +103,7 @@ class Config(Plugin):               # 注意类名会作为一些 不安全 函�
     #     kwargs:
     #         config_name: str 配置名称(为空则返回配置字典)
 
-    #     returns:
+    #     return:
     #         config: ModuleType 配置模块(以 value = config.key 读取)
     # """
 

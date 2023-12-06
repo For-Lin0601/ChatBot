@@ -4,8 +4,8 @@ import time
 import logging
 import shutil
 
-from Models.Plugins import *
 from .Events import *
+from Models.Plugins import *
 
 
 @register(

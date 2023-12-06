@@ -154,16 +154,12 @@ class GroupMessage(MessageEvent):
     group_id: int
     """群号"""
 
-    anoymous: Anoymous
+    anoymous: Anoymous = None
     """匿名信息, 如果不是匿名消息则为 null"""
 
     message_type: str = "group"
     """私聊 或 群聊"""
 
-    sun_type: Literal[
-        "nromal", "anoymous", "notice"]
-    """消息的子类型"""
-
     def __init__(self, message: str, **kwargs):
         message = CQParser.parseChain(message)
-        super().__init__(**kwargs)
+        super().__init__(message=message, **kwargs)

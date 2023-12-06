@@ -71,7 +71,7 @@ def create_event(json: dict):
     Args:
         json (dict): json
 
-    Returns:
+    return:
         str: emit事件
         QQevent: 对应的类
     ```"""

@@ -3,8 +3,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 import Events
-from Models.Plugins import *
 from .Events import *
+from Models.Plugins import *
 
 
 class Pool:

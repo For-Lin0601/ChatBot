@@ -6,8 +6,8 @@ from flask import Flask, jsonify
 import websockets
 
 import Events
+from Events import *
 from Models.Plugins import *
-from .Events import *
 from .QQevents import create_event
 from .CQHTTP_Protocol.CQHTTP_Protocol import CQHTTP_Protocol
 
@@ -21,7 +21,7 @@ class RunningFlag:
     description="QQ机器人",
     version="1.0.0",
     author="For_Lin0601",
-    priority=1,  # TODO 为数据库留了一个零号优先级
+    priority=1,
 )
 class QQbot(Plugin):
 
@@ -76,7 +76,7 @@ class QQbot(Plugin):
             # self.emit(Events.SubmitSysTask__, fn=run_gocq_exe)
 
             def _start_bot():
-                time.sleep(10)
+                time.sleep(3)
                 logging.info(
                     f"QQ: {self.config.qq}, MAH: {self.config.host}:{self.config.port}")
                 logging.critical(

@@ -4,12 +4,15 @@ import logging
 import typing as T
 
 import requests
+from Events import GetConfig__
+
+from Models.Plugins import Plugin
 from ..event.models import BotMessage, Message, Anonymous, ForwardMessages
 from ..entities import *
 from ..entities.components import Node
 
 
-class CQHTTP_Protocol:
+class CQHTTP_Protocol(Plugin):
     """发送CQHTTP请求"""
 
     def __init__(self, http_url: str):
@@ -30,6 +33,10 @@ class CQHTTP_Protocol:
         else:
             logging.debug(f"Network: post: {url=}, {data=}, {response=}")
         return response
+
+    def NotifyAdmin(self, message: T.Union[str, list]):
+        for admin in self.emit(GetConfig__).admin_list:
+            self.sendFriendMessage(admin, message)
 
     def sendFriendMessage(self,
                           user_id: int,
@@ -86,9 +93,9 @@ class CQHTTP_Protocol:
             return BotMessage.model_validate(result["data"])
         return False
 
-    def sendPrivateForwardMessage(self,
-                                  user_id: int,
-                                  messages: list) -> T.Union[BotMessage, bool]:
+    def sendPersonForwardMessage(self,
+                                 user_id: int,
+                                 messages: list) -> T.Union[BotMessage, bool]:
         for i in range(len(messages)):
             if isinstance(messages[i], Node):
                 messages[i] = messages[i].toDict()
@@ -105,6 +112,7 @@ class CQHTTP_Protocol:
         result = self._sent_post(f"{self.http_url}/delete_msg", {
             "message_id": message_id
         })
+        print("fuck?")
         if result["status"] == "ok":
             return True
         return False

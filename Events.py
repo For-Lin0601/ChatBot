@@ -6,7 +6,7 @@ PluginsLoadingFinished = "plugins_loading_finished"
     kwargs:
         None
 
-    returns:
+    return:
         None
 """
 
@@ -16,7 +16,7 @@ PluginsReloadFinished = "plugins_reload_finished"
     kwargs:
         None
 
-    returns:
+    return:
         None
 """
 
@@ -31,39 +31,39 @@ PluginsReloadFinished = "plugins_reload_finished"
 ########## plugin.name='Log' plugin.path='//plugins//__log//main' ##########
 SetLogs__ = "set_logs__"
 """设置日志(在有插件修改了日志之后)
-
+```python
     kwargs:
         None
 
-    returns:
+    return:
         None
-"""
+```"""
 
 
 ########## plugin.name='Config' plugin.path='//plugins//__config//main' ##########
 GetConfig__ = "get_config__"
 """获取配置
-
+```python
     kwargs:
         config_name: str 配置名称(为空则返回配置字典)
 
-    returns:
+    return:
         config: ModuleType 配置模块(以 value = config.key 读取)
-"""
+```"""
 
 SetConfig__ = "set_config__"
 """设置配置(暂存到 __config.config 中, 不写入 config.py)
-
+```python
     kwargs:
         config: dict 配置字典
-"""
+```"""
 
 
 
 ########## plugin.name='ThreadCtlPlugin' plugin.path='//plugins//__threadctl//main' ##########
 SubmitSysTask__ = "submit_sys_task__"
 """提交系统任务
-
+```python
     kwargs:
         fn: 任务
         args: 任务参数
@@ -71,11 +71,11 @@ SubmitSysTask__ = "submit_sys_task__"
 
     return:
         Future: 返回任务
-"""
+```"""
 
 SubmitAdminTask__ = "submit_admin_task__"
 """提交后台任务
-
+```python
     kwargs:
         fn: 任务
         args: 任务参数
@@ -83,11 +83,11 @@ SubmitAdminTask__ = "submit_admin_task__"
 
     return:
         Future: 返回任务
-"""
+```"""
 
 SubmitUserTask__ = "submit_user_task__"
 """提交用户任务
-
+```python
     kwargs:
         fn: 任务
         args: 任务参数
@@ -95,7 +95,7 @@ SubmitUserTask__ = "submit_user_task__"
 
     return:
         Future: 返回任务
-"""
+```"""
 
 
 
@@ -106,7 +106,7 @@ GetCQHTTP__ = "get_cqhttp__"
     kwargs:
         None
 
-    returns:
+    return:
         CQHTTP_pretocol: CQHTTP对象, 发送QQ消息使用, 具体请看 plugins.gocqOnQQ.CQHTTP_pretocol
 ```"""
 
@@ -316,17 +316,78 @@ QQ_lifecycle = "QQ_lifecycle"
 ```"""
 
 
+
+########## plugin.name='OpenAIInteract' plugin.path='//plugins//OpenAi//main' ##########
+GetOpenAi__ = "get_openai__"
+"""获取OpenAi对象时触发
+```python
+    kwargs:
+        None
+
+    return:
+        openai: pkg.openai.OpenAI
+```"""
+
+SessionExpired = "session_expired"
+"""会话过期时触发
+```python
+    kwargs:
+        session_name: str 会话名称(<launcher_type>_<launcher_id>)
+        session: pkg.openai.session.Session 会话对象
+        session_expire_time: int 已设置的会话过期时间(秒)
+```"""
+
+KeyExceeded = "key_exceeded"
+"""api-key超额时触发
+```python
+    kwargs:
+        key_name: str 超额的api-key名称
+        usage: dict 超额的api-key使用情况
+        exceeded_keys: list[str] 超额的api-key列表
+```"""
+
+KeySwitched = "key_switched"
+"""api-key超额切换成功时触发, 此事件不支持阻止默认行为
+```python
+    kwargs:
+        key_name: str 切换成功的api-key名称
+        key_list: list[str] api-key列表
+```"""
+
+
+
+########## plugin.name='TextMessagePlugin' plugin.path='//plugins//goTextMessage//main' ##########
+GetQQPersonCommand = "get_person_command"
+"""收到好友命令
+```python
+    kwargs:
+        message: PersonMessage  # 数据存储类, 详情请看 plugins.gocqOnQQ.QQevents.MessageEvent.py
+
+    return:
+        None
+```"""
+
+GetGroupCommand = "get_group_command"
+"""收到群聊命令
+```python
+    kwargs:
+        message: GroupMessage  # 数据存储类, 详情请看 plugins.gocqOnQQ.QQevents.MessageEvent.py
+
+    return:
+        None
+```"""
+
 ############### 以下为保留选项, TODO ###############
 
-# PersonMessageReceived = "person_message_received"
-# """收到私聊消息时, 在判断是否应该响应前触发
+PersonMessageReceived = "person_message_received"
+"""收到私聊消息时, 在判断是否应该响应前触发
+```python
+    kwargs:
+        message: PersonMessage  # 数据存储类, 详情请看 plugins.gocqOnQQ.QQevents.MessageEvent.py
 
-#     kwargs:
-#         launcher_type: str 发起对象类型(group/person)
-#         launcher_id: int 发起对象ID(群号/QQ号)
-#         sender_id: int 发送者ID(QQ号)
-#         message_chain: mirai.models.message.MessageChain 消息链
-# """
+        return:
+        bool:  # 是否阻止默认行为
+```"""
 
 # GroupMessageReceived = "group_message_received"
 # """收到群聊消息时, 在判断是否应该响应前触发（所有群消息）
@@ -347,7 +408,7 @@ QQ_lifecycle = "QQ_lifecycle"
 #         sender_id: int 发送者ID(QQ号)
 #         text_message: str 消息文本
 
-#     returns (optional):
+#     return (optional):
 #         alter: str 修改后的消息文本
 #         reply: list 回复消息组件列表
 # """
@@ -364,7 +425,7 @@ QQ_lifecycle = "QQ_lifecycle"
 #         text_message: str 完整指令文本
 #         is_admin: bool 是否为管理员
 
-#     returns (optional):
+#     return (optional):
 #         alter: str 修改后的完整指令文本
 #         reply: list 回复消息组件列表
 # """
@@ -378,7 +439,7 @@ QQ_lifecycle = "QQ_lifecycle"
 #         sender_id: int 发送者ID(QQ号)
 #         text_message: str 消息文本
 
-#     returns (optional):
+#     return (optional):
 #         alter: str 修改后的消息文本
 #         reply: list 回复消息组件列表
 # """
@@ -395,7 +456,7 @@ QQ_lifecycle = "QQ_lifecycle"
 #         text_message: str 完整指令文本
 #         is_admin: bool 是否为管理员
 
-#     returns (optional):
+#     return (optional):
 #         alter: str 修改后的完整指令文本
 #         reply: list 回复消息组件列表
 # """
@@ -411,7 +472,7 @@ QQ_lifecycle = "QQ_lifecycle"
 #         prefix: str 回复文字消息的前缀
 #         response_text: str 响应文本
 
-#     returns (optional):
+#     return (optional):
 #         prefix: str 修改后的回复文字消息的前缀
 #         reply: list 替换回复消息组件列表
 # """
@@ -435,52 +496,23 @@ QQ_lifecycle = "QQ_lifecycle"
 
 
 
-########## plugin.name='GPTBot' plugin.path='//plugins//GPT//main' ##########
-SessionExpired = "session_expired"
-"""会话过期时触发
-
-    kwargs:
-        session_name: str 会话名称(<launcher_type>_<launcher_id>)
-        session: pkg.openai.session.Session 会话对象
-        session_expire_time: int 已设置的会话过期时间(秒)
-"""
-
-KeyExceeded = "key_exceeded"
-"""api-key超额时触发
-
-    kwargs:
-        key_name: str 超额的api-key名称
-        usage: dict 超额的api-key使用情况
-        exceeded_keys: list[str] 超额的api-key列表
-"""
-
-KeySwitched = "key_switched"
-"""api-key超额切换成功时触发, 此事件不支持阻止默认行为
-
-    kwargs:
-        key_name: str 切换成功的api-key名称
-        key_list: list[str] api-key列表
-"""
-
-
-
 ########## plugin.name='banWordsUtil' plugin.path='//plugins//banWords//main' ##########
 BanWordCheck__ = "ban_word_check__"
 """检查是否包含敏感词
-
+```python
     kwargs:
         message: str 消息
 
-    returns:
+    return:
         bool 是否包含敏感词
-"""
+```"""
 
 BanWordProcess__ = "ban_word_process__"
 """处理敏感词
-
+```python
     kwargs:
         message: str 消息
 
-    returns:
+    return:
         str 处理后的消息
-"""
+```"""

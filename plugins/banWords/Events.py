@@ -1,19 +1,19 @@
 BanWordCheck__ = "ban_word_check__"
 """检查是否包含敏感词
-
+```python
     kwargs:
         message: str 消息
 
-    returns:
+    return:
         bool 是否包含敏感词
-"""
+```"""
 
 BanWordProcess__ = "ban_word_process__"
 """处理敏感词
-
+```python
     kwargs:
         message: str 消息
 
-    returns:
+    return:
         str 处理后的消息
-"""
+```"""

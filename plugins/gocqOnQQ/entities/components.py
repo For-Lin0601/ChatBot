@@ -150,7 +150,7 @@ class Video(BaseMessageComponent):
 class At(BaseMessageComponent):
     type: ComponentType = "At"
     qq: T.Union[int, str]  # 此处str为all时代表所有人
-    name: T.Optional[str]
+    name: T.Optional[str] = None
 
     def __init__(self, **_):
         super().__init__(**_)
@@ -323,12 +323,12 @@ class Forward(BaseMessageComponent):
 
 class Node(BaseMessageComponent):  # 该 component 仅支持使用 sendGroupForwardMessage 发送
     type: ComponentType = "Node"
-    id: T.Optional[int]
+    id: T.Optional[int] = None
     name: T.Optional[str]
     uin: T.Optional[int]
     content: T.Optional[T.Union[str, list]]
-    seq: T.Optional[T.Union[str, list]]  # 不清楚是什么
-    time: T.Optional[int]
+    seq: T.Optional[T.Union[str, list]] = None  # 不清楚是什么
+    time: T.Optional[int] = None
 
     def __init__(self, content: T.Union[str, list], **_):
         if isinstance(content, list):

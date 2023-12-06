@@ -1,6 +1,6 @@
 SubmitSysTask__ = "submit_sys_task__"
 """提交系统任务
-
+```python
     kwargs:
         fn: 任务
         args: 任务参数
@@ -8,11 +8,11 @@ SubmitSysTask__ = "submit_sys_task__"
 
     return:
         Future: 返回任务
-"""
+```"""
 
 SubmitAdminTask__ = "submit_admin_task__"
 """提交后台任务
-
+```python
     kwargs:
         fn: 任务
         args: 任务参数
@@ -20,11 +20,11 @@ SubmitAdminTask__ = "submit_admin_task__"
 
     return:
         Future: 返回任务
-"""
+```"""
 
 SubmitUserTask__ = "submit_user_task__"
 """提交用户任务
-
+```python
     kwargs:
         fn: 任务
         args: 任务参数
@@ -32,4 +32,4 @@ SubmitUserTask__ = "submit_user_task__"
 
     return:
         Future: 返回任务
-"""
+```"""

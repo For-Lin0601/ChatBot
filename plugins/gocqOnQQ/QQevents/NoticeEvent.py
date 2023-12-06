@@ -187,9 +187,8 @@ class GroupUpload(NoticeEvent):
     file: GroupUploadFile
     """文件信息"""
 
-    def __init__(self) -> None:
-        self.notice_type = "group_upload"
-        """群文件上传"""
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
 
 class GroupBan(NoticeEvent):
@@ -219,9 +218,8 @@ class GroupBan(NoticeEvent):
     duration: int
     """禁言时长(秒)(为全员禁言时为-1)"""
 
-    def __init__(self) -> None:
-        self.notice_type = "group_ban"
-        """群禁言"""
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
 
 class FriendAddEvent(NoticeEvent):

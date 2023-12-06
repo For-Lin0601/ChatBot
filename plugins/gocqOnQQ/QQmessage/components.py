@@ -150,7 +150,7 @@ class Video(BaseMessageComponent):
 class At(BaseMessageComponent):
     type: ComponentType = "At"
     qq: T.Union[int, str]  # 此处str为all时代表所有人
-    name: T.Optional[str]
+    name: T.Optional[str] = None
 
     def __init__(self, **_):
         super().__init__(**_)
