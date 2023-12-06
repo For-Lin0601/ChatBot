@@ -21,14 +21,10 @@ class CmdModel(Plugin):
     def check_cmd(self, event: EventContext,  **kwargs):
         message: Union[PersonMessage, GroupMessage] = kwargs["QQevents"]
         self.CQHTTP: CQHTTP_Protocol = self.emit(GetCQHTTP__)
-    #     if message.
-
-    # def check_admin(self, event: EventContext,  **kwargs):
-        person_message: PersonMessage = kwargs["QQevents"]
-        if person_message.message[0].text == "reload":
+        if message.message[0].text == "reload":
             logging.critical("开始插件热重载")
             self.emit(Events.SubmitSysTask__, fn=Plugin._reload)
-        elif person_message.message[0].text == "get":
+        elif message.message[0].text == "get":
             self.CQHTTP.sendFriendMessage(1636708665, "fuck")
 
     def on_reload(self):
