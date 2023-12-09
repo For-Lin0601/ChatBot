@@ -31,6 +31,9 @@ class FriendAdd(RequestEvent):
     flag: str
     """请求flag, 在调用处理请求的API时需要传入"""
 
+    nickname: str = None
+    """自己加的, 方便使用"""
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 

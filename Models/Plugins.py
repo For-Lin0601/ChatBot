@@ -233,7 +233,7 @@ class Plugin:
         允许自定义事件(用`self.emit()`调用)
         """
         event_context = EventContext(self, event_name)
-        logging.info(
+        logging.debug(
             f"({event_context.eid})start事件[{event_name}]: 插件[{self.name}]触发事件")
         if event_name in self.hooks_dict:
             for hook in self.hooks_dict[event_name]:
@@ -257,7 +257,7 @@ class Plugin:
                     break
         else:
             logging.debug(f"({event_context.eid})跟踪事件[{event_name}]: 无人监听")
-        logging.info(
+        logging.debug(
             f"({event_context.eid})跟踪事件[{event_name}]: 处理完毕, 停止跟踪。\n返回值: {event_context.return_value}")
 
         return event_context.return_value

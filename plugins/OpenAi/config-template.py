@@ -48,10 +48,5 @@ process_message_timeout = 180
 prompt_submit_length = 4096
 
 
-# api-key切换策略
-# active：每次请求时都会切换api-key
-# passive：仅当api-key超额时才会切换api-key
-switch_strategy = "active"
-
 # 每个会话的过期时间，单位为秒，原默认值20分钟，即 1200 ,注意这里的数字只能是整数
 session_expire_time = 600000

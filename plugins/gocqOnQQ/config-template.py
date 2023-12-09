@@ -15,11 +15,9 @@ admin_list = [
 # 登入成功后将 ./go-cqhttp/data 文件夹复制到服务器相同目录
 # 仅需在第一次配置即可, 后续若无风控则不会丢失 data
 
-
 # 手表协议无法接收戳一戳等消息, 详情请看https://docs.go-cqhttp.org/guide/config.html#%E9%85%8D%E7%BD%AE%E4%BF%A1%E6%81%AF
 # 若想启用其他协议, 请自行更改 ./go-cqhttp/device.json 的 protocol 字段, 具体数值参考上述网址
 # 提示: 其他协议均不支持扫码登入
-
 
 ##### gocqOnQQ 配置文件 #####
 # 没意外此处不用更改, 服务器请开启对应端口的安全组

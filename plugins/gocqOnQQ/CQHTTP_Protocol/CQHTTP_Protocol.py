@@ -4,8 +4,8 @@ import logging
 import typing as T
 
 import requests
-from Events import GetConfig__
 
+from Events import *
 from Models.Plugins import Plugin
 from ..event.models import BotMessage, Message, Anonymous, ForwardMessages
 from ..entities import *
@@ -20,8 +20,7 @@ class CQHTTP_Protocol(Plugin):
 
     def _sent_post(self, url: str, data: dict = None) -> dict:
         """发送post请求"""
-        response = requests.post(url, json=data, headers={
-            "Content-Type": "application/json"})
+        response = requests.post(url, json=data)
         if response.status_code != 200:
             raise Exception(response.text)
         response = json.loads(response.text)
@@ -112,7 +111,6 @@ class CQHTTP_Protocol(Plugin):
         result = self._sent_post(f"{self.http_url}/delete_msg", {
             "message_id": message_id
         })
-        print("fuck?")
         if result["status"] == "ok":
             return True
         return False

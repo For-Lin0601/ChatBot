@@ -357,21 +357,29 @@ KeySwitched = "key_switched"
 
 
 ########## plugin.name='TextMessagePlugin' plugin.path='//plugins//goTextMessage//main' ##########
-GetQQPersonCommand = "get_person_command"
+GetQQPersonCommand = "get_qq_person_command"
 """收到好友命令
 ```python
     kwargs:
-        message: PersonMessage  # 数据存储类, 详情请看 plugins.gocqOnQQ.QQevents.MessageEvent.py
+        message: str    # 好友命令文本(去除了前置感叹号)
+        message_chain: PersonMessage  # 数据存储类, 详情请看 plugins.gocqOnQQ.QQevents.MessageEvent.py
+        launcher_id: int(此处与sender_id相等)
+        sender_id: int  # 发送者ID
+        is_admin: bool  # 是否为管理员
 
     return:
         None
 ```"""
 
-GetGroupCommand = "get_group_command"
+GetQQGroupCommand = "get_qq_group_command"
 """收到群聊命令
 ```python
     kwargs:
-        message: GroupMessage  # 数据存储类, 详情请看 plugins.gocqOnQQ.QQevents.MessageEvent.py
+        message: str      # 群命令文本(去除了前置感叹号)
+        message_chain: GroupMessage  # 数据存储类, 详情请看 plugins.gocqOnQQ.QQevents.MessageEvent.py
+        launcher_id: int  # 群号
+        sender_id: int    # 发送者ID
+        is_admin: bool    # 是否为管理员
 
     return:
         None
@@ -379,7 +387,7 @@ GetGroupCommand = "get_group_command"
 
 ############### 以下为保留选项, TODO ###############
 
-PersonMessageReceived = "person_message_received"
+QQPersonMessageReceived = "qq_person_message_received"
 """收到私聊消息时, 在判断是否应该响应前触发
 ```python
     kwargs:
@@ -389,7 +397,7 @@ PersonMessageReceived = "person_message_received"
         bool:  # 是否阻止默认行为
 ```"""
 
-# GroupMessageReceived = "group_message_received"
+# QQGroupMessageReceived = "qq_group_message_received"
 # """收到群聊消息时, 在判断是否应该响应前触发（所有群消息）
 
 #     kwargs:
@@ -493,6 +501,19 @@ PersonMessageReceived = "person_message_received"
 #         session_name: str 会话名称(<launcher_type>_<launcher_id>)
 #         session: pkg.openai.session.Session 会话对象
 # """
+
+
+
+########## plugin.name='CmdPlugin' plugin.path='//plugins//cmdCmd//main' ##########
+CmdCmdHelp = "cmd_cmd_help"
+"""获取指令用法
+```python
+    kwargs:
+        None
+
+    return:
+        list[str]:  # 指令用法列表, 优先级在100之后直接append即可
+```"""
 
 
 

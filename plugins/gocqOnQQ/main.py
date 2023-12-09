@@ -6,7 +6,7 @@ from flask import Flask, jsonify
 import websockets
 
 import Events
-from Events import *
+from .Events import *
 from Models.Plugins import *
 from .QQevents import create_event
 from .CQHTTP_Protocol.CQHTTP_Protocol import CQHTTP_Protocol

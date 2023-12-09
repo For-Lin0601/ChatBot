@@ -1,7 +1,6 @@
 import logging
 
 
-
 ########## plugin.name='Log' plugin.path='//plugins//__log//main' ##########
 
 # 日志级别
@@ -16,65 +15,6 @@ sys_pool_num = 8
 admin_pool_num = 2
 # 执行用户请求和指令的线程池并行线程数量, 如需要更高的并发, 可以增大该值
 user_pool_num = 6
-
-
-
-########## plugin.name='OpenAIInteract' plugin.path='//plugins//OpenAi//main' ##########
-# ---------------------------------------------模型参数---------------------------------------------
-
-# [必需] OpenAI的配置，api_key: OpenAI的API Key
-# 1.若只有一个api-key，请直接修改以下内容中的"openai_api_key"为你的api-key
-# 2.如准备了多个api-key，可以以字典的形式填写，程序会自动选择可用的api-key
-openai_api_keys = [
-    # "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",  # 第一个，用完了
-    # "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",  # 第二个，传说120刀，封咯
-    # "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",  # 第三个，用完了
-    # "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",  # 第四个，同时WeCHatGPT也在用，封咯
-    # "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",  # 第五个，用完了
-    # "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",  # 封了
-    # "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",  # 封了
-    # "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",  # 用完
-    "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",
-    # "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",  # 用完
-    "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",
-    "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",
-]
-
-
-# OpenAI补全API的参数，OpenAI的文档: https://beta.openai.com/docs/api-reference/completions/create
-# 请在下方填写模型，程序自动选择接口,现已支持的模型有：
-#    'gpt-4'	             -->新出的更强4.0接口，目前版本似乎仅plus会员等可用
-#    'gpt-4-0314'
-#    'gpt-4-32k'
-#    'gpt-4-32k-0314'
-#    'gpt-3.5-turbo'                -->这个是默认的3.5接口，使用方法复制到下面的"model"：xxx  ，替换xxx
-#    'gpt-3.5-turbo-0301'
-#    'text-davinci-003'             -->这个是原来的3.0接口，人格相对好设置，但是token收费会更高
-#    'text-davinci-002'
-#    'code-davinci-002' | 'code-cushman-001' | 'text-curie-001' | 'text-babbage-001' | 'text-ada-001'   ....等等、还有一些你可能用不到的模型
-completion_api_params = {
-    "model": "gpt-3.5-turbo",
-    "temperature": 0.8,  # 数值越低得到的回答越理性，取值范围[0, 1]
-    "top_p": 1,  # 生成的文本的文本与要求的符合度, 取值范围[0, 1]
-    "frequency_penalty": 0.3,
-    "presence_penalty": 1.0,
-}
-
-
-# 消息处理的超时时间，单位为秒
-process_message_timeout = 180
-
-
-# 每次向OpenAI接口发送对话记录上下文的字符数
-# 注意：较大的prompt_submit_length会导致OpenAI账户额度消耗更快
-prompt_submit_length = 4096
-
-
-# api-key切换策略
-# active：每次请求时都会切换api-key
-# passive：仅当api-key超额时才会切换api-key
-switch_strategy = "active"
-
 
 
 ########## plugin.name='QQbot' plugin.path='//plugins//gocqOnQQ//main' ##########
@@ -124,8 +64,67 @@ ws_address = "127.0.0.1:6700"
 http_address = "127.0.0.1:6701"
 
 
+########## plugin.name='OpenAIInteract' plugin.path='//plugins//OpenAi//main' ##########
+# ---------------------------------------------模型参数---------------------------------------------
 
-########## plugin.name='TimeReminderPlugin' plugin.path='//plugins//timeReminder//main' ##########
+# [必需] OpenAI的配置，api_key: OpenAI的API Key
+# 1.若只有一个api-key，请直接修改以下内容中的"openai_api_key"为你的api-key
+# 2.如准备了多个api-key，可以以列表的形式填写，程序会自动选择可用的api-key
+openai_api_keys = [
+    # "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",  # 第一个，用完了
+    # "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",  # 第二个，传说120刀，封咯
+    # "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",  # 第三个，用完了
+    # "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",  # 第四个，同时WeCHatGPT也在用，封咯
+    # "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",  # 第五个，用完了
+    # "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",  # 封了
+    # "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",  # 封了
+    # "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",  # 用完
+    "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",
+    # "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",  # 用完
+    "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",
+    "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",
+]
+
+
+# OpenAI补全API的参数，OpenAI的文档: https://beta.openai.com/docs/api-reference/completions/create
+# 请在下方填写模型，程序自动选择接口,现已支持的模型有：
+#    'gpt-4'	             -->新出的更强4.0接口，目前版本似乎仅plus会员等可用
+#    'gpt-4-0314'
+#    'gpt-4-32k'
+#    'gpt-4-32k-0314'
+#    'gpt-3.5-turbo'                -->这个是默认的3.5接口，使用方法复制到下面的"model"：xxx  ，替换xxx
+#    'gpt-3.5-turbo-0301'
+#    'text-davinci-003'             -->这个是原来的3.0接口，人格相对好设置，但是token收费会更高
+#    'text-davinci-002'
+#    'code-davinci-002' | 'code-cushman-001' | 'text-curie-001' | 'text-babbage-001' | 'text-ada-001'   ....等等、还有一些你可能用不到的模型
+completion_api_params = {
+    "model": "gpt-3.5-turbo",
+    "temperature": 0.8,  # 数值越低得到的回答越理性，取值范围[0, 1]
+    "top_p": 1,  # 生成的文本的文本与要求的符合度, 取值范围[0, 1]
+    "frequency_penalty": 0.3,
+    "presence_penalty": 1.0,
+}
+
+
+# 消息处理的超时时间，单位为秒
+process_message_timeout = 180
+
+
+# 每次向OpenAI接口发送对话记录上下文的字符数
+# 注意：较大的prompt_submit_length会导致OpenAI账户额度消耗更快
+prompt_submit_length = 4096
+
+
+# api-key切换策略
+# active：每次请求时都会切换api-key
+# passive：仅当api-key超额时才会切换api-key
+switch_strategy = "active"
+
+# 每个会话的过期时间，单位为秒，原默认值20分钟，即 1200 ,注意这里的数字只能是整数
+session_expire_time = 600000
+
+
+########## plugin.name='TimeReminderPlugin' plugin.path='//plugins//cmdTimeReminder//main' ##########
 setsth = 123
 # timeReminder
 
@@ -137,6 +136,42 @@ retry_times = 1
 
 message_drop_tip = "【检测到时空信号交集，请等待返回信号处理完成】"
 
+
+# 禁用列表
+# person为个人，其中的QQ号会被禁止与机器人进行私聊或群聊交互
+# 示例: person = [2854196310, 1234567890, 9876543210]
+# group为群组，其中的群号会被禁止与机器人进行交互
+# 示例: group = [123456789, 987654321, 1234567890]
+
+# 2854196310是Q群管家机器人的QQ号，默认屏蔽以免出现循环
+banned_person_list = [2854196310, 3353064953]
+
+# 屏蔽的群号
+banned_group_list = []
+
+# 是否响应群消息(默认True响应)
+quote_qq_group = False
+
+# 仅在quote_qq_group为True时有效
+# 群内响应规则，符合此消息的群内消息即使不包含at机器人也会响应
+# 支持消息前缀匹配及正则表达式匹配
+# 注意每个规则的优先级为：消息前缀 > 正则表达式 > 随机响应
+# 且字典不能缺失字段, 若不需要, 可为空
+# 正则表达式简明教程：https://www.runoob.com/regexp/regexp-tutorial.html
+response_rules = {
+    "default": {  # 默认, 若未特殊标注则引用此处规则
+        "at": False,  # 是否响应at机器人的消息，ps：就是群聊艾特会不会回，如果为False则不回
+        "prefix": [],
+        "regexp": [],
+        "random_rate": 0.0,  # 随机响应概率，取值范围 0.0-1.0     0.0为完全不随机响应  1.0响应所有消息, 仅在前几项判断不通过时生效
+    },
+    "104960075": {  # 测试群
+        "at": True,
+        "prefix": ["/", "!", "！", "ai"],
+        "regexp": ["怎么?样.*", "怎么.*", "如何.*", ".*咋办"],
+        "random_rate": 0.0,
+    },
+}
 
 
 ########## plugin.name='banWordsUtil' plugin.path='//plugins//banWords//main' ##########
@@ -153,4 +188,4 @@ baidu_secret_key = ""
 # 不合规消息自定义返回
 inappropriate_message_tips = "[百度云]请珍惜机器人, 当前返回内容不合规"
 
-##### 屏蔽词请前往 plugins/banWords/sensitive.json 中修改!!!
+# 屏蔽词请前往 plugins/banWords/sensitive.json 中修改!!!
