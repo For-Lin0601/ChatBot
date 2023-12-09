@@ -76,7 +76,7 @@ class Plain(BaseMessageComponent):
     def __init__(self, text: str, convert: bool = True, **_):
         super().__init__(text=text, convert=convert, **_)
 
-    def toString(self):  # 没有 [CQ:plain] 这种东西，所以直接导出纯文本
+    def toString(self):  # 没有 [CQ:plain] 这种东西, 所以直接导出纯文本
         if not self.convert:
             return self.text
         return self.text.replace("&", "&amp;") \
@@ -96,12 +96,12 @@ class Record(BaseMessageComponent):
     type: ComponentType = "Record"
     file: T.Optional[str]
     magic: T.Optional[bool] = False
-    url: T.Optional[str]
+    url: T.Optional[str] = None
     cache: T.Optional[bool] = True
     proxy: T.Optional[bool] = True
     timeout: T.Optional[int] = 0
     # 额外
-    path: T.Optional[str]
+    path: T.Optional[str] = None
 
     def __init__(self, file: T.Optional[str], **_):
         for k in _.keys():
@@ -249,7 +249,7 @@ class Image(BaseMessageComponent):
     _type: T.Optional[str]
     subType: T.Optional[int] = None
     """只出现在群聊"""
-    url: T.Optional[str]
+    url: T.Optional[str] = None
     cache: T.Optional[bool] = True
     id: T.Optional[int] = 40000
     c: T.Optional[int] = 2

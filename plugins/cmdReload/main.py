@@ -9,18 +9,9 @@ from plugins.gocqOnQQ.entities.components import At, Plain
     description="热重载[re, reload]",
     version="1.0.0",
     author="For_Lin0601",
-    priority=203,
+    priority=207
 )
-class ReloadPlugin(Plugin):
-
-    def __init__(self):
-        pass
-
-    def on_reload(self):
-        pass
-
-    def on_stop(self):
-        pass
+class ReloadCommand(Plugin):
 
     @on(CmdCmdHelp)
     def help(self, event: EventContext, **kwargs):
@@ -31,13 +22,13 @@ class ReloadPlugin(Plugin):
     @on(GetQQPersonCommand)
     @on(GetQQGroupCommand)
     def cmd_reload(self, event: EventContext, **kwargs):
-        message: str = kwargs["message"]
+        message: str = kwargs["message"].strip()
         if message not in ["re", "reload"]:
             return
         event.prevent_postorder()
         if not kwargs["is_admin"]:
             if kwargs["launcher_id"] == kwargs["sender_id"]:  # 私聊
-                self.emit(Events.GetCQHTTP__).sendFriendMessage(
+                self.emit(Events.GetCQHTTP__).sendPersonMessage(
                     kwargs["sender_id"], "[bot] 权限不足")
             else:
                 self.emit(Events.GetCQHTTP__).sendGroupMessage(

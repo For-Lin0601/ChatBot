@@ -9,10 +9,15 @@ Flask==3.0.0
 websockets==12.0
 
 
-########## plugin.name='OpenAIInteract' plugin.path='//plugins//OpenAi//main' ##########
+########## plugin.name='OpenAiInteract' plugin.path='//plugins//OpenAi//main' ##########
 openai==0.28
 
 
 
 ########## plugin.name='TextMessagePlugin' plugin.path='//plugins//goTextMessage//main' ##########
 func_timeout~=4.3.5
+
+
+
+########## plugin.name='WaterMarkCommand' plugin.path='//plugins//cmdWaterMark//main' ##########
+Pillow~=10.1.0

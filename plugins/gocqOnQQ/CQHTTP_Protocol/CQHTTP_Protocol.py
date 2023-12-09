@@ -35,9 +35,9 @@ class CQHTTP_Protocol(Plugin):
 
     def NotifyAdmin(self, message: T.Union[str, list]):
         for admin in self.emit(GetConfig__).admin_list:
-            self.sendFriendMessage(admin, message)
+            self.sendPersonMessage(admin, message)
 
-    def sendFriendMessage(self,
+    def sendPersonMessage(self,
                           user_id: int,
                           message: T.Union[str, list],
                           group_id: T.Optional[int] = None,
@@ -98,7 +98,6 @@ class CQHTTP_Protocol(Plugin):
         for i in range(len(messages)):
             if isinstance(messages[i], Node):
                 messages[i] = messages[i].toDict()
-
         result = self._sent_post(f"{self.http_url}/send_private_forward_msg", {
             "user_id": user_id,
             "messages": messages
@@ -745,7 +744,7 @@ class CQHTTP_Protocol(Plugin):
             "role_id": role_id,
             "name": name,
             "color": color,
-            "independent": independent  # TODO gocq 中参数名写错了，待后续确认
+            "independent": independent  # TODO gocq 中参数名写错了, 待后续确认
         })
         if result["status"] == "ok":
             return True

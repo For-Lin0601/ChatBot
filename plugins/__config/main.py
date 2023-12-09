@@ -13,7 +13,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
     description="敏感词屏蔽",
     version="1.0.0",
     author="For_Lin0601",
-    priority=-99,
+    priority=-99
 )
 class Config(Plugin):
 

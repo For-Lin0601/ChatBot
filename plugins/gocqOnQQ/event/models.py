@@ -106,7 +106,7 @@ class ForwardMessageSender(BaseModel):
 
 class ForwardMessageNode(BaseModel):
     content: T.Union[str, list]
-    raw_content: T.Optional[str]  # 本来没有的，用于表示原 content
+    raw_content: T.Optional[str]  # 本来没有的, 用于表示原 content
     sender: ForwardMessageSender
     time: int
 

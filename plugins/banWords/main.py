@@ -10,9 +10,9 @@ from Models.Plugins import *
 
 @register(
     description="敏感词屏蔽",
-    version="0.1",
+    version="1.0.0",
     author="For_Lin0601",
-    priority=1000,
+    priority=1000
 )
 class banWordsUtil(Plugin):
 
@@ -34,7 +34,7 @@ class banWordsUtil(Plugin):
         with open(json_file_path, "r", encoding="utf-8") as f:
             sensitive_json = json.load(f)
         self.sensitive_words = sensitive_json['words']
-        self.mask = sensitive_json['mask'] if 'mask' in sensitive_json else '*',
+        self.mask = sensitive_json['mask'] if 'mask' in sensitive_json else '*'
         self.mask_word = sensitive_json['mask_word'] if 'mask_word' in sensitive_json else ''
 
     @on(PluginsLoadingFinished)

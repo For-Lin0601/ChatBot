@@ -7,10 +7,10 @@ from ..gocqOnQQ.CQHTTP_Protocol.CQHTTP_Protocol import CQHTTP_Protocol
 
 
 @register(
-    description="文本消息处理",
+    description="好友添加处理[add]",
     version="1.0.0",
     author="For_Lin0601",
-    priority=205
+    priority=209
 )
 class QQFriendAddPlugin(Plugin):
 
@@ -62,16 +62,16 @@ class QQFriendAddPlugin(Plugin):
 
         if str(friend_add.user_id) in account_list:
             cqhttp.setFriendRequest(friend_add.flag)
-            cqhttp.NotifyAdmin("检测到 default_password.txt 中存在的好友申请，已自动通过:\n昵称:{}\nQQ号:{}\n信息:{}".format(
+            cqhttp.NotifyAdmin("检测到 default_password.txt 中存在的好友申请, 已自动通过:\n昵称:{}\nQQ号:{}\n信息:{}".format(
                 friend_add.user_id, friend_add.nickname, friend_add.comment))
             import time
             time.sleep(1)
             try:
-                cqhttp.sendFriendMessage(
+                cqhttp.sendPersonMessage(
                     friend_add.user_id, f"[bot] 欢迎回来\n\n{config.help_message}")
             except:
                 cqhttp.NotifyAdmin(
-                    f"warning: 已通过 [{friend_add.nickname}][{friend_add.user_id}] 的好友申请，但未成功自动执行命令：\n!sent {friend_add.user_id} !help")
+                    f"warning: 已通过 [{friend_add.nickname}][{friend_add.user_id}] 的好友申请, 但未成功自动执行命令:\n!sent {friend_add.user_id} !help")
 
         elif friend_add not in self.friend_add_list:
             for i in self.friend_add_list:
@@ -81,8 +81,14 @@ class QQFriendAddPlugin(Plugin):
             cqhttp.NotifyAdmin("新好友请求:\n编号:{}\n昵称:{}\nQQ号:{}\n信息:{}".format(
                 len(self.friend_add_list), friend_add.nickname, friend_add.user_id, friend_add.comment))
 
+    @on(CmdCmdHelp)
+    def help(self, event: EventContext, **kwargs):
+        event.return_value.append(
+            "!add - 处理好友申请(负数拒绝)"
+        )
+
     @on(GetQQPersonCommand)
-    def get_qq_person_command(self, event: EventContext, **kwargs):
+    def add_person(self, event: EventContext, **kwargs):
         message: str = kwargs["message"]
         if not message.startswith("add"):
             return
@@ -93,7 +99,7 @@ class QQFriendAddPlugin(Plugin):
 
         if not kwargs["is_admin"]:
             if kwargs["launcher_id"] == sender_id:  # 私聊
-                cqhttp.sendFriendMessage(sender_id, "[bot] 权限不足")
+                cqhttp.sendPersonMessage(sender_id, "[bot] 权限不足")
             else:
                 cqhttp.sendGroupMessage(
                     kwargs["launcher_id"], [
@@ -106,30 +112,30 @@ class QQFriendAddPlugin(Plugin):
 
         if len(params) == 0:
             if not self.friend_add_list:
-                cqhttp.sendFriendMessage(sender_id, "[bot] 暂无好友申请")
+                cqhttp.sendPersonMessage(sender_id, "[bot] 暂无好友申请")
                 return
 
-            result = "[bot] 以下是尚未通过好友申请的人："
+            result = "[bot] 以下是尚未通过好友申请的人: "
             for i, req in enumerate(self.friend_add_list):
                 result += "\n\n[{}]\n昵称:{}\nQQ号:{}\n信息:{}".format(
                     i + 1, req.nickname, req.user_id, req.comment)
-            cqhttp.sendFriendMessage(sender_id, result)
+            cqhttp.sendPersonMessage(sender_id, result)
             return
 
         try:
             index = int(params[0])
         except:
-            cqhttp.sendFriendMessage(sender_id, "[bot] 无效的下标")
+            cqhttp.sendPersonMessage(sender_id, "[bot] 无效的下标")
             return
         if abs(index) > len(self.friend_add_list) or index == 0:
-            cqhttp.sendFriendMessage(sender_id, "[bot] 无效的下标")
+            cqhttp.sendPersonMessage(sender_id, "[bot] 无效的下标")
             return
 
         req: FriendAdd = self.friend_add_list[abs(index) - 1]
         if index < 0:
             cqhttp.setFriendRequest(req.flag, False)
             self.friend_add_list.remove(req)
-            cqhttp.sendFriendMessage(
+            cqhttp.sendPersonMessage(
                 sender_id, f"[bot] 已拒绝 [{req.nickname}][{req.user_id}] 的好友申请")
             return
 
@@ -138,15 +144,15 @@ class QQFriendAddPlugin(Plugin):
         import time
         time.sleep(1)
         try:
-            cqhttp.sendFriendMessage(
+            cqhttp.sendPersonMessage(
                 req.user_id, f"[bot] 已通过你的好友申请\n\n{config.help_message}")
         except:
-            cqhttp.sendFriendMessage(
-                sender_id, f"warning: 已通过 [{req.nickname}][{req.user_id}] 的好友申请，但未成功执行发送命令：\n!sent {req.user_id} !help")
+            cqhttp.sendPersonMessage(
+                sender_id, f"warning: 已通过 [{req.nickname}][{req.user_id}] 的好友申请, 但未成功执行发送命令:\n!sent {req.user_id} !help")
         self.friend_add_list.remove(req)
-        # TODO 进入send模式，和管理员对话
+        # TODO 进入send模式, 和管理员对话
         # pkg.qqbot.cmds.session.sent.launcherId_history = req.from_id
-        cqhttp.sendFriendMessage(
+        cqhttp.sendPersonMessage(
             sender_id, "已通过好友申请:\n昵称:{}\nQQ号:{}\n信息:{}\n设置备注(不一定成功):{}".format(
                 req.nickname, req.user_id, req.comment, remark if remark else req.nickname))
         return

@@ -21,7 +21,7 @@ class RunningFlag:
     description="QQ机器人",
     version="1.0.0",
     author="For_Lin0601",
-    priority=1,
+    priority=1
 )
 class QQbot(Plugin):
 
@@ -29,6 +29,21 @@ class QQbot(Plugin):
 
     def __init__(self):
         pass
+
+    @on(GetCQHTTP__)
+    def get_cqhttp(self, event: EventContext, **kwargs):
+        event.prevent_postorder()
+        event.return_value = self.cqhttp_protocol
+
+    def on_reload(self):
+        self.running_flag.flag = False
+        self.set_reload_config("running_flag", self.running_flag)
+        self.set_reload_config("ws_url", self.ws_url)
+        self.set_reload_config("http_url", self.http_url)
+        self.set_reload_config("cqhttp_protocol", self.cqhttp_protocol)
+
+    def on_stop(self):
+        self.is_run_flag = False
 
     @on(PluginsLoadingFinished)
     @on(PluginsReloadFinished)
@@ -98,9 +113,9 @@ class QQbot(Plugin):
         config_content = pattern.sub(f'uin: {qq}', config_content)
 
         new_sign_servers = f"""  sign-servers: 
-    - url: 'http://{host}:{port}'  # 主签名服务器地址， 必填
+    - url: 'http://{host}:{port}'  # 主签名服务器地址,  必填
       key: '{api_key}'  # 签名服务器所需要的apikey, 如果签名服务器的版本在1.1.0及以下则此项无效
-      authorization: '{authorization}'   # authorization 内容, 依服务端设置，如 'Bearer xxxx'
+      authorization: '{authorization}'   # authorization 内容, 依服务端设置, 如 'Bearer xxxx'
     - url: '-'  # 备用
       key: '114514'  
       authorization: '-'"""
@@ -109,7 +124,7 @@ class QQbot(Plugin):
 
         new_address = f"""
 servers:
-  # 添加方式，同一连接方式可添加多个，具体配置说明请查看文档
+  # 添加方式, 同一连接方式可添加多个, 具体配置说明请查看文档
   #- http: # http 通信
   #- ws:   # 正向 Websocket
   #- ws-reverse: # 反向 Websocket
@@ -117,21 +132,21 @@ servers:
   - http: # HTTP 通信设置
       address: {http_address} # HTTP监听地址
       version: 11     # OneBot协议版本, 支持 11/12
-      timeout: 5      # 反向 HTTP 超时时间, 单位秒，<5 时将被忽略
+      timeout: 5      # 反向 HTTP 超时时间, 单位秒, <5 时将被忽略
       long-polling:   # 长轮询拓展
         enabled: false       # 是否开启
-        max-queue-size: 2000 # 消息队列大小，0 表示不限制队列大小，谨慎使用
+        max-queue-size: 2000 # 消息队列大小, 0 表示不限制队列大小, 谨慎使用
       middlewares:
         <<: *default # 引用默认中间件
       post:           # 反向HTTP POST地址列表
       #- url: ''                # 地址
       #  secret: ''             # 密钥
-      #  max-retries: 3         # 最大重试，0 时禁用
-      #  retries-interval: 1500 # 重试时间，单位毫秒，0 时立即
+      #  max-retries: 3         # 最大重试, 0 时禁用
+      #  retries-interval: 1500 # 重试时间, 单位毫秒, 0 时立即
       #- url: http://127.0.0.1:5701/ # 地址
       #  secret: ''                  # 密钥
-      #  max-retries: 10             # 最大重试，0 时禁用
-      #  retries-interval: 1000      # 重试时间，单位毫秒，0 时立即
+      #  max-retries: 10             # 最大重试, 0 时禁用
+      #  retries-interval: 1000      # 重试时间, 单位毫秒, 0 时立即
   # 正向WS设置
   - ws:
       # 正向WS服务器监听地址
@@ -184,18 +199,3 @@ servers:
                             })
 
         self.emit(Events.SubmitSysTask__, fn=asyncio.run(listen()))
-
-    @on(GetCQHTTP__)
-    def get_cqhttp(self, event: EventContext, **kwargs):
-        event.prevent_postorder()
-        event.return_value = self.cqhttp_protocol
-
-    def on_reload(self):
-        self.running_flag.flag = False
-        self.set_reload_config("running_flag", self.running_flag)
-        self.set_reload_config("ws_url", self.ws_url)
-        self.set_reload_config("http_url", self.http_url)
-        self.set_reload_config("cqhttp_protocol", self.cqhttp_protocol)
-
-    def on_stop(self):
-        self.is_run_flag = False

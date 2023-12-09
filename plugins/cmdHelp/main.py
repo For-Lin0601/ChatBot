@@ -5,21 +5,12 @@ from Models.Plugins import *
 
 
 @register(
-    description="热重载[re, reload]",
+    description="显示自定义的帮助信息[help]",
     version="1.0.0",
     author="For_Lin0601",
-    priority=202,
+    priority=202
 )
-class HelpPlugin(Plugin):
-
-    def __init__(self):
-        pass
-
-    def on_reload(self):
-        pass
-
-    def on_stop(self):
-        pass
+class HelpCommand(Plugin):
 
     @on(CmdCmdHelp)
     def help(self, event: EventContext, **kwargs):
@@ -29,12 +20,12 @@ class HelpPlugin(Plugin):
 
     @on(GetQQPersonCommand)
     @on(GetQQGroupCommand)
-    def cmd_reload(self, event: EventContext, **kwargs):
-        message: str = kwargs["message"]
+    def cmd_help(self, event: EventContext, **kwargs):
+        message: str = kwargs["message"].strip()
         if message != "help":
             return
         event.prevent_postorder()
-        self.emit(Events.GetCQHTTP__).sendFriendMessage(
+        self.emit(Events.GetCQHTTP__).sendPersonMessage(
             user_id=kwargs["sender_id"],
             message=self.emit(Events.GetConfig__).help_message
         )

@@ -164,6 +164,7 @@ GO-CQHTTP-YesBot-master/
 data/
 nakuru-project-master/
 logs/
+cmdDiary/
 config.py
 *.zip
 session.token

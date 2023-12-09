@@ -9,7 +9,7 @@ import Events
 from .Events import *
 from Models.Plugins import *
 
-from ..gocqOnQQ.entities.components import At, Node, Plain
+from ..gocqOnQQ.entities.components import At, Plain
 from ..gocqOnQQ.CQHTTP_Protocol.CQHTTP_Protocol import CQHTTP_Protocol
 from ..gocqOnQQ.QQevents.MessageEvent import PersonMessage, GroupMessage
 
@@ -40,7 +40,6 @@ class TextMessagePlugin(Plugin):
     def check_cmd_and_chat_with_gpt(self, event: EventContext,  **kwargs):
         self.config = self.emit(Events.GetConfig__)
         message: PersonMessage = kwargs["QQevents"]
-        self.cqhttp: CQHTTP_Protocol = self.emit(Events.GetCQHTTP__)
 
         # 忽略自身消息
         if message.sender == self.config.qq:
@@ -50,6 +49,7 @@ class TextMessagePlugin(Plugin):
         if message.message[0].type != "Plain":
             return
 
+        self.cqhttp: CQHTTP_Protocol = self.emit(Events.GetCQHTTP__)
         event.prevent_postorder()
 
         # 若有附加消息, 给出警告
@@ -58,7 +58,7 @@ class TextMessagePlugin(Plugin):
         msg: str = message.message[0].text
 
         if len(msg.replace(" ", "")) == 0:
-            self.cqhttp.sendFriendMessage(
+            self.cqhttp.sendPersonMessage(
                 message.user_id, "[bot]warinig: 不能发送空消息"
             )
             return
@@ -76,9 +76,9 @@ class TextMessagePlugin(Plugin):
                     _time_crtl()
                     break
                 except FunctionTimedOut:
-                    logging.warning(f"{message.user_id}: 超时，重试中({_})")
-                    tmp_id.append(self.cqhttp.sendFriendMessage(
-                        message.user_id, f"[bot]warinig: 超时，重试中({_})"
+                    logging.warning(f"{message.user_id}: 超时, 重试中({_})")
+                    tmp_id.append(self.cqhttp.sendPersonMessage(
+                        message.user_id, f"[bot]warinig: 超时, 重试中({_})"
                     ).message_id)
             else:
                 for id_ in tmp_id:
@@ -158,9 +158,9 @@ class TextMessagePlugin(Plugin):
                     _time_crtl()
                     break
                 except FunctionTimedOut:
-                    logging.warning(f"{message.user_id}: 超时，重试中({_})")
-                    tmp_id.append(self.cqhttp.sendFriendMessage(
-                        message.user_id, f"[bot]warinig: 超时，重试中({_})"
+                    logging.warning(f"{message.user_id}: 超时, 重试中({_})")
+                    tmp_id.append(self.cqhttp.sendPersonMessage(
+                        message.user_id, f"[bot]warinig: 超时, 重试中({_})"
                     ).message_id)
             else:
                 for id_ in tmp_id:
@@ -221,7 +221,7 @@ class TextMessagePlugin(Plugin):
         # 限速策略
         if session_name in self.processing:
             if launcher_type == "person":
-                self.cqhttp.sendFriendMessage(
+                self.cqhttp.sendPersonMessage(
                     sender_id, self.config.message_drop_tip,
                     group_id=launcher_id if launcher_id != sender_id else None)
             return
@@ -232,7 +232,7 @@ class TextMessagePlugin(Plugin):
         if check_length:
             tmp_msg += f"\n!非文本消息!只取最前面文本为处理内容, 忽略后面特殊类型信息!"
         if launcher_type == "person":
-            tmp_id = cqhttp.sendFriendMessage(
+            tmp_id = cqhttp.sendPersonMessage(
                 sender_id,  tmp_msg,
                 group_id=launcher_id if launcher_id != sender_id else None).message_id
         else:
@@ -249,7 +249,7 @@ class TextMessagePlugin(Plugin):
         if end_time - start_time < 0.5:
             time.sleep(0.5 - (end_time - start_time))
         if launcher_type == "person":
-            cqhttp.sendFriendMessage(
+            cqhttp.sendPersonMessage(
                 sender_id, reply,
                 group_id=launcher_id if launcher_id != sender_id else None)
         else:
@@ -258,39 +258,3 @@ class TextMessagePlugin(Plugin):
             ])
         self.processing.remove(session_name)
         cqhttp.recall(tmp_id)
-
-        # logging.info(message.message)
-        # if message.message[0].text == "reload":
-        #     logging.critical("开始插件热重载")
-        #     self.emit(Events.SubmitSysTask__, fn=Plugin._reload)
-        # elif message.message[0].text == "get":
-        # at = At(qq=1636708665)
-
-        # self.CQHTTP.sendPersonForwardMessage(1636708665, [
-        #     Node(name="啊", uin=2944142195, content=[
-        #         Plain(text="八")
-        #     ]),
-        #     Node(name="啊", uin=2944142195, content=[
-        #         Plain(text="嘎")
-        #     ]),
-        #     Node(name="啊", uin=2944142195, content=[
-        #         Plain(text="呀")
-        #     ]),
-        #     Node(name="啊", uin=2944142195, content=[
-        #         Plain(text="路")
-        #     ])
-        # ])
-
-        # self.CQHTTP.sendGroupMessage(104960075, [at, Plain("fuck")])
-        # self.CQHTTP.sendGroupForwardMessage(104960075, [
-
-        #     Node(name="落雪ちゃん", uin=2941383730, content=[
-        #         Plain(text="nc什么时候cos小老师")
-        #     ]),
-        #     Node(name="盐焗雾喵", uin=2190945952, content=[
-        #         Plain(text="今晚就cos小老师")
-        #     ]),
-        #     Node(name="Rosemoe♪ ~ requiem ~", uin=2073412493, content=[
-        #         Plain(text="好耶")
-        #     ])
-        # ])

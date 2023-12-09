@@ -107,7 +107,7 @@ class ThreadCtl:
     description="线程池控制",
     version="1.0.0",
     author="For_Lin0601",
-    priority=-98,
+    priority=-98
 )
 class ThreadCtlPlugin(Plugin):
 

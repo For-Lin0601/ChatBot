@@ -94,5 +94,5 @@ class TopicChannelFeed(BaseModel):
     guild_id: int
     channel_id: int
     poster_info: GuildMember
-    contents: list # TODO 解析论坛子频道 contents，参考 https://github.com/Mrs4s/go-cqhttp/blob/7278f99ed9118fe2e54aca752e62574d5bae3f00/coolq/feed.go#L10
+    contents: list # TODO 解析论坛子频道 contents, 参考 https://github.com/Mrs4s/go-cqhttp/blob/7278f99ed9118fe2e54aca752e62574d5bae3f00/coolq/feed.go#L10
     resources: TopicChannelFeedResource

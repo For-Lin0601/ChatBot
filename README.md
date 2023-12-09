@@ -35,7 +35,7 @@ a fucking ChatBot link QQ, weChat to GPT.
 
 实际上只有双下划线开头的不可删除, 其余`./plugins`下的文件并非必须项
 
-[当前已有插件的优先级](#当前已有插件的优先级：)
+[当前已有插件的优先级](#当前已有插件的优先级: )
 
 # 2. 插件基类编写规范(`Plugin`)
 
@@ -75,7 +75,7 @@ a fucking ChatBot link QQ, weChat to GPT.
 
    当然在 Plugin 中拥有`plugin_list`保存了插件列表, 按优先级排序, 请自行确保安全调用
 
-插件的`main.py`编写示例：
+插件的`main.py`编写示例:
 
 ```python
 from Models.Plugins import *
@@ -85,7 +85,7 @@ from plugins.__config.Events import *
     description="输出hello world",  # 插件描述
     version="1.0.0",                # 插件版本
     author="For_Lin0601",           # 作者
-    priority=500,                   # 负数应预留给程序运行必须项, 请尽量不要出现重复的优先级, 否则函数触发顺序不易确定
+    priority=500                    # 负数应预留给程序运行必须项, 请尽量不要出现重复的优先级, 否则函数触发顺序不易确定
 )
 class Config(Plugin):               # 注意类名会作为一些 不安全 函数的标识, 尽管在书写这些不安全函数时做了声明, 但还希望类名不重复
 
@@ -137,8 +137,33 @@ class Config(Plugin):               # 注意类名会作为一些 不安全 函�
         pass
 ```
 
-# 当前已有插件的优先级：
+# 当前已有插件的优先级:
 
-- -100: **\_\_config**
-- -99: **\_\_log**
+- -100: **\_\_log**
+- -99: **\_\_config**
 - -98: **\_\_threadctl**
+
+- 1: **QQbot**
+- 2: **weChat** # TODO
+- 10: **OpenAi**
+
+- 100: **qq 文本消息处理**
+- 101: **weChat 文本消息处理** # TODO
+
+- 201: **cmd 命令**
+- 202: **help 命令**
+- 203: **send** # TODO
+- 204: **timeReminder**
+- 205: **default**
+- 206: **reset**
+- 207: **reload 命令**
+- 208: **日记命令**
+- 209: **好友添加处理**
+
+- 251: **waterMark**
+- 252: **随机图片获取**
+
+- 1000: **敏感词屏蔽**
+- 1001: **QQ 长消息处理**
+
+- 10000: **endCmd**

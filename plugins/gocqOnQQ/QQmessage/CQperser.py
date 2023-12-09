@@ -67,6 +67,8 @@ class CQParser:
         attribute_list = {}
         for _ in text_array:
             regex_result = re.search(r"^(.*?)=([\s\S]+)", _)
+            if regex_result is None:
+                continue
             k = regex_result.group(1)
             if k == "type":
                 k = "_type"

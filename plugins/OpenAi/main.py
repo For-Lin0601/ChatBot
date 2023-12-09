@@ -9,13 +9,13 @@ from Models.Plugins import *
 
 
 @register(
-    description="OpenAI 接口封装",
+    description="OpenAi 接口封装",
     version="1.0.0",
     author="For_Lin0601",
     priority=10
 )
-class OpenAIInteract(Plugin):
-    """OpenAI 接口封装
+class OpenAiInteract(Plugin):
+    """OpenAi 接口封装
 
     将文字接口和图片接口封装供调用方使用
     """
@@ -57,7 +57,12 @@ class OpenAIInteract(Plugin):
         """请求补全接口回复, 屏蔽敏感词"""
         config = self.emit(Events.GetConfig__)
         if session_name not in self.session:
-            self.session[session_name] = []
+            self.session[session_name] = [
+                {"role": "user",
+                 "content": config.default_prompt_describe["default"]},
+                {"role": "assistant",
+                 "content": "ok, I'll follow your commands."}
+            ]
         self.session[session_name].append({"role": "user", "content": message})
         self.time_out[session_name] = datetime.now()
 
@@ -69,12 +74,12 @@ class OpenAIInteract(Plugin):
                 del self.session[session_name]
                 del self.time_out[session_name]
             else:
-                # 会话未过期，检查长度
+                # 会话未过期, 检查长度
                 conversation = self.session[session_name]
                 total_length = sum(len(msg["content"]) for msg in conversation)
 
                 if total_length > config.prompt_submit_length:
-                    # 长度超过限制，从头开始暴力删除，每次删除两个记录
+                    # 长度超过限制, 从头开始暴力删除, 每次删除两个记录
                     while total_length > config.prompt_submit_length:
                         # 删除最前面的两个记录
                         if conversation:
@@ -84,12 +89,12 @@ class OpenAIInteract(Plugin):
                             del conversation[0]
                             total_length -= len(conversation[0]["content"])
 
-        # 如果没有可用的 API Key，通知管理员
+        # 如果没有可用的 API Key, 通知管理员
         if not config.openai_api_keys or self.api_key_index >= len(config.openai_api_keys):
-            logging.error("无可用的 OpenAI API Key")
+            logging.error("无可用的 OpenAi API Key")
             self.emit(Events.GetCQHTTP__).NotifyAdmin(
-                f"[bot]err: [{session_name}]无可用的 OpenAI API Key")
-            return "[bot]err: 无可用的 OpenAI API Key, 等待管理员处理"
+                f"[bot]err: [{session_name}]无可用的 OpenAi API Key")
+            return "[bot]err: 无可用的 OpenAi API Key, 等待管理员处理"
 
         try:
             # 使用当前下标对应的 API Key
@@ -105,17 +110,17 @@ class OpenAIInteract(Plugin):
             gpt_response = self.emit(
                 Events.BanWordProcess__, message=gpt_response)
 
-            # 如果成功，添加助手的回复到会话中
+            # 如果成功, 添加助手的回复到会话中
             self.session[session_name].append(
                 {"role": "assistant", "content": gpt_response})
             return gpt_response
         except openai.OpenAIError as e:
-            # 如果是 OpenAIError，尝试使用下一个 API Key
-            logging.warning(f"OpenAI API error: {str(e)}")
+            # 如果是 OpenAIError, 尝试使用下一个 API Key
+            logging.warning(f"OpenAi API error: {str(e)}")
             self.api_key_index += 1
-            # 递归调用，使用下一个 API Key
+            # 递归调用, 使用下一个 API Key
             self.emit(Events.GetCQHTTP__).NotifyAdmin(
-                f"[bot]err: [{session_name}]调用 API 失败!\n切换第 {self.api_key_index + 1} 个 OpenAI API Key\n{e}")
+                f"[bot]err: [{session_name}]调用 API 失败!\n切换第 {self.api_key_index + 1} 个 OpenAi API Key\n{e}")
             return self.request_completion(session_name, message)
         except Exception as e:
             logging.error(f"Error: {str(e)}")

@@ -76,7 +76,7 @@ class Plain(BaseMessageComponent):
     def __init__(self, text: str, convert: bool = True, **_):
         super().__init__(text=text, convert=convert, **_)
 
-    def toString(self):  # 没有 [CQ:plain] 这种东西，所以直接导出纯文本
+    def toString(self):  # 没有 [CQ:plain] 这种东西, 所以直接导出纯文本
         if not self.convert:
             return self.text
         return self.text.replace("&", "&amp;") \
@@ -247,8 +247,8 @@ class Image(BaseMessageComponent):
     type: ComponentType = "Image"
     file: T.Optional[str]
     _type: T.Optional[str]
-    subType: T.Optional[int]
-    url: T.Optional[str]
+    subType: T.Optional[int] = None
+    url: T.Optional[str] = None
     cache: T.Optional[bool] = True
     id: T.Optional[int] = 40000
     c: T.Optional[int] = 2

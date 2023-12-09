@@ -29,7 +29,7 @@ class Anonymous(BaseModel):
 class Group(BaseModel):
     group_id: int
     group_name: str
-    group_memo: str
+    group_memo: str = None
     group_create_time: int
     group_level: int
     member_count: int

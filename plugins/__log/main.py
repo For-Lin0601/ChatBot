@@ -12,7 +12,7 @@ from Models.Plugins import *
     description="log日志",
     version="1.0.0",
     author="For_Lin0601",
-    priority=-100,
+    priority=-100
 )
 class Log(Plugin):
 
