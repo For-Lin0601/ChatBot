@@ -55,19 +55,6 @@ def walk_plugin_path(module, prefix='', path_prefix=''):
                 break
 
 
-def logging_test():
-    res = "插件列表:"
-    for plugin in Plugin.plugin_list:
-        res += f"\n\n{plugin=}"
-        res += f"\n{plugin.cid=}, {plugin.name=},{plugin.priority=}, {plugin.description=}, {plugin.version=}, {plugin.author=}"
-        res += f"\n{plugin.enabled=}, {plugin.path=}"
-        res += f"\n{plugin.hooks=}"
-    res += "\n\n\nPlugin.hooks_dict: "
-    for key in Plugin.hooks_dict:
-        res += f"\n{key}: {Plugin.hooks_dict[key]}"
-    return res
-
-
 def load_plugins():
     """加载插件"""
     try:
@@ -80,10 +67,6 @@ def load_plugins():
     walk_plugin_path(__import__('plugins'))
 
     Plugin._initialize_plugins()
-    # logging.debug(logging_test())  # TODO
-
-    # Plugin._reload()
-    # # logging.debug(logging_test())  # TODO
 
     # 主线程循环
     while True:

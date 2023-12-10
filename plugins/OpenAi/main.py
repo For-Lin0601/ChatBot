@@ -56,26 +56,17 @@ class OpenAiInteract(Plugin):
     def request_completion(self, session_name: str, message: str):
         """请求补全接口回复, 屏蔽敏感词"""
         config = self.emit(Events.GetConfig__)
-        if session_name not in self.session:
-            self.session[session_name] = [
-                {"role": "user",
-                 "content": config.default_prompt_describe["default"]},
-                {"role": "assistant",
-                 "content": "ok, I'll follow your commands."}
-            ]
-        self.session[session_name].append({"role": "user", "content": message})
-        self.time_out[session_name] = datetime.now()
 
         # 删除过期的对话
-        for session_name, last_updated_time in self.time_out.items():
+        for name, last_updated_time in self.time_out.items():
             expiration_time = last_updated_time + \
                 timedelta(seconds=config.session_expire_time)
             if datetime.now() > expiration_time:
-                del self.session[session_name]
-                del self.time_out[session_name]
+                del self.session[name]
+                del self.time_out[name]
             else:
                 # 会话未过期, 检查长度
-                conversation = self.session[session_name]
+                conversation = self.session[name]
                 total_length = sum(len(msg["content"]) for msg in conversation)
 
                 if total_length > config.prompt_submit_length:
@@ -88,6 +79,16 @@ class OpenAiInteract(Plugin):
                         if conversation:
                             del conversation[0]
                             total_length -= len(conversation[0]["content"])
+
+        if session_name not in self.session:
+            self.session[session_name] = [
+                {"role": "user",
+                 "content": config.default_prompt["default"]},
+                {"role": "assistant",
+                 "content": "ok, I'll follow your commands."}
+            ]
+        self.session[session_name].append({"role": "user", "content": message})
+        self.time_out[session_name] = datetime.now()
 
         # 如果没有可用的 API Key, 通知管理员
         if not config.openai_api_keys or self.api_key_index >= len(config.openai_api_keys):
@@ -116,6 +117,10 @@ class OpenAiInteract(Plugin):
             return gpt_response
         except openai.OpenAIError as e:
             # 如果是 OpenAIError, 尝试使用下一个 API Key
+            if self.session[session_name][-1]["role"] == "user":
+                self.session[session_name].pop()
+            if "Rate limit reached" in str(e):
+                return "[bot]err: 触发限速策略, 请20秒后重试"
             logging.warning(f"OpenAi API error: {str(e)}")
             self.api_key_index += 1
             # 递归调用, 使用下一个 API Key

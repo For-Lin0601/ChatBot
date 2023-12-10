@@ -80,10 +80,10 @@ openai_api_keys = [
     # "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",  # 封了
     # "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",  # 封了
     # "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",  # 用完
-    "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",
-    "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",  # 用完
-    "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",
-    "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",
+    # "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",
+    # "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",  # 用完
+    # "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",
+    # "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",
 ]
 
 

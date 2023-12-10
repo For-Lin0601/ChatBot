@@ -1,7 +1,7 @@
 ########## 主线程必选项 ##########
-requests~=2.28.1
+requests~=2.31.0
 colorlog~=6.6.0
-
+pydantic~=2.5.2
 
 
 ########## plugin.name='QQbot' plugin.path='//plugins//gocqOnQQ//main' ##########

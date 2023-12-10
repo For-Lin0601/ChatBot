@@ -44,7 +44,7 @@ class ResetCommand(Plugin):
         if len(params) == 0:
             open_ai.session[session_name] = [
                 {"role": "user",
-                 "content": config.default_prompt_describe["default"]},
+                 "content": config.default_prompt["default"]},
                 {"role": "assistant",
                  "content": "ok, I'll follow your commands."}
             ]
@@ -54,7 +54,7 @@ class ResetCommand(Plugin):
 
         try:
             import os
-            prompts = config.default_prompt_describe
+            prompts = config.default_prompt
             key_list = list(prompts.keys())
             default_password_path = os.path.join(os.path.dirname(os.path.dirname(
                 os.path.abspath(__file__))), "cmdDefault", "default_password.txt")
@@ -79,7 +79,7 @@ class ResetCommand(Plugin):
                 return
             open_ai.session[session_name] = [
                 {"role": "user",
-                 "content": config.default_prompt_describe[params[0]]},
+                 "content": prompts[params[0]]},
                 {"role": "assistant",
                  "content": "ok, I'll follow your commands."}
             ]

@@ -225,6 +225,7 @@ class TextMessagePlugin(Plugin):
                     sender_id, self.config.message_drop_tip,
                     group_id=launcher_id if launcher_id != sender_id else None)
             return
+        self.processing.add(session_name)
         cqhttp: CQHTTP_Protocol = self.emit(Events.GetCQHTTP__)
         tmp_msg = "[bot]收到消息, " + \
             (f"当前{len(self.processing)-1}人正在排队" if len(self.processing)
@@ -239,7 +240,6 @@ class TextMessagePlugin(Plugin):
             tmp_id = cqhttp.sendGroupMessage(launcher_id, [
                 At(qq=sender_id), Plain(text=tmp_msg)
             ]).message_id
-        self.processing.add(session_name)
         start_time = time.time()
 
         # 处理消息
