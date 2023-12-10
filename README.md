@@ -15,7 +15,7 @@ a fucking ChatBot link QQ, weChat to GPT.
    后期可能改自动安装, 目前在开发阶段, 还请手动安装
 5. 重新启动`main.py`, 即可使用
 
-### 目前还没啥用, 当前进度: 连接 QQ
+### 当前进度: QQ正常使用, 正在阅读微信连接方法
 
 本项目使用了[go-cqhttp](https://github.com/Mrs4s/go-cqhttp)作为连接 QQ 的方式
 
@@ -152,7 +152,7 @@ class Config(Plugin):               # 注意类名会作为一些 不安全 函�
 
 - 201: **cmd 命令**
 - 202: **help 命令**
-- 203: **send** # TODO
+- 203: **send**
 - 204: **timeReminder**
 - 205: **default**
 - 206: **reset**
