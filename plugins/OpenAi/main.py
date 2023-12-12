@@ -53,7 +53,7 @@ class OpenAiInteract(Plugin):
         events.prevent_postorder()
         events.return_value = self
 
-    def request_completion(self, session_name: str, message: str):
+    def request_completion(self, session_name: str, message: str, tmp_api_key_index=None):
         """请求补全接口回复, 屏蔽敏感词"""
         config = self.emit(Events.GetConfig__)
 
@@ -99,28 +99,38 @@ class OpenAiInteract(Plugin):
 
         try:
             # 使用当前下标对应的 API Key
-            openai.api_key = config.openai_api_keys[self.api_key_index]
+            if tmp_api_key_index is not None:
+                openai.api_key = config.openai_api_keys[tmp_api_key_index]
+            else:
+                openai.api_key = config.openai_api_keys[self.api_key_index]
 
             gpt_response = openai.ChatCompletion.create(
                 messages=self.session[session_name],
                 **config.completion_api_params
             )
 
-            gpt_response = gpt_response['choices'][0]['message']['content']
+            gpt_response_text = gpt_response['choices'][0]['message']['content']
+            if len(gpt_response_text) > 3500:
+                gpt_response_text = gpt_response_text[:3500] + \
+                    "   ...[消息过长, 已截断]"
 
             gpt_response = self.emit(
-                Events.BanWordProcess__, message=gpt_response)
+                Events.BanWordProcess__, message=gpt_response_text)
 
             # 如果成功, 添加助手的回复到会话中
             self.session[session_name].append(
-                {"role": "assistant", "content": gpt_response})
-            return gpt_response
+                {"role": "assistant", "content": gpt_response_text})
+            return gpt_response_text
         except openai.OpenAIError as e:
             # 如果是 OpenAIError, 尝试使用下一个 API Key
             if self.session[session_name][-1]["role"] == "user":
                 self.session[session_name].pop()
             if "Rate limit reached" in str(e):
-                return "[bot]err: 触发限速策略, 请20秒后重试"
+                # "[bot]err: 触发限速策略, 请20秒后重试"
+                return self.request_completion(session_name, message, self.api_key_index + 1)
+            elif "maximum context length" in str(e):
+                return f"[bot]err: [{session_name}]会话历史记录过长, 请用'!reset'重置会话"
+
             logging.warning(f"OpenAi API error: {str(e)}")
             self.api_key_index += 1
             # 递归调用, 使用下一个 API Key

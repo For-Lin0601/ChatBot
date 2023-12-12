@@ -27,7 +27,6 @@ class SentCommand(Plugin):
         )
 
     @on(GetQQPersonCommand)
-    @on(GetQQGroupCommand)
     def cmd_send(self, event: EventContext, **kwargs):
         message: str = kwargs["message"].strip()
         pattern_alarm = r'^s[^a-zA-Z]+'

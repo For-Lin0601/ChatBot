@@ -193,22 +193,6 @@ help_message = """此机器人通过调用大型语言模型生成回复, 不具
 
 
 
-########## plugin.name='TimeReminderCommand' plugin.path='//plugins//cmdTimeReminder//main' ##########
-
-# 和风天气api
-he_feng_weather_key = "6d0d491a75f344bb8567d76bbe68ddbb"
-
-# 天聚数行api1
-tian_jv_shu_xing_api1 = "b0880ad234e3483aaa48eb7be46708d3"
-
-# 天聚数行api2
-tian_jv_shu_xing_api2 = "d39cd8380135a4101f0f45d9168fd008"
-
-# 天聚数行api3
-tian_jv_shu_xing_api3 = "6bc48466fbe872578d4512ddcdc19d04"
-
-
-
 ########## plugin.name='DefalutCommand' plugin.path='//plugins//cmdDefault//main' ##########
 
 # 每个会话的预设信息, 影响所有会话, 无视指令重置, 这是你机器人的人格
@@ -316,13 +300,6 @@ Duck will say: 'That's hilarious~' instead of 'Okay' to express agreement. Duck 
 # 会话重置提示
 command_reset_message = "【已检测到重置, 那就让我们再次相遇吧！】"
 command_reset_name_message = "【已检测到重置, 那就让我们再次相遇吧！】使用场景预设:"
-
-
-
-########## plugin.name='DiaryCommand' plugin.path='//plugins//cmdDiary//main' ##########
-
-# 个人日记等绝对权限会写在这里
-my_qq_number = 1636708665
 
 
 

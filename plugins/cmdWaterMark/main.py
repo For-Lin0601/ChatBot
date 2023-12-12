@@ -71,8 +71,8 @@ class WaterMarkCommand(Plugin):
             return
 
         # 此处只处理图片消息
-        if message.message[0].type != "Image" and \
-                message.message[0].url:
+        if not (message.message[0].type == "Image" and
+                message.message[0].url):
             return
 
         event.prevent_postorder()

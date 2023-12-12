@@ -59,7 +59,8 @@ class TextMessagePlugin(Plugin):
 
         if len(msg.replace(" ", "")) == 0:
             self.cqhttp.sendPersonMessage(
-                message.user_id, "[bot]warinig: 不能发送空消息"
+                message.user_id, "[bot]warinig: 不能发送空消息",
+                auto_escape=True
             )
             return
 
@@ -78,7 +79,8 @@ class TextMessagePlugin(Plugin):
                 except FunctionTimedOut:
                     logging.warning(f"{message.user_id}: 超时, 重试中({_})")
                     tmp_id.append(self.cqhttp.sendPersonMessage(
-                        message.user_id, f"[bot]warinig: 超时, 重试中({_})"
+                        message.user_id, f"[bot]warinig: 超时, 重试中({_})",
+                        auto_escape=True
                     ).message_id)
             else:
                 for id_ in tmp_id:
@@ -160,7 +162,8 @@ class TextMessagePlugin(Plugin):
                 except FunctionTimedOut:
                     logging.warning(f"{message.user_id}: 超时, 重试中({_})")
                     tmp_id.append(self.cqhttp.sendPersonMessage(
-                        message.user_id, f"[bot]warinig: 超时, 重试中({_})"
+                        message.user_id, f"[bot]warinig: 超时, 重试中({_})",
+                        auto_escape=True
                     ).message_id)
             else:
                 for id_ in tmp_id:
@@ -219,42 +222,55 @@ class TextMessagePlugin(Plugin):
             return
 
         # 限速策略
+        logging.debug(f"当前排队列表: {self.processing=}")
         if session_name in self.processing:
             if launcher_type == "person":
                 self.cqhttp.sendPersonMessage(
                     sender_id, self.config.message_drop_tip,
-                    group_id=launcher_id if launcher_id != sender_id else None)
+                    group_id=launcher_id if launcher_id != sender_id else None,
+                    auto_escape=True)
             return
         self.processing.add(session_name)
-        cqhttp: CQHTTP_Protocol = self.emit(Events.GetCQHTTP__)
-        tmp_msg = "[bot]收到消息, " + \
-            (f"当前{len(self.processing)-1}人正在排队" if len(self.processing)
-             > 1 else "当前无人排队, 消息处理中")
-        if check_length:
-            tmp_msg += f"\n!非文本消息!只取最前面文本为处理内容, 忽略后面特殊类型信息!"
-        if launcher_type == "person":
-            tmp_id = cqhttp.sendPersonMessage(
-                sender_id,  tmp_msg,
-                group_id=launcher_id if launcher_id != sender_id else None).message_id
-        else:
-            tmp_id = cqhttp.sendGroupMessage(launcher_id, [
-                At(qq=sender_id), Plain(text=tmp_msg)
-            ]).message_id
-        start_time = time.time()
+        try:
+            cqhttp: CQHTTP_Protocol = self.emit(Events.GetCQHTTP__)
+            tmp_msg = "[bot]收到消息, " + \
+                (f"当前{len(self.processing)-1}人正在排队" if len(self.processing)
+                 > 1 else "当前无人排队, 消息处理中")
+            if check_length:
+                tmp_msg += f"\n!非纯文本消息!只取最前面文本为处理内容, 忽略后面特殊类型信息!"
+            if launcher_type == "person":
+                tmp_id = cqhttp.sendPersonMessage(
+                    sender_id,  tmp_msg,
+                    group_id=launcher_id if launcher_id != sender_id else None,
+                    auto_escape=True).message_id
+            else:
+                tmp_id = cqhttp.sendGroupMessage(launcher_id, [
+                    At(qq=sender_id), Plain(text=tmp_msg)
+                ]).message_id
 
-        # 处理消息
-        reply = self.emit(Events.GetOpenAi__).request_completion(
-            session_name, text_message)
-        end_time = time.time()
-        if end_time - start_time < 0.5:
-            time.sleep(0.5 - (end_time - start_time))
-        if launcher_type == "person":
-            cqhttp.sendPersonMessage(
-                sender_id, reply,
-                group_id=launcher_id if launcher_id != sender_id else None)
-        else:
-            cqhttp.sendGroupMessage(launcher_id, [
-                At(qq=sender_id), Plain(text=reply)
-            ])
-        self.processing.remove(session_name)
-        cqhttp.recall(tmp_id)
+            # 处理消息
+            reply = self.emit(Events.GetOpenAi__).request_completion(
+                session_name, text_message)
+
+            if launcher_type == "person":
+                cqhttp.sendPersonMessage(
+                    sender_id, reply,
+                    group_id=launcher_id if launcher_id != sender_id else None,
+                    auto_escape=True)
+            else:
+                cqhttp.sendGroupMessage(launcher_id, [
+                    At(qq=sender_id), Plain(text=reply)
+                ])
+        except Exception as e:
+            logging.warning(e)
+            if launcher_type == "person":
+                cqhttp.sendPersonMessage(
+                    sender_id, reply,
+                    group_id=launcher_id if launcher_id != sender_id else None,
+                    auto_escape=True)
+        finally:
+            self.processing.remove(session_name)
+        try:
+            cqhttp.recall(tmp_id)
+        except:
+            logging.warning(f"{session_name}: {tmp_id}消息撤回失败")
