@@ -1,6 +1,7 @@
 
 import json
 import logging
+import threading
 import typing as T
 
 import requests
@@ -17,21 +18,24 @@ class CQHTTP_Protocol(Plugin):
 
     def __init__(self, http_url: str):
         self.http_url = http_url
+        self.lock = threading.Lock()
 
     def _sent_post(self, url: str, data: dict = None) -> dict:
         """发送post请求"""
-        response = requests.post(url, json=data)
-        if response.status_code != 200:
-            raise Exception(response.text)
-        response = json.loads(response.text)
-        if response["status"] == "async":
-            logging.debug(f"Network: post: {url=}, {data=}, 异步请求: {response=}")
-        elif response["status"] == "failed":
-            logging.error(
-                f"Network: 请求失败: post: {url=}, {data=}, {response}\n{response['msg']}\n{response['wording']}")
-        else:
-            logging.debug(f"Network: post: {url=}, {data=}, {response=}")
-        return response
+        with self.lock:
+            response = requests.post(url, json=data)
+            if response.status_code != 200:
+                raise Exception(response.text)
+            response = json.loads(response.text)
+            if response["status"] == "async":
+                logging.debug(
+                    f"Network: post: {url=}, {data=}, 异步请求: {response=}")
+            elif response["status"] == "failed":
+                logging.error(
+                    f"Network: 请求失败: post: {url=}, {data=}, {response}\n{response['msg']=}\n{response['wording']=}")
+            else:
+                logging.debug(f"Network: post: {url=}, {data=}, {response=}")
+            return response
 
     def NotifyAdmin(self, message: T.Union[str, list]):
         for admin in self.emit(GetConfig__).admin_list:
@@ -47,6 +51,9 @@ class CQHTTP_Protocol(Plugin):
             for chain in message:
                 _message += chain.toString()
             message = _message
+        elif isinstance(message, str) and len(message) > 1000:
+            message = self.emit(ForwardMessage__, message=message)
+            return self.sendPersonForwardMessage(user_id, message)
         payload = {
             "user_id": user_id,
             "message": message,
@@ -57,6 +64,7 @@ class CQHTTP_Protocol(Plugin):
         result = self._sent_post(
             f"{self.http_url}/send_private_msg", payload)
         if result["status"] == "ok":
+            logging.info(f"发送消息[person_{user_id}]: {message}")
             return BotMessage.model_validate(result["data"])
         return False
 
@@ -69,26 +77,16 @@ class CQHTTP_Protocol(Plugin):
             for chain in message:
                 _message += chain.toString()
             message = _message
+        elif isinstance(message, str) and len(message) > 1000:
+            message = self.emit(ForwardMessage__, message=message)
+            return self.sendGroupForwardMessage(group_id, message)
         result = self._sent_post(f"{self.http_url}/send_group_msg", {
             "group_id": group_id,
             "message": message,
             "auto_escape": auto_escape
         })
         if result["status"] == "ok":
-            return BotMessage.model_validate(result["data"])
-        return False
-
-    def sendGroupForwardMessage(self,
-                                group_id: int,
-                                messages: list) -> T.Union[BotMessage, bool]:
-        for i in range(len(messages)):
-            if isinstance(messages[i], Node):
-                messages[i] = messages[i].toDict()
-        result = self._sent_post(f"{self.http_url}/send_group_forward_msg", {
-            "group_id": group_id,
-            "messages": messages
-        })
-        if result["status"] == "ok":
+            logging.info(f"发送消息[group_{group_id}]: {message}")
             return BotMessage.model_validate(result["data"])
         return False
 
@@ -103,6 +101,22 @@ class CQHTTP_Protocol(Plugin):
             "messages": messages
         })
         if result["status"] == "ok":
+            logging.info(f"发送合并消息[person_{user_id}]: {messages}")
+            return BotMessage.model_validate(result["data"])
+        return False
+
+    def sendGroupForwardMessage(self,
+                                group_id: int,
+                                messages: list) -> T.Union[BotMessage, bool]:
+        for i in range(len(messages)):
+            if isinstance(messages[i], Node):
+                messages[i] = messages[i].toDict()
+        result = self._sent_post(f"{self.http_url}/send_group_forward_msg", {
+            "group_id": group_id,
+            "messages": messages
+        })
+        if result["status"] == "ok":
+            logging.info(f"发送合并消息[group_{group_id}]: {messages}")
             return BotMessage.model_validate(result["data"])
         return False
 

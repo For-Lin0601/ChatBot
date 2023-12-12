@@ -168,3 +168,5 @@ cmdDiary/
 config.py
 *.zip
 session.token
+**/temp.jpg
+**/watermark.json

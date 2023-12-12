@@ -13,11 +13,18 @@ from Models.Plugins import *
 class EndCommand(Plugin):
 
     @on(GetQQPersonCommand)
-    @on(GetQQGroupCommand)
     def cmd_end(self, event: EventContext, **kwargs):
         message: str = kwargs["message"]
         event.prevent_postorder()
         self.emit(Events.GetCQHTTP__).sendPersonMessage(
             user_id=kwargs["sender_id"],
-            message=f"[bot]err: 无命令响应: [!{message}]"
+            message=f"[bot]err: 无命令响应: !{message}"
+        )
+
+    @on(GetQQGroupCommand)
+    def cmd_end(self, event: EventContext, **kwargs):
+        message: str = kwargs["message"]
+        event.prevent_postorder()
+        self.emit(Events.GetCQHTTP__).sendGroupMessage(
+            group_id=kwargs["launcher_id"], message=f"[bot]err: 无命令响应: !{message}"
         )

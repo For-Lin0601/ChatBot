@@ -18,7 +18,6 @@ class CmdCommand(Plugin):
         event.return_value = ["!cmd - 显示指令列表"]
 
     @on(GetQQPersonCommand)
-    @on(GetQQGroupCommand)
     def cmd_reload(self, event: EventContext, **kwargs):
         message: str = kwargs["message"].strip()
         if message != "cmd":
@@ -28,5 +27,18 @@ class CmdCommand(Plugin):
         reply += "\n".join(self.emit(CmdCmdHelp))
         self.emit(Events.GetCQHTTP__).sendPersonMessage(
             user_id=kwargs["sender_id"],
+            message=reply
+        )
+
+    @on(GetQQGroupCommand)
+    def cmd_reload(self, event: EventContext, **kwargs):
+        message: str = kwargs["message"].strip()
+        if message != "cmd":
+            return
+        event.prevent_postorder()
+        reply = "[bot] 当前所有指令:\n\n"
+        reply += "\n".join(self.emit(CmdCmdHelp))
+        self.emit(Events.GetCQHTTP__).sendGroupMessage(
+            group_id=kwargs["launcher_id"],
             message=reply
         )

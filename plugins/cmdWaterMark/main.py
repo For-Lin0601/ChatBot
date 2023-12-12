@@ -22,8 +22,12 @@ from ..gocqOnQQ.QQevents.MessageEvent import PersonMessage
 class WaterMarkCommand(Plugin):
 
     def __init__(self):
-        self.file_path_name_for_add_to_picture = os.path.join(
+        self.watermark_json_file_path = os.path.join(
             os.path.dirname(__file__), "watermark.json")
+
+        if not os.path.exists(self.watermark_json_file_path):
+            with open(self.watermark_json_file_path, "w", encoding="utf-8") as f:
+                json.dump({}, f)
 
     @on(CmdCmdHelp)
     def help(self, event: EventContext, **kwargs):
@@ -51,7 +55,7 @@ class WaterMarkCommand(Plugin):
         modify_params = ' '.join(params[:3]).strip()
         logging.debug(
             f"插件[PictureForAddWatermark]收到私聊指令, 更改预留水印…[用户id: {sender_id}]")
-        with open(self.file_path_name_for_add_to_picture, "r+", encoding="utf-8") as f:
+        with open(self.watermark_json_file_path, "r+", encoding="utf-8") as f:
             watermark_data = json.load(f)
             watermark_data[str(sender_id)] = modify_params
             f.seek(0)
@@ -71,8 +75,8 @@ class WaterMarkCommand(Plugin):
             return
 
         # 此处只处理图片消息
-        if message.message[0].type != "Image" and \
-                message.message[0].url:
+        if not (message.message[0].type == "Image" and
+                message.message[0].url):
             return
 
         event.prevent_postorder()
@@ -97,7 +101,7 @@ class WaterMarkCommand(Plugin):
             image.save(image_bytes, format='JPEG')
             image_bytes = image_bytes.getvalue()
 
-            with open(self.file_path_name_for_add_to_picture, "r", encoding="utf-8") as f:
+            with open(self.watermark_json_file_path, "r", encoding="utf-8") as f:
                 watermark_data: dict[str, str] = json.load(f)
             if sender_id_str in watermark_data:
                 image = add_text_to_image(

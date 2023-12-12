@@ -30,7 +30,7 @@ def register(description: str,
         version (str): 插件版本
         author (str): 插件作者
         priority (int): 插件优先级
-        enabled (bool): 插件是否启用(只影响`self.emit`的调用, 即插件会被实例化)
+        enabled (bool): 插件是否启用
         kwargs: 剩余参数 所有键值对保存为字典存储在`kwargs`字段中
 
     return:
@@ -131,7 +131,7 @@ class Plugin:
             version (str): 插件版本
             author (str): 插件作者
             priority (int): 插件优先级
-            enabled (bool): 插件是否启用(只影响`self.emit`的调用, 即插件会被实例化)
+            enabled (bool): 插件是否启用
             kwargs: 剩余参数 所有键值对保存为字典存储在`kwargs`字段中
 
         return:
@@ -146,8 +146,16 @@ class Plugin:
             module_path = os.path.abspath(
                 plugin_cls.__module__.replace('.', os.path.sep))
             plugin_cls.path = module_path.replace(root_directory, "")
+            if not enabled:
+                cls._hooks_dict = {}
+                cls.__plugin_hooks__ = set()
+                logging.warning(
+                    f"插件{plugin_cls.__qualname__.split('.')[0]}被禁用")
+                return
             for tmp_cls in cls.plugin_list:
                 if plugin_cls.path == tmp_cls.path:
+                    cls._hooks_dict = {}
+                    cls.__plugin_hooks__ = set()
                     logging.warning(
                         f"插件重复注册, 插件{plugin_cls.__qualname__.split('.')[0]}已被注册(若为'尝试重新加载'则忽略)")
                     return

@@ -40,7 +40,6 @@ class QQbot(Plugin):
         self.set_reload_config("running_flag", self.running_flag)
         self.set_reload_config("ws_url", self.ws_url)
         self.set_reload_config("http_url", self.http_url)
-        self.set_reload_config("cqhttp_protocol", self.cqhttp_protocol)
 
     def on_stop(self):
         self.is_run_flag = False
@@ -56,7 +55,6 @@ class QQbot(Plugin):
             # 修改配置文件
             self.ws_url = f'ws://{self.config.ws_address}/'
             self.http_url = f'http://{self.config.http_address}'
-            self.cqhttp_protocol = CQHTTP_Protocol(self.http_url)
 
             config_file_path = os.path.join((os.path.dirname(os.path.dirname(
                 os.path.dirname(os.path.abspath(__file__))))), "config.yml"
@@ -80,18 +78,19 @@ class QQbot(Plugin):
 
             def run_gocq_exe():
                 executable_path = os.path.join(
-                    os.path.dirname(config_file_path), "go-cqhttp", "go-cqhttp.exe")
+                    "go-cqhttp", "go-cqhttp_windows_amd64.exe")
                 os.system(f'"{executable_path}" -faststart')
 
             # TODO 记得开启, 以及下面time.sleep至少10秒, 推荐12秒
-            # 编写的时候可以注释掉这行, 运行主线程后在新命令行开启go-cqhttp
-            # 这样重启机器人不影响go-cqhttp运行, 大大减少机器人被风控的概率
+            # 调试的时候可以注释掉这行, 运行主线程后在新命令行开启go-cqhttp
+            # 这样重启或热重载机器人不影响go-cqhttp运行, 大大减少机器人被风控的概率
+
             # 启用新线程运行go-cqhttp
 
             # self.emit(Events.SubmitSysTask__, fn=run_gocq_exe)
 
             def _start_bot():
-                time.sleep(3)
+                time.sleep(12)
                 logging.info(
                     f"QQ: {self.config.qq}, MAH: {self.config.host}:{self.config.port}")
                 logging.critical(
@@ -102,7 +101,7 @@ class QQbot(Plugin):
             self.running_flag = self.get_reload_config("running_flag")
             self.ws_url = self.get_reload_config("ws_url")
             self.http_url = self.get_reload_config("http_url")
-            self.cqhttp_protocol = self.get_reload_config("cqhttp_protocol")
+        self.cqhttp_protocol = CQHTTP_Protocol(self.http_url)
         self.running_flag.flag = True
 
     def _update_config(self, config_file_path,  qq, host, port, api_key, authorization, ws_address, http_address):

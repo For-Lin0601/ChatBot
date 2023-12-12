@@ -24,22 +24,23 @@ class RunningFlag:
     description="定时提醒[a, alarm]",
     version="1.0.0",
     author="For_Lin0601",
-    priority=204
+    priority=204,
+    enabled=False  # TODO 上传前打开
 )
 class TimeReminderCommand(Plugin):
 
-    # @on(PluginsLoadingFinished)  # TODO 上传前打开
-    # @on(PluginsReloadFinished)
-    # def start_timed_reminder(self, event: EventContext, **kwargs):
-    #     self.running_flag = RunningFlag()
-    #     self.running_flag.flag = True
-    #     self.emit(SubmitSysTask__, fn=self.timed_reminder_handle)
+    @on(PluginsLoadingFinished)
+    @on(PluginsReloadFinished)
+    def start_timed_reminder(self, event: EventContext, **kwargs):
+        self.running_flag = RunningFlag()
+        self.running_flag.flag = True
+        self.emit(SubmitSysTask__, fn=self.timed_reminder_handle)
 
-    # def on_reload(self):
-    #     self.running_flag.flag = False
+    def on_reload(self):
+        self.running_flag.flag = False
 
-    # def on_stop(self):
-    #     self.running_flag.flag = False
+    def on_stop(self):
+        self.running_flag.flag = False
 
     @on(CmdCmdHelp)
     def help(self, event: EventContext, **kwargs):
@@ -80,7 +81,7 @@ class TimeReminderCommand(Plugin):
             reply += "\n!a 下个月六号提醒我xxx"
             reply += "\n-------------"
             reply += "\n- 请注意 [自然语言识别] 能力有限！"
-            reply += "\n\n-> 子命令: "
+            reply += "\n\n-> 子命令:"
             reply += "\n[!a ls]"
             reply += "\n- 查看当前所有定时提醒"
             reply += "\n[!a all]"
@@ -119,7 +120,7 @@ class TimeReminderCommand(Plugin):
             else:
                 params_id = ''
 
-            reply = "[bot] 当前所有定时提醒: "
+            reply = "[bot] 当前所有定时提醒:"
             current_file_path = os.path.dirname(os.path.abspath(__file__))
             file_path = os.path.join(current_file_path, "waiting_events.txt")
             with open(file_path, "r+", encoding="utf-8") as file:
@@ -206,7 +207,7 @@ class TimeReminderCommand(Plugin):
                         cqhttp.sendPersonMessage(sender_id, "[bot] 未找到编号为 [{}] 的定时提醒".format(params_id))
                         return
 
-            if reply == "[bot] 当前所有定时提醒: ":
+            if reply == "[bot] 当前所有定时提醒:":
                 reply = "\n[bot] 未查询到定时提醒！\n!a 查看帮助"
             else:
                 reply = self.emit(ForwardMessage__, message=reply)
@@ -216,13 +217,13 @@ class TimeReminderCommand(Plugin):
             return
 
         elif ''.join(params).startswith("set"):
-            cqhttp.sendPersonMessage(sender_id, "[bot]err: set命令格式错误！\n请用以下命令重设城市名:\n-------------\n!a set <闹钟编号> <城市名>\n-------------\n其中 <闹钟编号> 可用命令: !a ls 查询")
+            cqhttp.sendPersonMessage(sender_id, "[bot]err: set命令格式错误!\n请用以下命令重设城市名:\n-------------\n!a set <闹钟编号> <城市名>\n-------------\n其中 <闹钟编号> 可用命令: !a ls 查询")
             return
 
         else:
             try:
                 text = ' '.join(params)
-                text = text.replace('【', '[').replace('】', ']').replace('！', '!').replace(': ', ':').replace('\\', '/')
+                text = text.replace('【', '[').replace('】', ']').replace('！', '!').replace('：', ':').replace('\\', '/')
                 if "#" in text:
                     text_time, text_message = text.split("#", 1)
                 else:
@@ -259,10 +260,7 @@ class TimeReminderCommand(Plugin):
             return
 
     def timed_reminder_handle(self):
-        """
-        定时提醒\n
-        此处原为阻塞线程, 异步系插件的特性
-        """
+        """定时提醒"""
         current_file_path = os.path.dirname(os.path.abspath(__file__))
         target_file_path = os.path.join(current_file_path, "waiting_events.txt")
         sleep = False
@@ -333,21 +331,21 @@ class TimeReminderCommand(Plugin):
                             time_diff = (time.mktime(current_time) - time.mktime(date_time)) // 60
 
                             if repeat_count > 0:
-                                reply_continue = "\n重复: 余 [{}] 次~".format(repeat_count + 1)
-                                reply_continue_default = "\n重复: 取剩余次数失败!"
+                                reply_continue = "\n重复: 剩余 [{}] 次~".format(repeat_count + 1)
+                                reply_continue_default = "\n重复: 获取剩余次数失败!"
                             elif repeat_count < 0:
-                                reply_continue = "\n重复: 行中~"
-                                reply_continue_default = "\n重复: 复进行中~"
+                                reply_continue = "\n重复: 进行中~"
+                                reply_continue_default = "\n重复: 重复进行中~"
                             elif not all(delta == 0 for delta in time_delta):
-                                reply_continue = "\n重复: 后 [1] 次~"
-                                reply_continue_default = "\n重复: 后 [1] 次~"
+                                reply_continue = "\n重复: 最后 [1] 次~"
+                                reply_continue_default = "\n重复: 最后 [1] 次~"
                             else:
-                                reply_continue = "\n重复: "
-                                reply_continue_default = "\n重复: "
+                                reply_continue = "\n重复: 无"
+                                reply_continue_default = "\n重复: 无"
 
                             if repeat_count != 0:
                                 year_month_day_time = ["年", "月", "天", "小时", "分钟", "秒"]
-                                reply_continue_or_default = "\n间隔:  ["
+                                reply_continue_or_default = "\n间隔: ["
                                 for i in range(6):
                                     if time_delta[i] != 0:
                                         reply_continue_or_default += "{}{}".format(time_delta[i], year_month_day_time[i])
@@ -371,11 +369,11 @@ class TimeReminderCommand(Plugin):
                                 else:
                                     cqhttp = self.emit(GetCQHTTP__)
                                     try:
-                                        cqhttp.sendPersonMessage(qq_number, "[bot]err: 未知原因!检测到您的定时提醒已过期!\n编号: {}]{}\n昵称: {}]\n时间: {}]\n信息: {}]".format(
+                                        cqhttp.sendPersonMessage(qq_number, "[bot]err: 未知原因!检测到您的定时提醒已过期!\n编号: [{}]{}\n昵称: [{}]\n时间: [{}]\n信息: [{}]".format(
                                             event_id, reply_continue_default, qq_name, event_date + ' ' + event_time, message_reply))
                                     except:
                                         reply_continue_default += "\n[bot]err: 消息提醒没有成功发出!"
-                                    cqhttp.NotifyAdmin("err: 未知原因!检测到定时提醒已过期!\n编号: {}]{}\n昵称: {}]\nQQ号: {}]\n时间: {}]\n信息: {}]".format(
+                                    cqhttp.NotifyAdmin("err: 未知原因!检测到定时提醒已过期!\n编号: [{}]{}\n昵称: [{}]\nQQ号: [{}]\n时间: [{}]\n信息: [{}]".format(
                                         event_id, reply_continue_default, qq_name, qq_number, event_date + ' ' + event_time,
                                         message[:min(40, len(message))] + ("   ..." if len(message) > 40 else "")))
 
@@ -383,11 +381,11 @@ class TimeReminderCommand(Plugin):
                             elif current_time >= date_time:
                                 cqhttp = self.emit(GetCQHTTP__)
                                 try:
-                                    cqhttp.sendPersonMessage(qq_number, "[bot] 您的定时提醒已送达~\n编号: {}]{}\n昵称: {}]\n时间: {}]\n信息: {}]".format(
+                                    cqhttp.sendPersonMessage(qq_number, "[bot] 您的定时提醒已送达~\n编号: [{}]{}\n昵称: [{}]\n时间: [{}]\n信息: [{}]".format(
                                         event_id, reply_continue, qq_name, event_date + ' ' + event_time, message_reply))
                                 except:
                                     repeat_count = 0
-                                    cqhttp.NotifyAdmin("err: 检测到消息提醒没有成功发出!!!\n编号: {}]{}\n昵称: {}]\nQQ号: {}]\n时间: {}]\n信息: {}]".format(
+                                    cqhttp.NotifyAdmin("err: 检测到消息提醒没有成功发出!!!\n编号: [{}]{}\n昵称: [{}]\nQQ号: [{}]\n时间: [{}]\n信息: [{}]".format(
                                         event_id, reply_continue_default, qq_name, qq_number, event_date + ' ' + event_time,
                                         message[:min(40, len(message))] + ("   ..." if len(message) > 40 else "")))
 
@@ -459,8 +457,7 @@ class TimeReminderCommand(Plugin):
                                         weather_reply = "[bot]err: ~~~天气查询~~~\n服务器请求错误!"
                                     cqhttp.sendPersonMessage(qq_number, weather_reply)
 
-                                    i = 0
-                                    while i < 3:
+                                    for i in range(3):
                                         try:
                                             # 查询每日推荐
                                             if qq_number in self.emit(GetConfig__).admin_list:
@@ -483,10 +480,10 @@ class TimeReminderCommand(Plugin):
                                             # if repeat_count == -3:
                                             #     message = [get.fanyi(item) for item in message]
                                             message = self.emit(ForwardMessage__, message=message)
-                                            cqhttp.sendPersonForwardMessage(qq_number, message)
-                                            break
+                                            if cqhttp.sendPersonForwardMessage(qq_number, message):
+                                                break
                                         except:
-                                            i += 1
+                                            pass
                                     else:
                                         cqhttp.sendPersonMessage(qq_number, "[bot]err: 每日推荐发送错误!")
                                         cqhttp.NotifyAdmin(f"err: [{qq_name}][{qq_number}]每日推荐发送错误!")
