@@ -356,7 +356,7 @@ KeySwitched = "key_switched"
 
 
 
-########## plugin.name='TextMessagePlugin' plugin.path='//plugins//goTextMessage//main' ##########
+########## plugin.name='TextMessageEventPlugin' plugin.path='//plugins//goEventTextMessage//main' ##########
 GetQQPersonCommand = "get_qq_person_command"
 """收到好友命令
 ```python

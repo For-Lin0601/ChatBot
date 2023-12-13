@@ -1,7 +1,6 @@
 
 import random
 import re
-import time
 from func_timeout import FunctionTimedOut, func_set_timeout
 
 
@@ -15,15 +14,12 @@ from ..gocqOnQQ.QQevents.MessageEvent import PersonMessage, GroupMessage
 
 
 @register(
-    description="文本消息处理",
+    description="文本消息监听",
     version="1.0.0",
     author="For_Lin0601",
     priority=100
 )
-class TextMessagePlugin(Plugin):
-
-    def __init__(self):
-        pass
+class TextMessageEventPlugin(Plugin):
 
     @on(PluginsLoadingFinished)
     def first_init(self, event: EventContext,  **kwargs):
@@ -49,8 +45,8 @@ class TextMessagePlugin(Plugin):
         if message.message[0].type != "Plain":
             return
 
-        self.cqhttp: CQHTTP_Protocol = self.emit(Events.GetCQHTTP__)
         event.prevent_postorder()
+        self.cqhttp: CQHTTP_Protocol = self.emit(Events.GetCQHTTP__)
 
         # 若有附加消息, 给出警告
         check_length = len(message.message) != 1

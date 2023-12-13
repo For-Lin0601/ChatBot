@@ -121,12 +121,12 @@ session_expire_time = 600000
 
 
 
-########## plugin.name='TextMessagePlugin' plugin.path='//plugins//goTextMessage//main' ##########
+########## plugin.name='TextMessageEventPlugin' plugin.path='//plugins//goEventTextMessage//main' ##########
 
 # 消息处理超时重试次数(0为不重试, 负数为取消消息默认处理, 不建议)
 retry_times = 1
 
-message_drop_tip = "【检测到时空信号交集, 请等待返回信号处理完成】"
+message_drop_tip = "【检测到时空信号交集, 当前消息被忽略, 请等待返回信号处理完成】"
 
 
 # 禁用列表
@@ -167,6 +167,13 @@ response_rules = {
 
 
 
+########## plugin.name='RecalleEventPlugin' plugin.path='//plugins//goEventRecall//main' ##########
+
+# 当收到消息被撤回时发送的消息前缀
+message_recall_tip = "【检测到时空逆流, 你撤回了消息:】"
+
+
+
 ########## plugin.name='HelpCommand' plugin.path='//plugins//cmdHelp//main' ##########
 # 指令!help帮助消息
 help_message = """此机器人通过调用大型语言模型生成回复, 不具有情感, 可能会生成不正确的信息, 可能会产生有害说明或有偏见的内容, 对2021年后的世界和事件的了解有限。
@@ -190,6 +197,22 @@ help_message = """此机器人通过调用大型语言模型生成回复, 不具
 !r <情景预设名称/编号> 
 -------------
 """
+
+
+
+########## plugin.name='TimeReminderCommand' plugin.path='//plugins//cmdTimeReminder//main' ##########
+
+# 和风天气api
+he_feng_weather_key = "6d0d491a75f344bb8567d76bbe68ddbb"
+
+# 天聚数行api1
+tian_jv_shu_xing_api1 = "b0880ad234e3483aaa48eb7be46708d3"
+
+# 天聚数行api2
+tian_jv_shu_xing_api2 = "d39cd8380135a4101f0f45d9168fd008"
+
+# 天聚数行api3
+tian_jv_shu_xing_api3 = "6bc48466fbe872578d4512ddcdc19d04"
 
 
 

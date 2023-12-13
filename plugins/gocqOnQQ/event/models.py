@@ -78,18 +78,22 @@ class BotMessage(BaseModel):
     message_id: T.Union[int, str]
 
 
+class SenderMessage(BaseModel):
+    nickname: T.Optional[str]
+    user_id: T.Optional[int]
+
 class Message(BaseModel):  # getMessage
     type: MessageItemType = "Message"
     message_id: int
     real_id: int
-    sender: Member
+    sender: SenderMessage
     time: int
-    message: str
-    raw_message: str
+    message: str = ""
+    raw_message: str = None
 
     def __init__(self, message: str, **_):
-        message = CQParser.parseChain(message)
         super().__init__(message=message, **_)
+        message = CQParser.parseChain(message)
 
 
 MessageTypes = {
