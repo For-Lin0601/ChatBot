@@ -126,8 +126,7 @@ class TextMessagePlugin(Plugin):
                         break
                 else:
                     # ramdom_rate字段随机值0.0-1.0
-                    if response_rules["random_rate"] > 0.0 and \
-                            random.random() > response_rules["random_rate"]:
+                    if random.random() < response_rules["random_rate"]:
                         logging.debug(f"根据规则忽略 {message.user_id}: {msg}")
                         return
         else:
