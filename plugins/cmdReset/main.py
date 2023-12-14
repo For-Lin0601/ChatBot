@@ -4,6 +4,7 @@ from datetime import datetime
 
 import Events
 from Models.Plugins import *
+from ..OpenAi.main import Session, OpenAiInteract
 from ..gocqOnQQ.CQHTTP_Protocol.CQHTTP_Protocol import CQHTTP_Protocol
 
 
@@ -39,16 +40,11 @@ class ResetCommand(Plugin):
 
         reply = ""
 
-        open_ai = self.emit(GetOpenAi__)
+        open_ai: OpenAiInteract = self.emit(GetOpenAi__)
         cqhttp: CQHTTP_Protocol = self.emit(Events.GetCQHTTP__)
         if len(params) == 0:
-            open_ai.session[session_name] = [
-                {"role": "user",
-                 "content": config.default_prompt["default"]},
-                {"role": "assistant",
-                 "content": "ok, I'll follow your commands."}
-            ]
-            open_ai.time_out[session_name] = datetime.now()
+            open_ai.sessions_dict[session_name] = Session(
+                session_name, "default", config.default_prompt["default"], config.session_expire_time)
             cqhttp.sendPersonMessage(sender_id, config.command_reset_message)
             return
 
@@ -64,8 +60,8 @@ class ResetCommand(Plugin):
                 account_list = file.readlines()
             account_list = [account.strip()
                             for account in account_list]  # 删除末尾换行符
-            permission = True if str(
-                sender_id) in account_list else False  # False表示只能查看部分
+            permission = True \
+                if str(sender_id) in account_list else False  # False表示只能查看部分
 
             if not permission:
                 key_list = [
@@ -77,13 +73,9 @@ class ResetCommand(Plugin):
                 cqhttp.sendPersonMessage(
                     sender_id, "[bot]会话重置失败: 没有找到场景预设: {}".format(params[0]))
                 return
-            open_ai.session[session_name] = [
-                {"role": "user",
-                 "content": prompts[params[0]]},
-                {"role": "assistant",
-                 "content": "ok, I'll follow your commands."}
-            ]
-            open_ai.time_out[session_name] = datetime.now()
+            open_ai.sessions_dict[session_name] = Session(
+                session_name, params[0], prompts[params[0]], config.session_expire_time)
+
             reply = config.command_reset_name_message + \
                 "{}".format(params[0])
         except Exception as e:

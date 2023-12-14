@@ -482,6 +482,7 @@ class TimeReminderCommand(Plugin):
                                             message = self.emit(ForwardMessage__, message=message)
                                             if cqhttp.sendPersonForwardMessage(qq_number, message):
                                                 break
+                                            time.sleep(0.2)
                                         except:
                                             pass
                                     else:

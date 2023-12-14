@@ -46,6 +46,12 @@ class TextMessageEventPlugin(Plugin):
             return
 
         event.prevent_postorder()
+
+        # 检查发送方是否被禁用
+        if self.is_banned("person", message.sender):
+            logging.debug(f"根据禁用列表忽略[person_{message.sender}]的消息")
+            return
+
         self.cqhttp: CQHTTP_Protocol = self.emit(Events.GetCQHTTP__)
 
         # 若有附加消息, 给出警告
@@ -93,13 +99,19 @@ class TextMessageEventPlugin(Plugin):
             return
 
         message: GroupMessage = kwargs["QQevents"]
-        self.cqhttp: CQHTTP_Protocol = self.emit(Events.GetCQHTTP__)
 
         # 忽略自身消息
         if message.sender == self.config.qq:
             return
 
         event.prevent_postorder()
+
+        # 检查发送方是否被禁用
+        if self.is_banned("group", message.group_id):
+            logging.debug(f"根据禁用列表忽略[group_{message.group_id}]的消息")
+            return
+
+        self.cqhttp: CQHTTP_Protocol = self.emit(Events.GetCQHTTP__)
 
         # 判断群是否符合响应规则
         if str(message.group_id) not in self.config.response_rules:
@@ -200,11 +212,6 @@ class TextMessageEventPlugin(Plugin):
         """
         session_name = "{}_{}".format(launcher_type, launcher_id)
 
-        # 检查发送方是否被禁用
-        if self.is_banned(launcher_type, launcher_id):
-            logging.info(f"根据禁用列表忽略{session_name}的消息")
-            return
-
         logging.info(f"收到消息[{session_name}]: {text_message}")
 
         # 触发命令
@@ -229,19 +236,18 @@ class TextMessageEventPlugin(Plugin):
             return
         self.processing.add(session_name)
         try:
-            cqhttp: CQHTTP_Protocol = self.emit(Events.GetCQHTTP__)
             tmp_msg = "[bot]收到消息, " + \
                 (f"当前{len(self.processing)-1}人正在排队" if len(self.processing)
                  > 1 else "当前无人排队, 消息处理中")
             if check_length:
                 tmp_msg += f"\n!非纯文本消息!只取最前面文本为处理内容, 忽略后面特殊类型信息!"
             if launcher_type == "person":
-                tmp_id = cqhttp.sendPersonMessage(
+                tmp_id = self.cqhttp.sendPersonMessage(
                     sender_id,  tmp_msg,
                     group_id=launcher_id if launcher_id != sender_id else None,
                     auto_escape=True).message_id
             else:
-                tmp_id = cqhttp.sendGroupMessage(launcher_id, [
+                tmp_id = self.cqhttp.sendGroupMessage(launcher_id, [
                     At(qq=sender_id), Plain(text=tmp_msg)
                 ]).message_id
 
@@ -250,24 +256,26 @@ class TextMessageEventPlugin(Plugin):
                 session_name, text_message)
 
             if launcher_type == "person":
-                cqhttp.sendPersonMessage(
+                self.cqhttp.sendPersonMessage(
                     sender_id, reply,
                     group_id=launcher_id if launcher_id != sender_id else None,
                     auto_escape=True)
             else:
-                cqhttp.sendGroupMessage(launcher_id, [
+                self.cqhttp.sendGroupMessage(launcher_id, [
                     At(qq=sender_id), Plain(text=reply)
                 ])
         except Exception as e:
-            logging.warning(e)
+            logging.error(e)
             if launcher_type == "person":
-                cqhttp.sendPersonMessage(
-                    sender_id, reply,
+                self.cqhttp.NotifyAdmin(
+                    f"[bot]err: [{session_name}]处理消息出现错误:\n{e}")
+                self.cqhttp.sendPersonMessage(
+                    sender_id, str(e),
                     group_id=launcher_id if launcher_id != sender_id else None,
                     auto_escape=True)
         finally:
             self.processing.remove(session_name)
         try:
-            cqhttp.recall(tmp_id)
+            self.cqhttp.recall(tmp_id)
         except:
             logging.warning(f"{session_name}: {tmp_id}消息撤回失败")

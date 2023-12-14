@@ -46,8 +46,14 @@ class DefalutCommand(Plugin):
         default_prompt_permission = config.default_prompt_permission
         default_prompt_permission_password = config.default_prompt_permission_password
         prompts = config.default_prompt
-        reply_str = "[bot] 默认情景预设:{}\n".format(prompts["default"])
-        reply_str += "管理员请使用 !default set <情景预设名称> 来设置默认情景预设\n\n"
+        openai = self.emit(Events.GetOpenAi__)
+        session_name = openai.sessions_dict.get(f'person_{sender_id}')
+        if session_name is None:
+            session_name = "default"
+        else:
+            session_name = session_name.role_name
+        reply_str = "[bot] 当前情景预设：{}\n".format(session_name)
+        reply_str += "默认情景预设:{}\n\n".format("default")
         reply_str += "用户请使用 !<reset/r> <情景预设名称> 来设置当前情景预设\n\n"
         reply_str += "用户也可使用 !<reset/r> <名称编号> 来设置当前情景预设\n\n"
         reply_str += "\n\n情景预设名称列表:\n"
