@@ -8,7 +8,6 @@ import time
 from datetime import datetime
 
 import Events
-from Events import *
 from Models.Plugins import *
 
 from ..gocqOnQQ.CQHTTP_Protocol.CQHTTP_Protocol import CQHTTP_Protocol
@@ -557,7 +556,7 @@ class TimeReminderCommand(Plugin):
             get_list[1] = "[bot] " + error_message
 
         # 获取每日新闻
-        news_list = ['1.百度热搜', '2.Pushplus 知乎', '3.天聚数行 新闻']
+        news_list = ['1.百度热搜', '2.大米api 新闻', '3.天聚数行 新闻']
         news = get.get_news()
         news_texts = [text for index, text in enumerate(news_list) if news[index] == '-1']
         if news_texts:
