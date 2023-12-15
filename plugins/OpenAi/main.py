@@ -33,6 +33,22 @@ class Session:
     def add_assistant(self, content: str):
         self.sessions.append({"role": "assistant", "content": content})
 
+    @property
+    def last_user_content(self):
+        if not self.sessions:
+            return ""
+        if self.sessions[-1]["role"] == "user":
+            return self.sessions[-1]["content"]
+        return self.sessions[-2]["content"] if len(self.sessions) > 1 else ""
+
+    @property
+    def last_assistant_content(self):
+        if not self.sessions:
+            return ""
+        if self.sessions[-1]["role"] == "assistant":
+            return self.sessions[-1]["content"]
+        return self.sessions[-2]["content"] if len(self.sessions) > 1 else ""
+
 
 @register(
     description="OpenAi 接口封装",
@@ -92,13 +108,15 @@ class OpenAiInteract(Plugin):
                     # 长度超过限制, 从头开始暴力删除, 每次删除两个记录
                     logging.debug("长度超过限制, 从头开始暴力删除: " + session.session_name)
                     while total_length > config.prompt_submit_length:
-                        # 删除最前面的两个记录
-                        if conversation:
-                            del conversation[0]
-                            total_length -= len(conversation[0]["content"])
-                        if conversation:
-                            del conversation[0]
-                            total_length -= len(conversation[0]["content"])
+                        # 删除最前面的两个记录, 不删除第一条人格设置
+                        if len(conversation) >= 3:
+                            total_length -= len(conversation[2]["content"])
+                            del conversation[2]
+                        if len(conversation) >= 3:
+                            total_length -= len(conversation[2]["content"])
+                            del conversation[2]
+                        if len(conversation) < 3 and total_length > config.prompt_submit_length:
+                            return "[bot]err: 对话长度超过限制, 当前场景预设过长, 请用`!r`重置会话"
 
         if session_name not in self.sessions_dict:
             self.sessions_dict[session_name] = Session(
@@ -137,6 +155,8 @@ class OpenAiInteract(Plugin):
 
             # 如果成功, 添加助手的回复到会话中
             self.sessions_dict[session_name].add_assistant(response_content)
+            logging.debug(
+                f"{session_name}: {self.sessions_dict[session_name].sessions}")
             return response_content
         except openai.OpenAIError as e:
             # 如果是 OpenAIError, 尝试使用下一个 API Key

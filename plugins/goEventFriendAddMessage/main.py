@@ -10,7 +10,7 @@ from ..gocqOnQQ.CQHTTP_Protocol.CQHTTP_Protocol import CQHTTP_Protocol
     description="好友添加处理[add]",
     version="1.0.0",
     author="For_Lin0601",
-    priority=209
+    priority=208
 )
 class QQFriendAddPlugin(Plugin):
 
