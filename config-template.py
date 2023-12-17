@@ -11,12 +11,11 @@ logging_level = logging.DEBUG
 ########## plugin.name='ThreadCtlPlugin' plugin.path='//plugins//__threadctl//main' ##########
 # 线程池相关配置, 该参数决定机器人可以同时处理几个人的消息, 超出线程池数量的请求会被阻塞, 不会被丢弃, 如果你不清楚该参数的意义, 请不要更改
 # 线程池不完全支持热重载, 其中系统线程不支持重载, 管理员线程和用户线程可能需要在第二次热重载时才会更新配置, 但由于线程池本体足够使用, 暂不考虑完善此处
-sys_pool_num = 8
+sys_pool_num = 12
 # 执行管理员请求和指令的线程池并行线程数量, 一般和管理员数量相等
 admin_pool_num = 2
 # 执行用户请求和指令的线程池并行线程数量, 如需要更高的并发, 可以增大该值
 user_pool_num = 6
-
 
 
 ########## plugin.name='QQbot' plugin.path='//plugins//gocqOnQQ//main' ##########
@@ -62,6 +61,27 @@ ws_address = "127.0.0.1:6700"
 
 # http 通信
 http_address = "127.0.0.1:6701"
+
+
+########## plugin.name='WeChatbot' plugin.path='//plugins//wcferry//main' ##########
+##### 微信设置 #####
+
+# 微信不需要账号密码, 直接扫码即可获得
+
+# 微信管理员列表, 强烈建议有一个, 否则大量指令无法使用
+# 此处与 QQ 相互独立
+# 微信管理员不登入账号, 仅做后台发送管理员数据使用
+# 支持热重载
+# `wxid_`开头的字符串从上报数据中获得
+# 此处也支持直接使用微信号
+wx_admin_list = [
+    "wxid_mwlbigzntcjk22",  # 作者微信
+]
+
+
+##### wcferry 配置文件 #####
+# 此处全为默认, 10086, 10087端口被占用
+# 未知原因别的端口都启动不了
 
 
 
@@ -120,6 +140,66 @@ prompt_submit_length = 4096
 session_expire_time = 600000
 
 
+# 消息超时提示
+tip_timeout_message = "【检测到时空风暴影响，返回信号被确认超时】"
+
+
+########## plugin.name='WxChatTextMessageEventPlugin' plugin.path='//plugins//wcEventTextMessage//main' ##########
+
+# 消息处理超时重试次数(0为不重试, 负数为取消消息默认处理, 不建议)
+wx_retry_times = 1
+
+# 消息处理的超时时间, 单位为秒
+# 此处不填写, 与QQ机器人保持一致
+# process_message_timeout = 180
+
+# 禁用列表
+# 填写其wxid, 会被禁止与机器人进行私聊或群聊交互
+# 私聊和群聊都有wxid
+wx_banned_list = []
+
+
+# 是否响应群消息(默认False不响应, 群聊更容易被风控)
+quote_wx_group = False
+
+# 仅在quote_wx_group为True时有效
+# 群内响应规则, 符合此消息的群内消息即使不包含at机器人也会响应
+# 支持消息前缀匹配及正则表达式匹配
+# 注意每个规则的优先级为: 消息前缀 > 正则表达式 > 随机响应
+# 且字典不能缺失字段, 若不需要, 可为空
+# 正则表达式简明教程: https://www.runoob.com/regexp/regexp-tutorial.html
+wx_response_rules = {
+    "default": {  # 默认, 若未特殊标注则引用此处规则
+        "at": False,  # 是否响应at机器人的消息, ps: 就是群聊艾特会不会回, 如果为False则不回
+        "prefix": [],
+        "regexp": [],
+        "random_rate": 0.0,  # 随机响应概率, 取值范围 0.0-1.0     0.0为完全不随机响应  1.0响应所有消息, 仅在前几项判断不通过时生效
+    },
+    "45786776627@chatroom": {  # 测试群
+        "at": True,
+        "prefix": ["/", "!", "！", "ai"],
+        "regexp": ["怎么?样.*", "怎么.*", "如何.*", ".*咋办"],
+        "random_rate": 0.0,
+    },
+}
+
+
+########## plugin.name='banWordsUtil' plugin.path='//plugins//banWords//main' ##########
+# 是否启用百度云内容安全审核, 用于接入百度云, 从而智能的拦截机器人发出的不合格图片和消息
+# 注册方式查看 https://cloud.baidu.com/doc/ANTIPORN/s/Wkhu9d5iy, 如果开启 baidu_check = True
+baidu_check = False
+
+# 百度云API_KEY 24位英文数字字符串
+baidu_api_key = ""
+
+# 百度云SECRET_KEY 32位的英文数字字符串
+baidu_secret_key = ""
+
+# 不合规消息自定义返回
+inappropriate_message_tips = "[百度云]请珍惜机器人, 当前返回内容不合规"
+
+##### 屏蔽词请前往 plugins/banWords/sensitive.json 中修改!!!
+
 
 ########## plugin.name='TextMessageEventPlugin' plugin.path='//plugins//goEventTextMessage//main' ##########
 
@@ -166,12 +246,10 @@ response_rules = {
 }
 
 
-
 ########## plugin.name='RecalleEventPlugin' plugin.path='//plugins//goEventRecall//main' ##########
 
 # 当收到消息被撤回时发送的消息前缀
 message_recall_tip = "【检测到时空逆流, 你撤回了消息:】"
-
 
 
 ########## plugin.name='HelpCommand' plugin.path='//plugins//cmdHelp//main' ##########
@@ -197,7 +275,6 @@ help_message = """此机器人通过调用大型语言模型生成回复, 不具
 !r <情景预设名称/编号> 
 -------------
 """
-
 
 
 ########## plugin.name='DefalutCommand' plugin.path='//plugins//cmdDefault//main' ##########
@@ -301,13 +378,11 @@ Duck will say: 'That's hilarious~' instead of 'Okay' to express agreement. Duck 
 }
 
 
-
 ########## plugin.name='ResetCommand' plugin.path='//plugins//cmdReset//main' ##########
 
 # 会话重置提示
 command_reset_message = "【已检测到重置, 那就让我们再次相遇吧！】"
 command_reset_name_message = "【已检测到重置, 那就让我们再次相遇吧！】使用场景预设:"
-
 
 
 ########## plugin.name='RandomPictureCommand' plugin.path='//plugins//cmdRandomPicture//main' ##########
@@ -317,18 +392,3 @@ include_image_description = True
 
 
 
-########## plugin.name='banWordsUtil' plugin.path='//plugins//banWords//main' ##########
-# 是否启用百度云内容安全审核, 用于接入百度云, 从而智能的拦截机器人发出的不合格图片和消息
-# 注册方式查看 https://cloud.baidu.com/doc/ANTIPORN/s/Wkhu9d5iy, 如果开启 baidu_check = True
-baidu_check = False
-
-# 百度云API_KEY 24位英文数字字符串
-baidu_api_key = ""
-
-# 百度云SECRET_KEY 32位的英文数字字符串
-baidu_secret_key = ""
-
-# 不合规消息自定义返回
-inappropriate_message_tips = "[百度云]请珍惜机器人, 当前返回内容不合规"
-
-##### 屏蔽词请前往 plugins/banWords/sensitive.json 中修改!!!

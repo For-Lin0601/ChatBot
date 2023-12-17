@@ -89,7 +89,7 @@ class QQFriendAddPlugin(Plugin):
 
     @on(GetQQPersonCommand)
     def add_person(self, event: EventContext, **kwargs):
-        message: str = kwargs["message"]
+        message: str = kwargs["message"].strip()
         if not message.startswith("add"):
             return
         config = self.emit(GetConfig__)
@@ -150,9 +150,26 @@ class QQFriendAddPlugin(Plugin):
             cqhttp.sendPersonMessage(
                 sender_id, f"warning: 已通过 [{req.nickname}][{req.user_id}] 的好友申请, 但未成功执行发送命令:\n!sent {req.user_id} !help")
         self.friend_add_list.remove(req)
-        # TODO 进入send模式, 和管理员对话
-        # pkg.qqbot.cmds.session.sent.launcherId_history = req.from_id
         cqhttp.sendPersonMessage(
             sender_id, "已通过好友申请:\n昵称:{}\nQQ号:{}\n信息:{}\n设置备注(不一定成功):{}".format(
                 req.nickname, req.user_id, req.comment, remark if remark else req.nickname))
         return
+
+    @on(GetQQGroupCommand)
+    def add_group(self, event: EventContext, **kwargs):
+        message: str = kwargs["message"].strip()
+        if not message.startswith("add"):
+            return
+        event.prevent_postorder()
+        self.emit(GetCQHTTP__).sendGroupMessage(
+            group_id=kwargs["launcher_id"], message=f"[bot] 群聊暂不支持此命令"
+        )
+
+    @on(GetWXCommand)
+    def add_wx(self, event: EventContext, **kwargs):
+        message: str = kwargs["command"].strip()
+        if not message.startswith("add"):
+            return
+        event.prevent_postorder()
+        self.emit(GetWCF__).send_text(
+            "[bot] 微信暂不支持此命令", kwargs["roomid"] if kwargs["roomid"] else kwargs["sender"])

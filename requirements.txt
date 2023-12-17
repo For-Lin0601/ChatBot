@@ -14,11 +14,17 @@ websockets==12.0
 openai==0.28
 
 
-
 ########## plugin.name='TextMessageEventPlugin' plugin.path='//plugins//goEventTextMessage//main' ##########
 func_timeout~=4.3.5
 
 
-
 ########## plugin.name='WaterMarkCommand' plugin.path='//plugins//cmdWaterMark//main' ##########
 Pillow~=10.1.0
+
+
+########## plugin.name='WxChatTextMessageEventPlugin' plugin.path='//plugins//wcEventTextMessage//main' ##########
+func_timeout~=4.3.5
+
+
+########## plugin.name='WeChatbot' plugin.path='//plugins//wcferry//main' ##########
+wcferry~=39.0.10.0

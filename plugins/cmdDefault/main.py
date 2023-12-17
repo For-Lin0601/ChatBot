@@ -3,6 +3,7 @@
 import Events
 from Models.Plugins import *
 from ..gocqOnQQ.CQHTTP_Protocol.CQHTTP_Protocol import CQHTTP_Protocol
+from wcferry import Wcf
 
 
 @register(
@@ -37,7 +38,6 @@ class DefalutCommand(Plugin):
         sender_id = kwargs["sender_id"]
         params = message.split()
 
-        reply = []
         if len(params) == 0:
             params = [None]
         # 输出目前所有情景预设
@@ -80,9 +80,9 @@ class DefalutCommand(Plugin):
                         "[{}][{}]通过default_password验证".format(friend_name, sender_id))
                     file.write('{}\n'.format(sender_id))
                     permission = True
-                except:
+                except Exception as e:
                     cqhttp.sendPersonMessage(
-                        sender_id, "[bot]err: 意外的错误! 请联系管理员处理!")
+                        sender_id, f"[bot]err: 意外的错误! 请联系管理员处理!{e}")
             return
 
         # 查看通过default_password验证的用户
@@ -149,4 +149,129 @@ class DefalutCommand(Plugin):
 
         reply = self.emit(Events.ForwardMessage__, message=reply_str)
         cqhttp.sendPersonForwardMessage(sender_id, reply)
+        return
+
+    @on(GetQQGroupCommand)
+    def cmd_default(self, event: EventContext, **kwargs):
+        message: str = kwargs["message"].strip()
+        if not (message.startswith("de ") or message == "de" or
+                message.startswith("default")):
+            return
+        event.prevent_postorder()
+        cqhttp: CQHTTP_Protocol = self.emit(Events.GetCQHTTP__)
+        cqhttp.sendGroupMessage(
+            kwargs["launcher_id"], "[bot] 群聊暂不支持此命令")
+
+    @on(GetWXCommand)
+    def cmd_default(self, event: EventContext, **kwargs):
+        message: str = kwargs["command"].strip()
+        if not (message.startswith("de ") or message == "de" or
+                message.startswith("default")):
+            return
+        if message.startswith("default"):
+            message = message[7:].strip()
+        elif message.startswith("de "):
+            message = message[2:].strip()
+        elif message == "de":
+            message = ""
+        event.prevent_postorder()
+        wcf: Wcf = self.emit(Events.GetWCF__)
+        config = self.emit(Events.GetConfig__)
+        sender = kwargs["roomid"] if kwargs["roomid"] else kwargs["sender"]
+        params = message.split()
+
+        if len(params) == 0:
+            params = [None]
+        # 输出目前所有情景预设
+        import os
+        default_prompt_describe = config.default_prompt_describe
+        default_prompt_permission = config.default_prompt_permission
+        default_prompt_permission_password = config.default_prompt_permission_password
+        prompts = config.default_prompt
+        openai = self.emit(Events.GetOpenAi__)
+        session_name = openai.sessions_dict.get(f'wx_{sender}')
+        if session_name is None:
+            session_name = "default"
+        else:
+            session_name = session_name.role_name
+        reply_str = "[bot] 当前情景预设：{}\n".format(session_name)
+        reply_str += "默认情景预设:{}\n\n".format("default")
+        reply_str += "用户请使用 !<reset/r> <情景预设名称> 来设置当前情景预设\n\n"
+        reply_str += "用户也可使用 !<reset/r> <名称编号> 来设置当前情景预设\n\n"
+        reply_str += "\n\n情景预设名称列表:\n"
+        default_password_path = os.path.join(os.path.dirname(
+            os.path.abspath(__file__)), 'default_password_wx.txt')
+
+        # 用文件的方式记录已经输入过密码的人
+        with open(default_password_path, 'r') as file:
+            account_list = file.readlines()
+        account_list = [account.strip() for account in account_list]  # 删除末尾换行符
+        permission = True if sender in account_list else False  # False表示只能查看部分
+        if params[0] == default_prompt_permission_password and not sender in account_list:
+            if sender.endswith("@chatroom"):
+                wcf.send_text(
+                    "[bot] 群聊暂不支持无限制模式~", sender)
+                return
+            with open(default_password_path, 'a') as file:
+                try:
+                    friends_list = wcf.get_friends()
+                    for friend in friends_list:
+                        if friend["wxid"] == sender:
+                            friend_name = friend["remark"] if friend["remark"] else friend["name"]
+                            break
+                    wcf.send_text(
+                        "[{}][{}]通过default_password验证".format(friend_name, sender), sender)
+                    self.emit(Events.GetCQHTTP__).NotifyAdmin(
+                        "微信[{}][{}]通过default_password验证".format(friend_name, sender))
+                    file.write('{}\n'.format(sender))
+                    permission = True
+                except Exception as e:
+                    wcf.send_text(
+                        f"[bot]err: 意外的错误! 请联系管理员处理!\n{e}", sender)
+            return
+
+        # 查看通过default_password验证的用户
+        elif params[0] == "ls":
+            if kwargs["is_admin"]:
+                account_reply = ""
+                friends_list = wcf.get_friends()
+                for wx_id in account_list:
+                    for friend in friends_list:
+                        if friend["wxid"] == wx_id:
+                            account_reply += f'\n[{friend["remark"] if friend["remark"] else friend["name"]}][{wx_id}]'
+                            break
+                    else:
+                        account_reply += f"\n[未知][{wx_id}]"
+                wcf.send_text(
+                    "通过default_password验证的列表: {}".format(account_reply), sender)
+            else:
+                wcf.send_text("[bot] 权限不足", sender)
+            return
+
+        # 查看所有情景预设的详细信息
+        elif params[0] == "all":
+            if kwargs["is_admin"]:
+                wcf.send_text("[bot] 请前往QQ查看", sender)
+            else:
+                wcf.send_text("[bot] 权限不足", sender)
+            return
+
+        i = 1
+        for key in prompts:
+            if key in default_prompt_permission or permission:
+                reply_str += "   - [{}]{}\n".format(i, key)
+                i += 1
+        reply_str += "\n\n详细信息:"
+        i = 1
+        for key in prompts:
+            if key in default_prompt_permission or permission:
+                reply_str += "\n\n[{}] 名称: {}".format(i, key)
+                i += 1
+                if key in default_prompt_describe:
+                    reply_str += "\n   - [role] 自我介绍\n   - [content] {}".format(
+                        default_prompt_describe[key])
+                else:
+                    reply_str += "\n   - 该角色尚无自我介绍"
+
+        wcf.send_text(reply_str, sender)
         return

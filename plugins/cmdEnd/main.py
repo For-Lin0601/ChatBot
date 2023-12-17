@@ -28,3 +28,12 @@ class EndCommand(Plugin):
         self.emit(Events.GetCQHTTP__).sendGroupMessage(
             group_id=kwargs["launcher_id"], message=f"[bot]err: 无命令响应: !{message}"
         )
+
+    @on(GetWXCommand)
+    def cmd_end(self, event: EventContext, **kwargs):
+        message: str = kwargs["command"]
+        event.prevent_postorder()
+        self.emit(Events.GetWCF__).send_text(
+            msg=f"[bot]err: 无命令响应: !{message}",
+            receiver=kwargs["roomid"] if kwargs["roomid"] else kwargs["sender"]
+        )

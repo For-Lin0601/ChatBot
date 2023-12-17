@@ -21,11 +21,10 @@ class RunningFlag:
     description="QQ机器人",
     version="1.0.0",
     author="For_Lin0601",
-    priority=1
+    priority=1,
+    # enabled=False  # TODO 注释掉这行, 默认启用
 )
 class QQbot(Plugin):
-
-    listeners: dict[str, list[callable]] = {}
 
     def __init__(self):
         pass
@@ -42,7 +41,7 @@ class QQbot(Plugin):
         self.set_reload_config("http_url", self.http_url)
 
     def on_stop(self):
-        self.is_run_flag = False
+        self.running_flag.flag = False
 
     @on(PluginsLoadingFinished)
     @on(PluginsReloadFinished)
@@ -81,22 +80,13 @@ class QQbot(Plugin):
                     "go-cqhttp", "go-cqhttp_windows_amd64.exe")
                 os.system(f'"{executable_path}" -faststart')
 
-            # TODO 记得开启, 以及下面time.sleep至少10秒, 推荐12秒
             # 调试的时候可以注释掉这行, 运行主线程后在新命令行开启go-cqhttp
             # 这样重启或热重载机器人不影响go-cqhttp运行, 大大减少机器人被风控的概率
 
             # 启用新线程运行go-cqhttp
+            self.emit(Events.SubmitSysTask__, fn=run_gocq_exe)
 
-            # self.emit(Events.SubmitSysTask__, fn=run_gocq_exe)
-
-            def _start_bot():
-                time.sleep(12)
-                logging.info(
-                    f"QQ: {self.config.qq}, MAH: {self.config.host}:{self.config.port}")
-                logging.critical(
-                    f'程序启动完成,如长时间未显示 "CQ WebSocket 服务器已启动: {self.config.ws_address},  CQ HTTP 服务器已启动: {self.config.http_address}" 请检查配置')
-                self._run()
-            self.emit(Events.SubmitSysTask__, fn=_start_bot)
+            self.emit(Events.SubmitSysTask__, fn=self._run)
         else:
             self.running_flag = self.get_reload_config("running_flag")
             self.ws_url = self.get_reload_config("ws_url")
@@ -160,6 +150,13 @@ servers:
 
     def _run(self):
         """监听事件"""
+        # time.sleep至少10秒, 推荐12秒
+        time.sleep(12)
+        logging.info(
+            f"QQ: {self.config.qq}, MAH: {self.config.host}:{self.config.port}")
+        logging.critical(
+            f'程序启动完成,如长时间未显示 "CQ WebSocket 服务器已启动: {self.config.ws_address},  CQ HTTP 服务器已启动: {self.config.http_address}" 请检查配置')
+
         async def listen():
             self.emit(QQClientSuccess)
             async with websockets.connect(self.ws_url) as websocket_event:

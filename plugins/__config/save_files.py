@@ -28,11 +28,11 @@ def save_files(cls: 'Plugin', main_file_name):
 
         marker = f"########## {plugin.name=} {plugin.path=} ##########".replace(
             "\\", "/")
-        pattern = f"{marker}(.*)(?=(########## plugin.name=(.*) plugin.path=(.*) ##########)|$)"
+        pattern = f"{marker}(.*?)(?=(########## plugin.name=(.*) plugin.path=(.*) ##########)|$)"
         match = re.search(pattern, main_file_content, re.DOTALL)
         if match:
             main_file_content = main_file_content.replace(
-                match.group(), marker + "\n" + file_content.rstrip())
+                match.group(), marker + "\n" + file_content.rstrip() + "\n\n\n")
         else:
             main_file_content += f"\n\n\n{marker}\n{file_content}"
 

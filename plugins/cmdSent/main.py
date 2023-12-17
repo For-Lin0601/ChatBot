@@ -58,6 +58,27 @@ class SentCommand(Plugin):
         cqhttp.sendPersonMessage(sender_id, reply)
         return
 
+    @on(GetQQGroupCommand)
+    def group_send(self, event: EventContext, **kwargs):
+        message: str = kwargs["message"].strip()
+        pattern_alarm = r'^s[^a-zA-Z]+'
+        if not (re.search(pattern_alarm, message) or message == "s" or message.startswith("sent")):
+            return
+        event.prevent_postorder()
+        cqhttp: CQHTTP_Protocol = self.emit(Events.GetCQHTTP__)
+        group_id = kwargs["group_id"]
+        cqhttp.sendGroupMessage(group_id, "[bot] 群聊暂不支持此命令")
+
+    @on(GetWXCommand)
+    def wx_send(self, event: EventContext, **kwargs):
+        message: str = kwargs["command"].strip()
+        pattern_alarm = r'^s[^a-zA-Z]+'
+        if not (re.search(pattern_alarm, message) or message == "s" or message.startswith("sent")):
+            return
+        event.prevent_postorder()
+        sender = kwargs["roomid"] if kwargs["roomid"] else kwargs["sender"]
+        self.emit(Events.GetWCF__).send_text("[bot] 微信暂不支持此命令", sender)
+
     def sent_from_admin(self, message, sender_id, cqhttp: CQHTTP_Protocol):
         """以管理员身份发起对话"""
         params = message.split()

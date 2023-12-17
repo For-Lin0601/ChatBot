@@ -171,6 +171,10 @@ class OpenAiInteract(Plugin):
                 # "[bot]err: OpenAi API 内部错误, 请稍后重试"
                 logging.warning(f"OpenAi API 内部错误, 临时切换下一个 API Key: {str_e}")
                 return self.request_completion(session_name, message, self.api_key_index + 1)
+            elif "远程主机强迫关闭了一个现有的连接。" in str_e:
+                # "[bot]err: OpenAi API 连接超时, 请稍后重试"
+                logging.warning(f"OpenAi API 连接超时, 临时切换下一个 API Key: {str_e}")
+                return self.request_completion(session_name, message, self.api_key_index + 1)
             elif "maximum context length" in str_e:
                 # "[bot]err: 会话历史记录过长, 请用'!reset'重置会话"
                 logging.warning(f"OpenAi API 历史记录过长: {str_e}")

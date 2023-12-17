@@ -29,3 +29,14 @@ class HelpCommand(Plugin):
             user_id=kwargs["sender_id"],
             message=self.emit(Events.GetConfig__).help_message
         )
+
+    @on(GetWXCommand)
+    def wx_send(self, event: EventContext, **kwargs):
+        message: str = kwargs["command"].strip()
+        if message != "help":
+            return
+        event.prevent_postorder()
+        self.emit(Events.GetWCF__).send_text(
+            self.emit(Events.GetConfig__).help_message,
+            kwargs["roomid"] if kwargs["roomid"] else kwargs["sender"]
+        )

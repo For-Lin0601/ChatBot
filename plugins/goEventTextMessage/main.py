@@ -38,7 +38,7 @@ class TextMessageEventPlugin(Plugin):
         message: PersonMessage = kwargs["QQevents"]
 
         # 忽略自身消息
-        if message.sender == self.config.qq:
+        if message.user_id == self.config.qq:
             return
 
         # 此处只处理纯文本消息
@@ -48,8 +48,12 @@ class TextMessageEventPlugin(Plugin):
         event.prevent_postorder()
 
         # 检查发送方是否被禁用
-        if self.is_banned("person", message.sender):
-            logging.debug(f"根据禁用列表忽略[person_{message.sender}]的消息")
+        if self.is_banned("person", message.user_id):
+            logging.debug(f"根据禁用列表忽略[person_{message.user_id}]的消息")
+            return
+
+        if self.emit(QQPersonMessageReceived) is False:
+            logging.debug(f"根据插件忽略[person_{message.user_id}]的消息")
             return
 
         self.cqhttp: CQHTTP_Protocol = self.emit(Events.GetCQHTTP__)
@@ -101,7 +105,7 @@ class TextMessageEventPlugin(Plugin):
         message: GroupMessage = kwargs["QQevents"]
 
         # 忽略自身消息
-        if message.sender == self.config.qq:
+        if message.user_id == self.config.qq:
             return
 
         event.prevent_postorder()
@@ -134,7 +138,7 @@ class TextMessageEventPlugin(Plugin):
                         break
                 else:
                     # ramdom_rate字段随机值0.0-1.0
-                    if random.random() < response_rules["random_rate"]:
+                    if random.random() >= response_rules["random_rate"]:
                         logging.debug(f"根据规则忽略 {message.user_id}: {msg}")
                         return
         else:

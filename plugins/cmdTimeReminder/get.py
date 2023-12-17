@@ -561,6 +561,16 @@ def check_internet_status(plugin_host: CQHTTP_Protocol, my_qq_number: int) -> No
         else:
             plugin_host.sendPersonMessage(
                 my_qq_number, "[bot]err: 机革未自动连接到互联网！！！")
+            try:
+                from Models.Plugins import Plugin
+                from Events import GetWCF__, GetConfig__
+                my_wx_id = Plugin.emit(GetConfig__).my_wx_id
+                wcf = Plugin.emit(GetWCF__)
+                for _ in range(5):
+                    wcf.send_text("[bot]err: 机革未自动连接到互联网！！！", my_wx_id)
+            except Exception as e:
+                import logging
+                logging.error(f"机革未自动连接到互联网时发生错误：{e}")
 
     except Exception as e:
         plugin_host.sendPersonMessage(

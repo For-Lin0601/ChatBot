@@ -59,7 +59,6 @@ SetConfig__ = "set_config__"
 ```"""
 
 
-
 ########## plugin.name='ThreadCtlPlugin' plugin.path='//plugins//__threadctl//main' ##########
 SubmitSysTask__ = "submit_sys_task__"
 """提交系统任务
@@ -96,7 +95,6 @@ SubmitUserTask__ = "submit_user_task__"
     return:
         Future: 返回任务
 ```"""
-
 
 
 ########## plugin.name='QQbot' plugin.path='//plugins//gocqOnQQ//main' ##########
@@ -317,6 +315,41 @@ QQ_lifecycle = "QQ_lifecycle"
 ```"""
 
 
+########## plugin.name='WeChatbot' plugin.path='//plugins//wcferry//main' ##########
+GetWCF__ = "get_wcf__"
+"""获取wcf对象
+```python
+    kwargs:
+        None
+
+    return:
+        wcf:  # wcf对象, 发送微信消息使用
+        # 具体请看 from wcferry import Wcf
+```"""
+
+
+# `WX_`开头的一律不返回, 插件自行处理并提交下方`post`事件
+
+
+WXClientSuccess = "wx_client_success"
+"""微信客户端连接成功(仅在程序启动时触发)(`WX_`开头一律不用返回)
+```python
+    kwargs:
+        None
+```"""
+
+
+##### 微信事件只有WxMsg一种 #####
+
+
+Wx_msg = "wx_msg"
+"""收到微信消息(`WX_`开头一律不用返回)
+```python
+    kwargs:
+        Wx_msg: WxMsg   # 数据存储类
+        is_admin: bool  # 是否为管理员
+```"""
+
 
 ########## plugin.name='OpenAiInteract' plugin.path='//plugins//OpenAi//main' ##########
 GetOpenAi__ = "get_openai__"
@@ -329,32 +362,72 @@ GetOpenAi__ = "get_openai__"
         openai: pkg.openai.OpenAI
 ```"""
 
-SessionExpired = "session_expired"
-"""会话过期时触发
+
+########## plugin.name='WxChatTextMessageEventPlugin' plugin.path='//plugins//wcEventTextMessage//main' ##########
+GetWXCommand = "get_wx_command"
+"""收到微信命令
 ```python
     kwargs:
-        session_name: str 会话名称(<launcher_type>_<launcher_id>)
-        session: pkg.openai.session.Session 会话对象
-        session_expire_time: int 已设置的会话过期时间(秒)
+        command: str           # 好友命令文本(去除了前置感叹号)
+        message: WxMsg         # 数据存储类
+        sender: int            # 发送者ID
+        roomid: Optional[str]  # (仅群消息有)群 id
+        is_admin: bool         # 是否为管理员
+
+    return:
+        None
 ```"""
 
-KeyExceeded = "key_exceeded"
-"""api-key超额时触发
+WXMessageReceived = "qq_person_message_received"
+"""收到私聊消息时, 在判断是否应该响应前触发
 ```python
     kwargs:
-        key_name: str 超额的api-key名称
-        usage: dict 超额的api-key使用情况
-        exceeded_keys: list[str] 超额的api-key列表
+        message: WxMsg  # 数据存储类
+
+        return:
+        bool:  # 是否阻止默认行为
 ```"""
 
-KeySwitched = "key_switched"
-"""api-key超额切换成功时触发, 此事件不支持阻止默认行为
+
+########## plugin.name='banWordsUtil' plugin.path='//plugins//banWords//main' ##########
+BanWordCheck__ = "ban_word_check__"
+"""检查是否包含敏感词
 ```python
     kwargs:
-        key_name: str 切换成功的api-key名称
-        key_list: list[str] api-key列表
+        message: str 消息
+
+    return:
+        bool 是否包含敏感词
 ```"""
 
+BanWordProcess__ = "ban_word_process__"
+"""处理敏感词
+```python
+    kwargs:
+        message: str 消息
+
+    return:
+        str 处理后的消息
+```"""
+
+
+########## plugin.name='ForwardMessageUtil' plugin.path='//plugins//goForwordMessage//main' ##########
+
+ForwardMessage__ = "forward_message__"
+"""包装转发消息, 传入字符串则按一千字左右一分割, 列表则一个元素一分割
+```python
+    kwargs:
+        message: Union[str, list]              # 消息
+        qq: Union[int, list] = bot.user_id     # 发送人
+        name: Union[str, list] = bot.nickname  # 发送人昵称
+        # 若 qq 或 name 为空, 会使用登入号的 QQ号 或 QQ昵称
+        # 注意要为列表的话, 三个必须一起为列表, 且长度一致, 将会一一对应转化
+        # text列表可为 list[str] , 也可为自定义小列表, 小列表内应为 .plugins.gocqOnQQ.entitiles.components 中的合法QQ消息
+        # text内不可混淆两种方式, 在此仅检查text[0]的种类, 不做额外检查
+
+    return:
+        Union[list, bool]       # 消息链
+```"""
 
 
 ########## plugin.name='TextMessageEventPlugin' plugin.path='//plugins//goEventTextMessage//main' ##########
@@ -397,7 +470,6 @@ QQPersonMessageReceived = "qq_person_message_received"
 ```"""
 
 
-
 ########## plugin.name='CmdCommand' plugin.path='//plugins//cmdCmd//main' ##########
 CmdCmdHelp = "cmd_cmd_help"
 """获取指令用法
@@ -411,43 +483,3 @@ CmdCmdHelp = "cmd_cmd_help"
 
 
 
-########## plugin.name='banWordsUtil' plugin.path='//plugins//banWords//main' ##########
-BanWordCheck__ = "ban_word_check__"
-"""检查是否包含敏感词
-```python
-    kwargs:
-        message: str 消息
-
-    return:
-        bool 是否包含敏感词
-```"""
-
-BanWordProcess__ = "ban_word_process__"
-"""处理敏感词
-```python
-    kwargs:
-        message: str 消息
-
-    return:
-        str 处理后的消息
-```"""
-
-
-
-########## plugin.name='ForwardMessageUtil' plugin.path='//plugins//goForwordMessage//main' ##########
-
-ForwardMessage__ = "forward_message__"
-"""包装转发消息, 传入字符串则按一千字左右一分割, 列表则一个元素一分割
-```python
-    kwargs:
-        message: Union[str, list]              # 消息
-        qq: Union[int, list] = bot.user_id     # 发送人
-        name: Union[str, list] = bot.nickname  # 发送人昵称
-        # 若 qq 或 name 为空, 会使用登入号的 QQ号 或 QQ昵称
-        # 注意要为列表的话, 三个必须一起为列表, 且长度一致, 将会一一对应转化
-        # text列表可为 list[str] , 也可为自定义小列表, 小列表内应为 .plugins.gocqOnQQ.entitiles.components 中的合法QQ消息
-        # text内不可混淆两种方式, 在此仅检查text[0]的种类, 不做额外检查
-
-    return:
-        Union[list, bool]       # 消息链
-```"""

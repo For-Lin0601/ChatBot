@@ -170,3 +170,4 @@ config.py
 session.token
 **/temp.jpg
 **/watermark.json
+**/watermark_wx.json

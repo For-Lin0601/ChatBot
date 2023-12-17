@@ -6,6 +6,7 @@ import Events
 from Models.Plugins import *
 from .get_picture import process_mod
 from ..gocqOnQQ.CQHTTP_Protocol.CQHTTP_Protocol import CQHTTP_Protocol
+from wcferry import Wcf
 
 
 @register(
@@ -67,3 +68,84 @@ class RandomPictureCommand(Plugin):
 
         cqhttp.sendPersonMessage(sender_id, replay)
         cqhttp.recall(tmp_id)
+
+    @on(GetQQGroupCommand)
+    def get_random_picture(self, event: EventContext, **kwargs):
+        message: str = kwargs["message"].strip()
+        if not (re.search('照片|图片|壁纸|ranimg|闪照', message)
+                and not re.search('hi|diray', message)):
+            return
+        event.prevent_postorder()
+        config = self.emit(Events.GetConfig__)
+        params = re.sub(
+            r'^照片|图片|壁纸|ranimg|闪照', '', message
+        ).strip().split()
+        launcher_id = kwargs["launcher_id"]
+        cqhttp: CQHTTP_Protocol = self.emit(Events.GetCQHTTP__)
+
+        logging.debug("发送提示消息: 收到图片获取请求, 网络请求中")
+        tmp_id = cqhttp.sendGroupMessage(
+            launcher_id, "[bot] 收到图片获取请求, 网络请求中"
+        ).message_id
+
+        for _ in range(3):
+            try:
+                replay, program = process_mod(params)
+                break
+            except:
+                pass
+        else:
+            replay = "[bot]err: 网络波动, 稍后重试~"
+
+        if isinstance(replay, str):
+            cqhttp.sendGroupMessage(launcher_id, replay)
+            cqhttp.recall(tmp_id)
+            return
+
+        replay = replay.toString()
+
+        if re.search('闪照', message):
+            try:
+                replay = replay[:-1] + ",type=flash" + replay[-1]
+            except:
+                pass
+        elif config.include_image_description and program not in [['随机'], ['']]:
+            replay = replay + ' '.join(program)
+
+        cqhttp.sendGroupMessage(launcher_id, replay)
+        cqhttp.recall(tmp_id)
+
+    @on(GetWXCommand)
+    def get_random_picture(self, event: EventContext, **kwargs):
+        message: str = kwargs["command"].strip()
+        if not (re.search('照片|图片|壁纸|ranimg|闪照', message)
+                and not re.search('hi|diray', message)):
+            return
+        event.prevent_postorder()
+        config = self.emit(Events.GetConfig__)
+        params = re.sub(
+            r'^照片|图片|壁纸|ranimg|闪照', '', message
+        ).strip().split()
+        sender = kwargs["roomid"] if kwargs["roomid"] else kwargs["sender"]
+        wcf: Wcf = self.emit(Events.GetWCF__)
+
+        logging.debug("发送提示消息: 收到图片获取请求, 网络请求中")
+        wcf.send_text(
+            "[bot] 收到图片获取请求, 网络请求中", sender)
+        for _ in range(3):
+            try:
+                replay, program = process_mod(params)
+                break
+            except:
+                pass
+        else:
+            replay = "[bot]err: 网络波动, 稍后重试~"
+
+        if isinstance(replay, str):
+            wcf.send_text(kwargs["launcher_id"], replay)
+            return
+
+        wcf.send_image(
+            os.path.join(os.path.dirname(__file__), "temp.jpg"),
+            sender
+        )

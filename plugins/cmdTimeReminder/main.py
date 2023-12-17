@@ -258,6 +258,27 @@ class TimeReminderCommand(Plugin):
             cqhttp.sendPersonMessage(sender_id, reply)
             return
 
+    @on(GetQQGroupCommand)
+    def group_send(self, event: EventContext, **kwargs):
+        message: str = kwargs["message"].strip()
+        pattern_alarm = r'^a[^a-zA-Z]+'
+        if not (re.search(pattern_alarm, message) or message == "a" or message.startswith("alarm")):
+            return
+        event.prevent_postorder()
+        cqhttp: CQHTTP_Protocol = self.emit(Events.GetCQHTTP__)
+        group_id = kwargs["group_id"]
+        cqhttp.sendGroupMessage(group_id, "[bot] 群聊暂不支持此命令")
+
+    @on(GetWXCommand)
+    def wx_send(self, event: EventContext, **kwargs):
+        message: str = kwargs["command"].strip()
+        pattern_alarm = r'^a[^a-zA-Z]+'
+        if not (re.search(pattern_alarm, message) or message == "a" or message.startswith("alarm")):
+            return
+        event.prevent_postorder()
+        sender = kwargs["roomid"] if kwargs["roomid"] else kwargs["sender"]
+        self.emit(Events.GetWCF__).send_text("[bot] 微信暂不支持此命令", sender)
+
     def timed_reminder_handle(self):
         """定时提醒"""
         current_file_path = os.path.dirname(os.path.abspath(__file__))
@@ -456,7 +477,7 @@ class TimeReminderCommand(Plugin):
                                         weather_reply = "[bot]err: ~~~天气查询~~~\n服务器请求错误!"
                                     cqhttp.sendPersonMessage(qq_number, weather_reply)
 
-                                    for i in range(3):
+                                    for i in range(5):
                                         try:
                                             # 查询每日推荐
                                             if qq_number in self.emit(GetConfig__).admin_list:

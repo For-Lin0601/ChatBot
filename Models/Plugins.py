@@ -371,7 +371,7 @@ class Plugin:
                             '热重载模块: {} 失败: {}'.format(prefix + item.name, sys.exc_info()))
                         traceback.print_exc()
 
-        logging.info("开始重载插件")
+        logging.critical("开始重载插件")
         for plugin in cls.plugin_list:
             try:
                 plugin.on_reload()
@@ -386,6 +386,7 @@ class Plugin:
         Plugin._initialize_plugins()
         Plugin.emit(PluginsReloadFinished)
         Plugin.__reload_config__ = {}
+        logging.critical("插件热重载完成")
 
     @classmethod
     def _stop(cls):

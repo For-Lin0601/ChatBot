@@ -39,10 +39,28 @@ class ReloadCommand(Plugin):
                     ])
             return
 
-        logging.critical("开始插件热重载")
+        self.set_reload_config("reload_command_from", "qq")
+        self.emit(Events.SubmitSysTask__, fn=Plugin._reload)
+
+    @on(GetWXCommand)
+    def wx_send(self, event: EventContext, **kwargs):
+        message: str = kwargs["command"].strip()
+        if message not in ["re", "reload"]:
+            return
+        event.prevent_postorder()
+        sender = kwargs["roomid"] if kwargs["roomid"] else kwargs["sender"]
+        if not kwargs["is_admin"]:
+            self.emit(Events.GetWCF__).send_text("[bot] 权限不足", sender)
+            return
+
+        self.set_reload_config("reload_command_from", sender)
         self.emit(Events.SubmitSysTask__, fn=Plugin._reload)
 
     @on(PluginsReloadFinished)
     def on_plugins_reload_finished(self, event: EventContext, **kwargs):
-        logging.critical("插件热重载完成")
-        self.emit(Events.GetCQHTTP__).NotifyAdmin("[bot] 插件热重载完成")
+        reload_command_from = self.get_reload_config("reload_command_from")
+        if reload_command_from == "qq":
+            self.emit(Events.GetCQHTTP__).NotifyAdmin("[bot] 插件热重载完成")
+        else:
+            self.emit(Events.GetWCF__).send_text(
+                "[bot] 插件热重载完成", reload_command_from)

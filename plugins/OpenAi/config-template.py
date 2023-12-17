@@ -50,3 +50,7 @@ prompt_submit_length = 4096
 
 # 每个会话的过期时间, 单位为秒, 原默认值20分钟, 即 1200 ,注意这里的数字只能是整数
 session_expire_time = 600000
+
+
+# 消息超时提示
+tip_timeout_message = "【检测到时空风暴影响，返回信号被确认超时】"
