@@ -54,7 +54,7 @@ class Plugin:
     """事件处理器列表
 
     调用请用`self.emit(str)`
-
+    ```python
     例如: {
         "group_normal_message_received": [              # 事件名
             [0, <function check_message at 0x000001>],  # 第一项为类的`cid`标识, 第二项为函数
@@ -65,7 +65,7 @@ class Plugin:
             [1, <function reply_person at 0x000004>],
         ]
     }
-    """
+    ```"""
 
     cid = 0
     """类id标识, 自动获取, 用作抽象函数寻找对应类实例的标识"""
@@ -99,9 +99,9 @@ class Plugin:
     用 set_reload_config(), get_reload_config() 调用
 
     内部形如:
-    ```py
+    ```python
     {
-        f"{plugin.name} {plugin.path}" = {           # 针对每个插件维护一个字典
+        f"{plugin.name} {plugin.path}" = {  # 针对每个插件维护一个字典
             "set_reload_config": set_reload_config,  # 插件设定的保留值
         }
     }

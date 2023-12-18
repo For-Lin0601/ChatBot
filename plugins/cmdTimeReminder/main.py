@@ -43,9 +43,24 @@ class TimeReminderCommand(Plugin):
 
     @on(CmdCmdHelp)
     def help(self, event: EventContext, **kwargs):
-        event.return_value.append(
-            "!alarm - 定时提醒"
-        )
+        event.return_value["alarm"] = {
+            "is_admin": False,
+            "alias": ["a"],
+            "summary": "定时提醒",
+            "usage": (
+                "!alarm\n"
+                " - 定时提醒\n"
+                "!alarm ls\n"
+                " - 查看所有定时提醒\n"
+                "!alarm all\n"
+                " - [管理员]查看所有定时提醒\n"
+                "!alarm d [编号]\n"
+                " - 删除指定定时提醒\n"
+                "!alarm set [编号] [城市]\n"
+                " - 设置每日短句"
+            ),
+            "description": "详情请输入`!alarm`查看, 在此不赘述, 可用作闹钟, 但还请注意QQ存在意外掉线的问题, 所以请勿过于依赖此功能"
+        }
 
     @on(GetQQPersonCommand)
     def add_time_reminder(self, event: EventContext, **kwargs):
@@ -72,7 +87,7 @@ class TimeReminderCommand(Plugin):
             reply += "\n- 间隔单位: 年月日时分秒"
             reply += "\n- 次数单位: ？次/无限"
             reply += "\n- 允许出现空缺, 会一定程度地自动填充"
-            reply += "\n- 井号 (#) 为时间标识, 仅会展示井号 (#) 之后的信息, 可省略"
+            reply += "\n- 井号 (#) 为时间标识, 仅会展示井号 (#) 之后的信息, 可忽略"
             reply += "\n- 因为本定时提醒基于QQ机器人, 所以请勿过于依赖此功能。不排除机器人停机等意外情况！！！"
             reply += "\n\n-> 由于标准格式过于复杂, 所以支持 [自然语言识别]"
             reply += "\n-------------"

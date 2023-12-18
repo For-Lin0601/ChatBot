@@ -1,5 +1,6 @@
 
 
+import time
 import re
 
 import Events
@@ -19,9 +20,17 @@ class RandomPictureCommand(Plugin):
 
     @on(CmdCmdHelp)
     def help(self, event: EventContext, **kwargs):
-        event.return_value.append(
-            "!图片 - 随机图片获取"
-        )
+        event.return_value["图片"] = {
+            "is_admin": False,
+            "alias": ["照片", "壁纸", "ranimg", "闪照"],
+            "summary": "随机图片获取",
+            "usage": "!图片 <番名> <横屏|竖屏>",
+            "description": (
+                "触发词可选: 照片|图片|壁纸|ranimg|闪照, QQ能发送闪照\n"
+                "番名可选, 不定时更新\n"
+                "横竖屏可选(实际只区分横屏竖屏, 其余为可识别项): pc|PC|电脑|横屏|pe|PE|android|mobile|手机|安卓|竖屏|random|随机"
+            )
+        }
 
     @on(GetQQPersonCommand)
     def get_random_picture(self, event: EventContext, **kwargs):
@@ -42,32 +51,36 @@ class RandomPictureCommand(Plugin):
             sender_id, "[bot] 收到图片获取请求, 网络请求中"
         ).message_id
 
-        for _ in range(3):
-            try:
-                replay, program = process_mod(params)
-                break
-            except:
-                pass
-        else:
-            replay = "[bot]err: 网络波动, 稍后重试~"
+        start_time = time.time()
+        try:
+            for _ in range(3):
+                try:
+                    replay, program = process_mod(params)
+                    break
+                except:
+                    pass
+            else:
+                replay = "[bot]err: 网络波动, 稍后重试~"
 
-        if isinstance(replay, str):
+            if isinstance(replay, str):
+                cqhttp.sendPersonMessage(sender_id, replay)
+                return
+
+            replay = replay.toString()
+
+            if re.search('闪照', message):
+                try:
+                    replay = replay[:-1] + ",type=flash" + replay[-1]
+                except:
+                    pass
+            elif config.include_image_description and program not in [['随机'], ['']]:
+                replay = replay + ' '.join(program)
+
             cqhttp.sendPersonMessage(sender_id, replay)
+        finally:
+            if time.time() - start_time > 0.5:
+                time.sleep(0.5 - (time.time() - start_time))
             cqhttp.recall(tmp_id)
-            return
-
-        replay = replay.toString()
-
-        if re.search('闪照', message):
-            try:
-                replay = replay[:-1] + ",type=flash" + replay[-1]
-            except:
-                pass
-        elif config.include_image_description and program not in [['随机'], ['']]:
-            replay = replay + ' '.join(program)
-
-        cqhttp.sendPersonMessage(sender_id, replay)
-        cqhttp.recall(tmp_id)
 
     @on(GetQQGroupCommand)
     def get_random_picture(self, event: EventContext, **kwargs):
@@ -88,32 +101,36 @@ class RandomPictureCommand(Plugin):
             launcher_id, "[bot] 收到图片获取请求, 网络请求中"
         ).message_id
 
-        for _ in range(3):
-            try:
-                replay, program = process_mod(params)
-                break
-            except:
-                pass
-        else:
-            replay = "[bot]err: 网络波动, 稍后重试~"
+        start_time = time.time()
+        try:
+            for _ in range(3):
+                try:
+                    replay, program = process_mod(params)
+                    break
+                except:
+                    pass
+            else:
+                replay = "[bot]err: 网络波动, 稍后重试~"
 
-        if isinstance(replay, str):
+            if isinstance(replay, str):
+                cqhttp.sendGroupMessage(launcher_id, replay)
+                return
+
+            replay = replay.toString()
+
+            if re.search('闪照', message):
+                try:
+                    replay = replay[:-1] + ",type=flash" + replay[-1]
+                except:
+                    pass
+            elif config.include_image_description and program not in [['随机'], ['']]:
+                replay = replay + ' '.join(program)
+
             cqhttp.sendGroupMessage(launcher_id, replay)
+        finally:
+            if time.time() - start_time < 0.5:
+                time.sleep(0.5 - (time.time() - start_time))
             cqhttp.recall(tmp_id)
-            return
-
-        replay = replay.toString()
-
-        if re.search('闪照', message):
-            try:
-                replay = replay[:-1] + ",type=flash" + replay[-1]
-            except:
-                pass
-        elif config.include_image_description and program not in [['随机'], ['']]:
-            replay = replay + ' '.join(program)
-
-        cqhttp.sendGroupMessage(launcher_id, replay)
-        cqhttp.recall(tmp_id)
 
     @on(GetWXCommand)
     def get_random_picture(self, event: EventContext, **kwargs):
@@ -122,7 +139,6 @@ class RandomPictureCommand(Plugin):
                 and not re.search('hi|diray', message)):
             return
         event.prevent_postorder()
-        config = self.emit(Events.GetConfig__)
         params = re.sub(
             r'^照片|图片|壁纸|ranimg|闪照', '', message
         ).strip().split()
@@ -134,7 +150,7 @@ class RandomPictureCommand(Plugin):
             "[bot] 收到图片获取请求, 网络请求中", sender)
         for _ in range(3):
             try:
-                replay, program = process_mod(params)
+                replay, _ = process_mod(params)
                 break
             except:
                 pass
@@ -142,7 +158,7 @@ class RandomPictureCommand(Plugin):
             replay = "[bot]err: 网络波动, 稍后重试~"
 
         if isinstance(replay, str):
-            wcf.send_text(kwargs["launcher_id"], replay)
+            wcf.send_text(sender, replay)
             return
 
         wcf.send_image(

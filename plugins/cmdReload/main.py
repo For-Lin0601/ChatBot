@@ -15,9 +15,16 @@ class ReloadCommand(Plugin):
 
     @on(CmdCmdHelp)
     def help(self, event: EventContext, **kwargs):
-        event.return_value.append(
-            "!reload - 执行热重载"
-        )
+        event.return_value["reload"] = {
+            "is_admin": True,
+            "alias": ["re"],
+            "summary": "执行热重载",
+            "usage": "!reload",
+            "description": (
+                "执行热重载, 对于管理员来说主要是gpt api等配置卡住时重新加载配置\n"
+                "对于开发者来说, 便于调试。绝大部分插件都支持热重载, 源码中均有标识"
+            )
+        }
 
     @on(GetQQPersonCommand)
     @on(GetQQGroupCommand)

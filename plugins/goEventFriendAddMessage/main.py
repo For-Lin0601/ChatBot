@@ -29,6 +29,16 @@ class QQFriendAddPlugin(Plugin):
     def on_reload(self):
         self.set_reload_config("friend_add_list", self.friend_add_list)
 
+    @on(CmdCmdHelp)
+    def help(self, event: EventContext, **kwargs):
+        event.return_value["add"] = {
+            "is_admin": True,
+            "alias": [],
+            "summary": "好友添加处理",
+            "usage": "!add [编号]",
+            "description": "正数同意, 负数拒绝。最常用的就是`!add 1`或者`!add -1`, 毕竟大多数情况都是从头处理。此处不太稳定, 尽快处理好友申请吧。热重载或者程序重启后不确保好友申请能否留得住, 如果没留住只能上号手动通过了。此外通过`default_password.txt`中的人会自动通过好友申请"
+        }
+
     @on(QQ_friend_add_event)
     def qq_friend_add_event(self, event: EventContext,  **kwargs):
         config = self.emit(GetConfig__)
@@ -80,12 +90,6 @@ class QQFriendAddPlugin(Plugin):
             self.friend_add_list.append(friend_add)
             cqhttp.NotifyAdmin("新好友请求:\n编号:{}\n昵称:{}\nQQ号:{}\n信息:{}".format(
                 len(self.friend_add_list), friend_add.nickname, friend_add.user_id, friend_add.comment))
-
-    @on(CmdCmdHelp)
-    def help(self, event: EventContext, **kwargs):
-        event.return_value.append(
-            "!add - 处理好友申请(负数拒绝)"
-        )
 
     @on(GetQQPersonCommand)
     def add_person(self, event: EventContext, **kwargs):

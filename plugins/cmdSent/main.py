@@ -22,9 +22,25 @@ class SentCommand(Plugin):
 
     @on(CmdCmdHelp)
     def help(self, event: EventContext, **kwargs):
-        event.return_value.append(
-            "!sent - 向管理员发送信息"
-        )
+        event.return_value["sent"] = {
+            "is_admin": False,
+            "alias": ["s"],
+            "summary": "向管理员发送信息",
+            "usage": "!sent <信息>",
+            "description": (
+                "仅支持发送纯文本消息, 若有图片等信息, 只取最前面第一段文字\n"
+                "这个尖括号是表示写入信息啊, 为什么那么多人原封不动发一个`!s <信息>`过来, 拜托完全不知道怎么处理了\n"
+                "管理员使用需加上对方qq号, `!sent [qq号] <信息>`\n"
+                "qq号可以缩写, 会判断寻找最接近的一个好友, 然后可以用简短的数字来选择好友\n"
+                "比如可以连续发送`!s 16367086`, `!s 1 你好`。基本可以确定会向163670865发送消息(末尾5被省略)\n"
+                "亦或者用`!s ls`查看当前好友列表(这里允许向群发送, 但不允许群里向管理员发送, 太吵啦)\n"
+                "然后可选范围就会很大, 比如有一百个好友, 那么就可以用`!s 100`或者`!s ls100`快速选择到最后一位好友\n"
+                "若未输入发送的内容, 将会把选定的qq号暂存, 可以用`!s <信息>`快速发送到暂存的好友\n"
+                "暂存的配置是所有管理员共用的, 所以高峰期还请尽量打全qq号, 仅在只有一个人使用的时候这些逻辑判断才会比较顺手\n"
+                "此外管理员发送的消息中还可携带命令, 完全以对方身份执行, 但无`message_chain`原型(一般也不用这玩意吧)\n"
+                "比如`!s 1636708665 !help`会向`1636708665`发送帮助信息, 当然也可以发送携带参数的命令, 都没问题"
+            )
+        }
 
     @on(GetQQPersonCommand)
     def cmd_send(self, event: EventContext, **kwargs):
@@ -40,15 +56,14 @@ class SentCommand(Plugin):
         cqhttp: CQHTTP_Protocol = self.emit(Events.GetCQHTTP__)
         sender_id = kwargs["sender_id"]
 
-        reply = "[bot] 已向管理员发送信息[{}]".format(message[:min(20, len(message))] +
-                                             ("   ..." if len(message) > 20 else ""))
-
         # 发起者为管理员
         if kwargs["is_admin"]:
             self.sent_from_admin(message, sender_id, cqhttp)
             return
 
-        elif len(message) == 0:
+        reply = "[bot] 已向管理员发送信息[{}]".format(message[:min(20, len(message))] +
+                                             ("   ..." if len(message) > 20 else ""))
+        if len(message) == 0:
             reply = "[bot]err: 请输入要发送的信息"
 
         else:
@@ -96,7 +111,7 @@ class SentCommand(Plugin):
                     return friend.remark
             for group in groups_list:
                 if group.group_id == qq_id:
-                    return f"group_{group.name}"
+                    return f"group_{group.group_name}"
 
         def _msg_add(i: int) -> str:
             """列表显示设置"""
@@ -298,6 +313,8 @@ class SentCommand(Plugin):
                     self.emit(
                         GetQQPersonCommand,
                         message=answer.replace("!", "").replace("！", ""),
+                        message_chain=None,
+                        launcher_id=self.launcherId_history,
                         sender_id=self.launcherId_history,
                         is_admin=self.launcherId_history in self.emit(GetConfig__).admin_list)
 
@@ -318,16 +335,17 @@ class SentCommand(Plugin):
                     self.answer_history = answer
                     reply = '[bot]err: 信息未发出！该信息疑似命令，请重新组织语言，或用 "!sent" 再次确认发送\n正则表达式: ^\d+[!！][a-zA-Z]+.*$'
                 else:
-                    try:
+                    # 发送信息
+                    if self.launcherId_history in [friend.user_id for friend in friends_list]:
                         cqhttp.sendPersonMessage(
                             self.launcherId_history, "[admin]\n{}".format(answer))
-                        reply = "[bot] 信息: [{}]\n成功发送至[{}][{}]".format(answer[:min(20, len(answer))] +
-                                                                       ("   ..." if len(answer) > 20 else ""), _find(self.launcherId_history), self.launcherId_history)
-                    except:
-                        cqhttp.sendPersonMessage(
+                        reply = "[bot] 信息: [{}]\n成功发送至[{}][{}]".format(
+                            answer[:min(20, len(answer))] + ("   ..." if len(answer) > 20 else ""), _find(self.launcherId_history), self.launcherId_history)
+                    else:
+                        cqhttp.sendGroupMessage(
                             self.launcherId_history, "[admin]\n{}".format(answer))
-                        reply = "[bot] 信息: [{}]\n成功发送至[{}][{}]".format(answer[:min(20, len(answer))] +
-                                                                       ("   ..." if len(answer) > 20 else ""), _find(self.launcherId_history), self.launcherId_history)
+                        reply = "[bot] 信息: [{}]\n成功发送至[{}][{}]".format(
+                            answer[:min(20, len(answer))] + ("   ..." if len(answer) > 20 else ""), _find(self.launcherId_history), self.launcherId_history)
 
         cqhttp.sendPersonMessage(sender_id, reply)
         return

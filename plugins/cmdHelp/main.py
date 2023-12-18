@@ -14,9 +14,13 @@ class HelpCommand(Plugin):
 
     @on(CmdCmdHelp)
     def help(self, event: EventContext, **kwargs):
-        event.return_value.append(
-            "!help - 显示自定义的帮助信息"
-        )
+        event.return_value["help"] = {
+            "is_admin": False,
+            "alias": [],
+            "summary": "显示自定义的帮助信息",
+            "usage": "!help",
+            "description": "机器人操作指南, 新手入门手册"
+        }
 
     @on(GetQQPersonCommand)
     @on(GetQQGroupCommand)

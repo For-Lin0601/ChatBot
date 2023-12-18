@@ -16,9 +16,20 @@ class DefalutCommand(Plugin):
 
     @on(CmdCmdHelp)
     def help(self, event: EventContext, **kwargs):
-        event.return_value.append(
-            "!default - 查看所有情景预设"
-        )
+        event.return_value["default"] = {
+            "is_admin": False,
+            "alias": ["de"],
+            "summary": "查看所有情景预设",
+            "usage": (
+                "!default\n"
+                " - 查看所有情景预设\n"
+                "!default ls\n"
+                " - [管理员]查看通过password的好友列表\n"
+                "!default all\n"
+                " - [管理员]查看所有情景预设"
+            ),
+            "description": "- password 请前往`config.py`中配置`default_prompt_permission_password`字段"
+        }
 
     @on(GetQQPersonCommand)
     def cmd_reload(self, event: EventContext, **kwargs):

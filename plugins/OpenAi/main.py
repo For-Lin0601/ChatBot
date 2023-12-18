@@ -65,20 +65,19 @@ class OpenAiInteract(Plugin):
     sessions_dict: dict[str, Session]
     """QQ以`person_xxx`或`group_xxx`保存
 
-    微信以`wx_person_xxx`或`wx_group_xxx`保存
+    微信以`wx_wxid_xxx`保存
     """
 
     def __init__(self):
         self.api_key_index = 0
+        self.openai_api_keys = self.emit(Events.GetConfig__).openai_api_keys
 
     @on(PluginsLoadingFinished)
     def init(self, events: EventContext, **kwargs):
-        self.openai_api_keys = self.emit(Events.GetConfig__).openai_api_keys
         self.sessions_dict = {}
 
     @on(PluginsReloadFinished)
     def get_config(self, events: EventContext, **kwargs):
-        self.openai_api_keys = self.emit(Events.GetConfig__).openai_api_keys
         self.sessions_dict = self.get_reload_config("session")
 
     def on_reload(self):
@@ -123,13 +122,11 @@ class OpenAiInteract(Plugin):
                 session_name, "default", config.default_prompt["default"], config.session_expire_time)
         self.sessions_dict[session_name].add_user(message)
 
-        # 如果没有可用的 API Key, 通知管理员
+        # 如果没有可用的 API Key
         if not config.openai_api_keys or \
             self.api_key_index >= len(config.openai_api_keys) or \
                 (tmp_api_key_index is not None and tmp_api_key_index >= len(config.openai_api_keys)):
             logging.error("无可用的 OpenAi API Key")
-            self.emit(Events.GetCQHTTP__).NotifyAdmin(
-                f"[bot]err: [{session_name}]无可用的 OpenAi API Key")
             return "[bot]err: 无可用的 OpenAi API Key, 等待管理员处理"
 
         try:
@@ -160,32 +157,56 @@ class OpenAiInteract(Plugin):
             return response_content
         except openai.OpenAIError as e:
             # 如果是 OpenAIError, 尝试使用下一个 API Key
-            if self.sessions_dict[session_name].sessions[-1]["role"] == "user":
-                self.sessions_dict[session_name].sessions.pop()
+            conversation = self.sessions_dict[session_name].sessions
+            if conversation[-1]["role"] == "user":
+                conversation.pop()
             str_e = str(e)
             if "Rate limit reached" in str_e:
                 # "[bot]err: 触发限速策略, 请20秒后重试"
                 logging.warning(f"OpenAi API 限速, 临时切换下一个 API Key: {str_e}")
-                return self.request_completion(session_name, message, self.api_key_index + 1)
+                tmp = tmp_api_key_index if tmp_api_key_index else self.api_key_index
+                return self.request_completion(session_name, message, tmp + 1)
             elif "The server had an error while processing your request. Sorry about that!" in str_e:
                 # "[bot]err: OpenAi API 内部错误, 请稍后重试"
                 logging.warning(f"OpenAi API 内部错误, 临时切换下一个 API Key: {str_e}")
-                return self.request_completion(session_name, message, self.api_key_index + 1)
-            elif "远程主机强迫关闭了一个现有的连接。" in str_e:
+                tmp = tmp_api_key_index if tmp_api_key_index else self.api_key_index
+                return self.request_completion(session_name, message, tmp + 1)
+            elif "远程主机强迫关闭了一个现有的连接。" in str_e \
+                    or "SSLEOFError" in str_e:
                 # "[bot]err: OpenAi API 连接超时, 请稍后重试"
-                logging.warning(f"OpenAi API 连接超时, 临时切换下一个 API Key: {str_e}")
-                return self.request_completion(session_name, message, self.api_key_index + 1)
+                logging.warning(f"OpenAi API 连接超时: {str_e}")
+                self.emit(Events.GetCQHTTP__).NotifyAdmin(
+                    f"[bot]err: [{session_name}]OpenAi API 连接超时"
+                )
+                return config.tip_timeout_message
             elif "maximum context length" in str_e:
                 # "[bot]err: 会话历史记录过长, 请用'!reset'重置会话"
                 logging.warning(f"OpenAi API 历史记录过长: {str_e}")
-                return f"[bot]err: [{session_name}]会话历史记录过长, 请用'!reset'重置会话"
+                # 删除最前面的两个记录, 不删除第一条人格设置
+                if len(conversation) < 3:
+                    # 走到这里得怀疑是不是人格设置太长了, 直接导致token过长(我就是懒得算token)
+                    return f"[bot]err: [{session_name}]会话历史记录过长, 请用'!reset'重置会话"
+                if len(conversation) >= 3:
+                    total_length -= len(conversation[2]["content"])
+                    del conversation[2]
+                if len(conversation) >= 3:
+                    total_length -= len(conversation[2]["content"])
+                    del conversation[2]
+                return self.request_completion(session_name, message)
 
             logging.warning(f"OpenAi API error: {str_e}")
             self.api_key_index += 1
             # 递归调用, 使用下一个 API Key
-            self.emit(Events.GetCQHTTP__).NotifyAdmin(
-                f"[bot]err: [{session_name}]调用 API 失败!\n切换第 {self.api_key_index + 1} 个 OpenAi API Key\n{str_e}")
-            return self.request_completion(session_name, message)
+            if self.api_key_index < len(config.openai_api_keys):
+                self.emit(Events.GetCQHTTP__).NotifyAdmin(
+                    f"[bot]err: [{session_name}]调用 API 失败!API Key:{self.openai_api_keys[self.api_key_index]}\n" +
+                    f"切换第 {self.api_key_index + 1} 个 API Key:{self.openai_api_keys[self.api_key_index+1]}\n{str_e}")
+                return self.request_completion(session_name, message)
+            else:
+                self.emit(Events.GetCQHTTP__).NotifyAdmin(
+                    f"[bot]err: [{session_name}]调用 API 失败!API Key:{self.openai_api_keys[self.api_key_index]}\n" +
+                    f"无可用的 API Key\n{str_e}")
+                return "[bot]err: 无可用的 OpenAi API Key, 等待管理员处理"
         except Exception as e:
             str_e = str(e)
             logging.error(f"Error: {str_e}")

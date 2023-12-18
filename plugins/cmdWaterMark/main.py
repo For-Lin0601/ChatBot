@@ -37,9 +37,16 @@ class WaterMarkCommand(Plugin):
 
     @on(CmdCmdHelp)
     def help(self, event: EventContext, **kwargs):
-        event.return_value.append(
-            "!水印 - 添加水印"
-        )
+        event.return_value["水印"] = {
+            "is_admin": False,
+            "alias": [],
+            "summary": "添加水印",
+            "usage": (
+                "!水印 <信息1> <信息2> <信息3>"
+                " - 三条信息以空格分割"
+            ),
+            "description": "为图片添加水印, 方便交青年大学习什么的截图。所以三个信息基本对应着 班级 姓名 学号。设置完成后直接发图片即可, 提示语以`[PictureForAddWatermark]`开头"
+        }
 
     @on(GetQQPersonCommand)
     def add_watermark(self, event: EventContext, **kwargs):

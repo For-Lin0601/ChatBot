@@ -18,9 +18,20 @@ class ResetCommand(Plugin):
 
     @on(CmdCmdHelp)
     def help(self, event: EventContext, **kwargs):
-        event.return_value.append(
-            "!reset - 重置当前情景预设"
-        )
+        event.return_value["reset"] = {
+            "is_admin": False,
+            "alias": ["r"],
+            "summary": "重置当前情景预设",
+            "usage": (
+                "!reset <预设名|预设编号>"
+                " - 用`!default`查看所有预设"
+            ),
+            "description": (
+                "举例: `!reset 提词器`, 或者缩写为`!r 2`(请注意提词器的编号不一定为2)\n"
+                "也称之为角色扮演, 或者感觉对话太卡顿可以用`!reset`重置。清除历史记录可能会优化一点对话体验\n"
+                "可以自己提供预设给管理员, 让管理员写入`config.py`中的`default_prompt`字段, 即可使用。注意`config.py`中该字段的上下文, 有几个相邻的字段都需要完善。相关提示写在`config.py`中"
+            )
+        }
 
     @on(GetQQPersonCommand)
     def cmd_reset(self, event: EventContext, **kwargs):

@@ -12,13 +12,17 @@ from wcferry import Wcf
     author="For_Lin0601",
     priority=209
 )
-class HelpCommand(Plugin):
+class HistoryCommand(Plugin):
 
     @on(CmdCmdHelp)
     def help(self, event: EventContext, **kwargs):
-        event.return_value.append(
-            "!history - 查看聊天历史记录"
-        )
+        event.return_value["history"] = {
+            "is_admin": False,
+            "alias": [],
+            "summary": "查看聊天历史记录",
+            "usage": "!history",
+            "description": "只能查看自己的, 且聊天记录会在一定时间后清空, 或者总长度大于一定时被暴力截断。唯一要注意的就是代码中的空格真的很占位置"
+        }
 
     @on(GetQQPersonCommand)
     def wx_cmd_history(self, event: EventContext, **kwargs):
