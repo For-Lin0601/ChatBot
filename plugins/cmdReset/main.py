@@ -128,7 +128,7 @@ class ResetCommand(Plugin):
         if len(params) == 0:
             open_ai.sessions_dict[session_name] = Session(
                 session_name, "default", config.default_prompt["default"], config.session_expire_time)
-            wcf.send_text(config.command_reset_name_message, sender)
+            wcf.send_text(config.command_reset_message, sender)
             return
 
         try:
