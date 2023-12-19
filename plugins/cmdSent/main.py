@@ -32,13 +32,13 @@ class SentCommand(Plugin):
                 "这个尖括号是表示写入信息啊, 为什么那么多人原封不动发一个`!s <信息>`过来, 拜托完全不知道怎么处理了\n"
                 "管理员使用需加上对方qq号, `!sent [qq号] <信息>`\n"
                 "qq号可以缩写, 会判断寻找最接近的一个好友, 然后可以用简短的数字来选择好友\n"
-                "比如可以连续发送`!s 16367086`, `!s 1 你好`。基本可以确定会向163670865发送消息(末尾5被省略)\n"
+                "比如可以连续发送`!s 12345`, `!s 1 你好`。即可向`123456`发送消息(末尾6被省略)\n"
                 "亦或者用`!s ls`查看当前好友列表(这里允许向群发送, 但不允许群里向管理员发送, 太吵啦)\n"
                 "然后可选范围就会很大, 比如有一百个好友, 那么就可以用`!s 100`或者`!s ls100`快速选择到最后一位好友\n"
                 "若未输入发送的内容, 将会把选定的qq号暂存, 可以用`!s <信息>`快速发送到暂存的好友\n"
                 "暂存的配置是所有管理员共用的, 所以高峰期还请尽量打全qq号, 仅在只有一个人使用的时候这些逻辑判断才会比较顺手\n"
                 "此外管理员发送的消息中还可携带命令, 完全以对方身份执行, 但无`message_chain`原型(一般也不用这玩意吧)\n"
-                "比如`!s 1636708665 !help`会向`1636708665`发送帮助信息, 当然也可以发送携带参数的命令, 都没问题"
+                "比如`!s 123456 !help`会向`123456`发送帮助信息, 当然也可以发送携带参数的命令, 都没问题"
             )
         }
 
@@ -61,8 +61,8 @@ class SentCommand(Plugin):
             self.sent_from_admin(message, sender_id, cqhttp)
             return
 
-        reply = "[bot] 已向管理员发送信息[{}]".format(message[:min(20, len(message))] +
-                                             ("   ..." if len(message) > 20 else ""))
+        reply = "[bot] 已向管理员发送信息[{}]".format(
+            message[:min(20, len(message))] + ("   ..." if len(message) > 20 else ""))
         if len(message) == 0:
             reply = "[bot]err: 请输入要发送的信息"
 
@@ -119,42 +119,41 @@ class SentCommand(Plugin):
             msg = "\n可选择:"
             for j in range(1, min(6, len(self.results)+1)):
                 if i == j:
-                    msg += "\n【{}】【{}】【{}】".format(j,
-                                                   self.results[j-1], _find(self.results[j-1]))
+                    msg += "\n【{}】【{}】【{}】".format(
+                        j, self.results[j-1], _find(self.results[j-1]))
                 else:
-                    msg += "\n[{}][{}][{}]".format(j,
-                                                   self.results[j-1], _find(self.results[j-1]))
+                    msg += "\n[{}][{}][{}]".format(
+                        j, self.results[j-1], _find(self.results[j-1]))
             if i <= 8:
                 for j in range(6, min(i+3, len(self.results)+1)):
                     if i == j:
-                        msg += "\n【{}】【{}】【{}】".format(j,
-                                                       self.results[j-1], _find(self.results[j-1]))
+                        msg += "\n【{}】【{}】【{}】".format(
+                            j, self.results[j-1], _find(self.results[j-1]))
                     else:
-                        msg += "\n[{}][{}][{}]".format(j,
-                                                       self.results[j-1], _find(self.results[j-1]))
+                        msg += "\n[{}][{}][{}]".format(
+                            j, self.results[j-1], _find(self.results[j-1]))
                 if len(self.results) > i+2:
                     msg += "\n[更多] ……\n查看全部:\n!<sent/s> ls"
             else:
                 msg += "\n[更多] ……"
                 for j in range(i-2, min(i+3, len(self.results)+1)):
                     if i == j:
-                        msg += "\n【{}】【{}】【{}】".format(j,
-                                                       self.results[j-1], _find(self.results[j-1]))
+                        msg += "\n【{}】【{}】【{}】".format(
+                            j, self.results[j-1], _find(self.results[j-1]))
                     else:
-                        msg += "\n[{}][{}][{}]".format(j,
-                                                       self.results[j-1], _find(self.results[j-1]))
+                        msg += "\n[{}][{}][{}]".format(
+                            j, self.results[j-1], _find(self.results[j-1]))
                 if len(self.results) > i+2:
                     msg += "\n[更多] ……"
                 msg += "\n查看全部:\n!<sent/s> ls"
             return msg
 
         # 判断内容是否为特殊指令ls
-        if len(params) >= 1 and (params[0] == 'ls' or
-                                 (params[0].startswith('ls') and params[0][2:].isdigit())):
+        if len(params) >= 1 and \
+                (params[0] == 'ls' or (params[0].startswith('ls') and params[0][2:].isdigit())):
 
             # 如果输入"ls + ' ' + 汉字"格式则报错
-            if not (' '.join(params) == 'ls' or
-                    (''.join(params).startswith('ls') and ''.join(params)[2:][0].isdigit())):
+            if not (' '.join(params) == 'ls' or (''.join(params).startswith('ls') and ''.join(params)[2:][0].isdigit())):
                 cqhttp.sendPersonMessage(sender_id, "[bot]err: 请输入合法的对象编号")
                 return
             self.results = id_list[:]
@@ -180,11 +179,11 @@ class SentCommand(Plugin):
             i = 0
             for i in range(1, len(self.results)+1):
                 if self.results[i-1] == self.launcherId_history:
-                    msg += "\n【{}】【{}】【{}】".format(i,
-                                                   self.results[i-1], _find(self.results[i-1]))
+                    msg += "\n【{}】【{}】【{}】".format(
+                        i, self.results[i-1], _find(self.results[i-1]))
                 else:
-                    msg += "\n[{}][{}][{}]".format(i,
-                                                   self.results[i-1], _find(self.results[i-1]))
+                    msg += "\n[{}][{}][{}]".format(
+                        i, self.results[i-1], _find(self.results[i-1]))
                 if str(i) == params_replaceLS:
                     reply_pd = True
                     self.launcherId_history = self.results[i-1]
@@ -220,11 +219,11 @@ class SentCommand(Plugin):
                     msg += "\n可选择:"
                     for i in range(1, len(self.results)+1):
                         if self.results[i-1] == self.launcherId_history:
-                            msg += "\n【{}】【{}】【{}】".format(i,
-                                                           self.results[i-1], _find(self.results[i-1]))
+                            msg += "\n【{}】【{}】【{}】".format(
+                                i, self.results[i-1], _find(self.results[i-1]))
                         else:
-                            msg += "\n[{}][{}][{}]".format(i,
-                                                           self.results[i-1], _find(self.results[i-1]))
+                            msg += "\n[{}][{}][{}]".format(
+                                i, self.results[i-1], _find(self.results[i-1]))
                 reply = msg
 
         # 找不到历史记录，并且没有输入过目标QQ号，但允许暂存输入的信息
@@ -249,25 +248,25 @@ class SentCommand(Plugin):
                         if str(qq)[i - 1] == params[0][j - 1]:
                             dp[i][j] = dp[i - 1][j - 1]
                         else:
-                            dp[i][j] = min(dp[i - 1][j], dp[i]
-                                           [j - 1], dp[i - 1][j - 1]) + 1
+                            dp[i][j] = min(
+                                dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]) + 1
                 distances[qq] = dp[m][n]
             self.results = sorted(
                 distances.keys(), key=lambda x: distances[x])[:3]
 
             msg = "[bot] "
             if self.launcherId_history != 0:
-                msg += "默认发送: [{}][{}]".format(self.launcherId_history,
-                                               _find(self.launcherId_history))
+                msg += "默认发送: [{}][{}]".format(
+                    self.launcherId_history, _find(self.launcherId_history))
             if len(self.results) != 0:
                 msg += "\n可选择(更新):"
                 for i in range(1, len(self.results)+1):
                     if self.results[i-1] == self.launcherId_history:
-                        msg += "\n【{}】【{}】【{}】".format(i,
-                                                       self.results[i-1], _find(self.results[i-1]))
+                        msg += "\n【{}】【{}】【{}】".format(
+                            i, self.results[i-1], _find(self.results[i-1]))
                     else:
-                        msg += "\n[{}][{}][{}]".format(i,
-                                                       self.results[i-1], _find(self.results[i-1]))
+                        msg += "\n[{}][{}][{}]".format(
+                            i, self.results[i-1], _find(self.results[i-1]))
             reply = msg
 
         # 管理员请勿向自身发送信息
@@ -340,12 +339,18 @@ class SentCommand(Plugin):
                         cqhttp.sendPersonMessage(
                             self.launcherId_history, "[admin]\n{}".format(answer))
                         reply = "[bot] 信息: [{}]\n成功发送至[{}][{}]".format(
-                            answer[:min(20, len(answer))] + ("   ..." if len(answer) > 20 else ""), _find(self.launcherId_history), self.launcherId_history)
+                            answer[:min(20, len(answer))] +
+                            ("   ..." if len(answer) > 20 else ""),
+                            _find(self.launcherId_history), self.launcherId_history
+                        )
                     else:
                         cqhttp.sendGroupMessage(
                             self.launcherId_history, "[admin]\n{}".format(answer))
                         reply = "[bot] 信息: [{}]\n成功发送至[{}][{}]".format(
-                            answer[:min(20, len(answer))] + ("   ..." if len(answer) > 20 else ""), _find(self.launcherId_history), self.launcherId_history)
+                            answer[:min(20, len(answer))] +
+                            ("   ..." if len(answer) > 20 else ""),
+                            _find(self.launcherId_history), self.launcherId_history
+                        )
 
         cqhttp.sendPersonMessage(sender_id, reply)
         return
