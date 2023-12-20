@@ -2,21 +2,31 @@
 
 # [必需] OpenAI的配置, api_key: OpenAI的API Key
 # 1.若只有一个api-key, 请直接修改以下内容中的"openai_api_key"为你的api-key
-# 2.如准备了多个api-key, 可以以列表的形式填写, 程序会自动选择可用的api-key
-openai_api_keys = [
-    # "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",  # 第一个, 用完了
-    # "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",  # 第二个, 传说120刀, 封咯
-    # "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",  # 第三个, 用完了
-    # "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",  # 第四个, 同时WeCHatGPT也在用, 封咯
-    # "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",  # 第五个, 用完了
-    # "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",  # 封了
-    # "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",  # 封了
-    # "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",  # 用完
-    # "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",
-    # "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",  # 用完
-    # "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",
-    # "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",
-]
+# 2.如准备了多个api-key, 可以以字典的形式填写, 程序会自动选择可用的api-key
+# 字典的键可随意命名, 字典的值为配置字典
+# 若全为默认配置, 可直接将值设定为`api_key`
+# 默认配置在下方`completion_api_params`字段中修改
+
+# 3.（非必要选择！）现已支持网络代理，格式："http_proxy": "http://127.0.0.1:7890"   其中7890是你代理软件打开的端口，一般开全局则无需设置
+# 4.（非必要选择！）现已支持反向代理，可以添加reverse_proxy字段以使用反向代理，使用反向代理可以在国内使用OpenAI的API，反向代理的配置请参考 ，https://github.com/Ice-Hazymoon/openai-scf-proxy , 格式为： "reverse_proxy": "http://example.com:12345/v1"
+
+openai_config = {
+    # "example1": "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",  # 全为默认配置, 填写字符串即可
+
+    # "example2": {
+    #     "api_key": "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    #     "params": {  # 配置此api默认参数, 此处不建议启用4.0模型, token消耗过快。可用`!cmd reset`查看临时切换模型规则
+    #         "model": "gpt-4-0314",
+    #         "temperature": 0.8,
+    #         "top_p": 1,
+    #         "frequency_penalty": 0.3,
+    #         "presence_penalty": 1.0,
+    #     },
+    #     "http_proxy": None,     # 代理, 默认None
+    #     "reverse_proxy": None,  # 反向代理, 默认None
+    #     "is_plus": True,        # 是否为付费模型, 默认False。此字段会判断是否支持切换到4.0模型, 若所有api都为False则抛出无api可用
+    # },
+}
 
 
 # OpenAI补全API的参数, OpenAI的文档: https://beta.openai.com/docs/api-reference/completions/create
@@ -53,4 +63,4 @@ session_expire_time = 600000
 
 
 # 消息超时提示
-tip_timeout_message = "【检测到时空风暴影响，返回信号被确认超时】"
+reply_timeout_message = "【检测到时空风暴影响，返回信号被确认超时】"

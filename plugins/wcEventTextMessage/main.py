@@ -155,7 +155,7 @@ class WxChatTextMessageEventPlugin(Plugin):
         logging.debug(f"当前排队列表: {self.processing=}")
         if session_name in self.processing:
             self.wcf.send_text(
-                self.config.message_drop_tip, roomid if roomid else sender
+                self.config.message_drop_message, roomid if roomid else sender
             )
             return
         self.processing.add(session_name)

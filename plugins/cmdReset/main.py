@@ -3,6 +3,7 @@ import re
 
 import Events
 from Models.Plugins import *
+from ..cmdDefault.CheckPermission import check_permission
 from ..OpenAi.main import Session, OpenAiInteract
 from ..gocqOnQQ.CQHTTP_Protocol.CQHTTP_Protocol import CQHTTP_Protocol
 from wcferry import Wcf
@@ -60,19 +61,9 @@ class ResetCommand(Plugin):
             return
 
         try:
-            import os
             prompts = config.default_prompt
             key_list = list(prompts.keys())
-            default_password_path = os.path.join(os.path.dirname(os.path.dirname(
-                os.path.abspath(__file__))), "cmdDefault", "default_password.txt")
-
-            # 用文件的方式记录已经输入过密码的人
-            with open(default_password_path, 'r') as file:
-                account_list = file.readlines()
-            account_list = [account.strip()
-                            for account in account_list]  # 删除末尾换行符
-            permission = True \
-                if str(sender_id) in account_list else False  # False表示只能查看部分
+            permission = check_permission(sender_id)
 
             if not permission:
                 key_list = [
@@ -132,18 +123,9 @@ class ResetCommand(Plugin):
             return
 
         try:
-            import os
             prompts = config.default_prompt
             key_list = list(prompts.keys())
-            default_password_path = os.path.join(os.path.dirname(os.path.dirname(
-                os.path.abspath(__file__))), "cmdDefault", "default_password_wx.txt")
-
-            # 用文件的方式记录已经输入过密码的人
-            with open(default_password_path, 'r') as file:
-                account_list = file.readlines()
-            account_list = [account.strip()
-                            for account in account_list]  # 删除末尾换行符
-            permission = True if sender in account_list else False  # False表示只能查看部分
+            permission = check_permission(sender)
 
             if not permission:
                 key_list = [

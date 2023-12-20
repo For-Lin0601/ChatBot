@@ -81,7 +81,7 @@ class QQbot(Plugin):
                 os.system(f'"{executable_path}" -faststart')
 
             # 启用新线程运行go-cqhttp
-            self.emit(Events.SubmitSysTask__, fn=run_gocq_exe)
+            # self.emit(Events.SubmitSysTask__, fn=run_gocq_exe)
             # 调试的时候可以注释掉这行, 运行主线程后在新命令行开启go-cqhttp
             # 这样重启或热重载机器人不影响go-cqhttp运行, 大大减少机器人被风控的概率
 

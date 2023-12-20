@@ -423,7 +423,7 @@ def get_area(area: str) -> str:
         area_content += "\n"
         area_content += f"区域: {area_result['district']}\n" if area_result['district'] != "" else ""
         area_content += f"运营商: {area_result['isp']}\n" if area_result['isp'] != "" else ""
-        area_content += f"经纬度: {area_result['latitude']}, {area_result['longitude']}"
+        area_content += f"经纬度: {area_result['longitude']}, {area_result['latitude']}"
 
     except:
         area_url = f"http://whois.pconline.com.cn/ipJson.jsp?ip={area}&json=true"

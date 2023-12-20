@@ -6,48 +6,8 @@ import openai
 import Events
 from .Events import *
 from Models.Plugins import *
-
-
-class Session:
-    """运行时记忆链(暂时没做外部存储)"""
-
-    def __init__(self, session_name: str, role_name: str, content: str, out_time: datetime):
-        self.session_name = session_name
-        """与用户绑定的会话名字"""
-
-        self.role_name = role_name
-        """场景预设名"""
-
-        self.sessions = [
-            {"role": "user", "content": content},
-            {"role": "assistant", "content": "ok, I'll follow your commands."}
-        ]
-        """对话内容"""
-
-        self.time_out = datetime.now() + timedelta(seconds=out_time)
-        """过期时间"""
-
-    def add_user(self, content: str):
-        self.sessions.append({"role": "user", "content": content})
-
-    def add_assistant(self, content: str):
-        self.sessions.append({"role": "assistant", "content": content})
-
-    @property
-    def last_user_content(self):
-        if not self.sessions:
-            return ""
-        if self.sessions[-1]["role"] == "user":
-            return self.sessions[-1]["content"]
-        return self.sessions[-2]["content"] if len(self.sessions) > 1 else ""
-
-    @property
-    def last_assistant_content(self):
-        if not self.sessions:
-            return ""
-        if self.sessions[-1]["role"] == "assistant":
-            return self.sessions[-1]["content"]
-        return self.sessions[-2]["content"] if len(self.sessions) > 1 else ""
+from .Session import Session
+from .OpenAiKeysManager import OpenAiKeysManager
 
 
 @register(
@@ -68,17 +28,20 @@ class OpenAiInteract(Plugin):
     微信以`wx_wxid_xxx`保存
     """
 
-    def __init__(self):
-        self.api_key_index = 0
-        self.openai_api_keys = self.emit(Events.GetConfig__).openai_api_keys
-
     @on(PluginsLoadingFinished)
-    def init(self, events: EventContext, **kwargs):
-        self.sessions_dict = {}
-
     @on(PluginsReloadFinished)
-    def get_config(self, events: EventContext, **kwargs):
-        self.sessions_dict = self.get_reload_config("session")
+    def init(self, events: EventContext, **kwargs):
+        if self.is_first_init():
+            self.sessions_dict = {}
+        else:
+            self.sessions_dict = self.get_reload_config("session")
+        self.config = self.emit(Events.GetConfig__)
+        self.openai_config = self.config.openai_config
+        self.completion_api_params = self.config.completion_api_params
+        self.keys_manager = OpenAiKeysManager(
+            self.openai_config,
+            self.completion_api_params
+        )
 
     def on_reload(self):
         self.set_reload_config("session", self.sessions_dict)
@@ -90,7 +53,6 @@ class OpenAiInteract(Plugin):
 
     def request_completion(self, session_name: str, message: str, tmp_api_key_index=None):
         """请求补全接口回复, 屏蔽敏感词"""
-        config = self.emit(Events.GetConfig__)
 
         # 删除过期的对话
         current_time = datetime.now()
@@ -103,10 +65,10 @@ class OpenAiInteract(Plugin):
                 conversation = session.sessions
                 total_length = sum(len(msg["content"]) for msg in conversation)
 
-                if total_length > config.prompt_submit_length:
+                if total_length > self.config.prompt_submit_length:
                     # 长度超过限制, 从头开始暴力删除, 每次删除两个记录
                     logging.debug("长度超过限制, 从头开始暴力删除: " + session.session_name)
-                    while total_length > config.prompt_submit_length:
+                    while total_length > self.config.prompt_submit_length:
                         # 删除最前面的两个记录, 不删除第一条人格设置
                         if len(conversation) >= 3:
                             total_length -= len(conversation[2]["content"])
@@ -114,31 +76,38 @@ class OpenAiInteract(Plugin):
                         if len(conversation) >= 3:
                             total_length -= len(conversation[2]["content"])
                             del conversation[2]
-                        if len(conversation) < 3 and total_length > config.prompt_submit_length:
+                        if len(conversation) < 3 and total_length > self.config.prompt_submit_length:
                             return "[bot]err: 对话长度超过限制, 当前场景预设过长, 请用`!r`重置会话"
 
         if session_name not in self.sessions_dict:
             self.sessions_dict[session_name] = Session(
-                session_name, "default", config.default_prompt["default"], config.session_expire_time)
-        self.sessions_dict[session_name].add_user(message)
+                session_name, "default", self.config.default_prompt["default"], self.config.session_expire_time)
+        session = self.sessions_dict[session_name]
+        session.add_user(message)
 
         # 如果没有可用的 API Key
-        if not config.openai_api_keys or \
-            self.api_key_index >= len(config.openai_api_keys) or \
-                (tmp_api_key_index is not None and tmp_api_key_index >= len(config.openai_api_keys)):
+        if not self.keys_manager.has_openai_config(tmp_api_key_index, session.is_plus):
             logging.error("无可用的 OpenAi API Key")
             return "[bot]err: 无可用的 OpenAi API Key, 等待管理员处理"
 
         try:
-            # 使用当前下标对应的 API Key
-            if tmp_api_key_index is not None:
-                openai.api_key = config.openai_api_keys[tmp_api_key_index]
-            else:
-                openai.api_key = config.openai_api_keys[self.api_key_index]
+            session_config = self.keys_manager\
+                .get_openai_config_by_index(tmp_api_key_index, session.is_plus)
+            # 配置openai http代理
+            if session_config["http_proxy"] is not None:
+                openai.proxy = {
+                    "http": session_config["http_proxy"],
+                    "https": session_config["http_proxy"]
+                }
+            # 配置openai api_base
+            if session_config["reverse_proxy"] is not None:
+                openai.api_base = session_config["reverse_proxy"]
+            # 配置API Key
+            openai.api_key = session_config["api_key"]
 
             gpt_response = openai.ChatCompletion.create(
                 messages=self.sessions_dict[session_name].sessions,
-                **config.completion_api_params
+                **(self.sessions_dict[session_name].params if self.sessions_dict[session_name].params else session_config["params"]),
             )
 
             response_content = gpt_response['choices'][0]['message']['content']
@@ -151,25 +120,27 @@ class OpenAiInteract(Plugin):
                 Events.BanWordProcess__, message=response_content)
 
             # 如果成功, 添加助手的回复到会话中
-            self.sessions_dict[session_name].add_assistant(response_content)
-            logging.debug(
-                f"{session_name}: {self.sessions_dict[session_name].sessions}")
-            return response_content
+            session.add_assistant(response_content)
+            logging.debug(f"{session_name}: {session.sessions}")
+            return session.prefix + response_content
         except openai.OpenAIError as e:
             # 如果是 OpenAIError, 尝试使用下一个 API Key
-            conversation = self.sessions_dict[session_name].sessions
+            session = self.sessions_dict[session_name]
+            conversation = session.sessions
             if conversation[-1]["role"] == "user":
                 conversation.pop()
             str_e = str(e)
             if "Rate limit reached" in str_e:
                 # "[bot]err: 触发限速策略, 请20秒后重试"
                 logging.warning(f"OpenAi API 限速, 临时切换下一个 API Key: {str_e}")
-                tmp = tmp_api_key_index if tmp_api_key_index else self.api_key_index
+                tmp = tmp_api_key_index if tmp_api_key_index else self.keys_manager.get_index(
+                    session.is_plus)
                 return self.request_completion(session_name, message, tmp + 1)
             elif "The server had an error while processing your request. Sorry about that!" in str_e:
                 # "[bot]err: OpenAi API 内部错误, 请稍后重试"
                 logging.warning(f"OpenAi API 内部错误, 临时切换下一个 API Key: {str_e}")
-                tmp = tmp_api_key_index if tmp_api_key_index else self.api_key_index
+                tmp = tmp_api_key_index if tmp_api_key_index else self.keys_manager.get_index(
+                    session.is_plus)
                 return self.request_completion(session_name, message, tmp + 1)
             elif "远程主机强迫关闭了一个现有的连接。" in str_e \
                     or "SSLEOFError" in str_e:
@@ -178,7 +149,7 @@ class OpenAiInteract(Plugin):
                 self.emit(Events.GetCQHTTP__).NotifyAdmin(
                     f"[bot]err: [{session_name}]OpenAi API 连接超时"
                 )
-                return config.tip_timeout_message
+                return self.config.reply_timeout_message
             elif "maximum context length" in str_e:
                 # "[bot]err: 会话历史记录过长, 请用'!reset'重置会话"
                 logging.warning(f"OpenAi API 历史记录过长: {str_e}")
@@ -195,17 +166,21 @@ class OpenAiInteract(Plugin):
                 return self.request_completion(session_name, message)
 
             logging.error(f"OpenAi API error: {str_e}")
-            self.api_key_index += 1
-            # 递归调用, 使用下一个 API Key
-            if self.api_key_index < len(config.openai_api_keys):
+            tmp_index = tmp_api_key_index if tmp_api_key_index else self.keys_manager.get_index(
+                session.is_plus)
+            if self.keys_manager.next_api(session.is_plus):
+                logging.info(
+                    f"切换至第 {self.keys_manager.get_index()+1} 个 API Key:{self.keys_manager.get_openai_config_name_by_index(is_plus=session.is_plus)}")
                 self.emit(Events.GetCQHTTP__).NotifyAdmin(
-                    f"[bot]err: [{session_name}]调用 API 失败!API Key:{self.openai_api_keys[self.api_key_index-1]}\n" +
-                    f"切换至第 {self.api_key_index+1} 个 API Key:{self.openai_api_keys[self.api_key_index]}\n{str_e}")
+                    f"[bot]err: [{session_name}]调用 API 失败!API Key:{self.keys_manager.get_openai_config_name_by_index(tmp_index, session.is_plus)}\n" +
+                    f"切换至第 {self.keys_manager.get_index()+1} 个 API Key:{self.keys_manager.get_openai_config_name_by_index(is_plus=session.is_plus)}\n{str_e}")
                 return self.request_completion(session_name, message)
             else:
                 self.emit(Events.GetCQHTTP__).NotifyAdmin(
-                    f"[bot]err: [{session_name}]调用 API 失败!API Key:{self.openai_api_keys[self.api_key_index-1]}\n" +
-                    f"无可用的 API Key\n{str_e}")
+                    f"[bot]err: [{session_name}]调用 API 失败!API Key:{self.keys_manager.get_openai_config_name_by_index(tmp_index, session.is_plus)}\n" +
+                    "无可用的 API Key" +
+                    ("\n请切换模型重试" if session.is_plus else "") +
+                    f"\n{str_e}")
                 return "[bot]err: 无可用的 OpenAi API Key, 等待管理员处理"
         except Exception as e:
             str_e = str(e)

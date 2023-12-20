@@ -234,7 +234,7 @@ class TextMessageEventPlugin(Plugin):
         if session_name in self.processing:
             if launcher_type == "person":
                 self.cqhttp.sendPersonMessage(
-                    sender_id, self.config.message_drop_tip,
+                    sender_id, self.config.message_drop_message,
                     group_id=launcher_id if launcher_id != sender_id else None,
                     auto_escape=True)
             return
