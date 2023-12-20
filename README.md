@@ -1,6 +1,6 @@
 # ChatBot
 
-本项目使用了[go-cqhttp](https://github.com/Mrs4s/go-cqhttp)作为连接 QQ 的方式
+本项目使用了 [go-cqhttp](https://github.com/Mrs4s/go-cqhttp) 作为连接 QQ 的方式
 
 本项目使用了 [WeChatFerry](https://github.com/lich0821/WeChatFerry) 作为连接微信的方式(挂载稍有难度, 故默认关闭微信连接)
 
@@ -15,11 +15,12 @@
    `pip install -r requirements.txt`
    若想启用虚拟环境在此处启用即可
    后期可能改自动安装, 目前在开发阶段, 还请手动安装
-5. 进入.\plugins\goOnQQ\main.py 文件中搜索`TODO`, 根据提示取消注释, 启用 go-cq(由于项目频繁调试, 故此常年被注释掉)
-6. 重新启动`main.py`, 登入 QQ(和微信)
-7. 重新启动`main.py`, 即可使用
+5. 重新启动`main.py`, 登入 QQ(和微信)
+6. 重新启动`main.py`, 即可使用
 
 > tips: 默认插件里绝大部分仅为作者个人喜好, 故一些不能直接使用的插件是默认关闭的, 具体可在源码搜索`TODO`自行查询(感觉也没什么复用性)
+>
+> QQ 登入是非阻塞的, 故第一次登入后需重启项目。微信登入是阻塞的, 但请不要在登入完成之前进行热重载
 
 > [微信需安装 3.9.2.23 版本](https://github.com/lich0821/WeChatFerry/releases/tag/v39.0.11), 故默认关闭。**强烈建议在服务器环境下实验**, 你也不希望你的电脑微信版本倒退吧
 >
@@ -80,7 +81,7 @@
 
 ~~四级挂了, 淦~~
 
-~~正在接微信, 问题多多哇。不过是支持微信 QQ 同时登入, 且用同一套逻辑的(甚至数据也可以互通, 目前暂时为全隔离状态, 可自己接)~~
+~~正在接微信。支持微信 QQ 同时登入, 且用同一套逻辑(甚至数据也可以互通, 目前暂时为全隔离状态, 可自己接)~~
 
 基本写完了, 没啥大 bug, 小 bug 知道的暂时都解决了, 欢迎提交 issue(虽然没啥可能)
 
@@ -167,10 +168,10 @@ class Config(Plugin):  # 注意类名会作为一些 不安全 函数的标识, 
     # """获取配置
 
     #     kwargs:
-    #         config_name: str 配置名称(为空则返回配置字典)
+    #         None
 
     #     return:
-    #         config: ModuleType 配置模块(以 value = config.key 读取)
+    #         config: ModuleType  # 配置模块(以 value = config.key 读取)
     # """
 
     @on(GetConfig__)  # 双下划线结尾表示必阻塞事件, 即只应当有此事件开发者自己注册此事件, 供外部`self.emit(GetConfig__)`使用
@@ -186,14 +187,17 @@ class Config(Plugin):  # 注意类名会作为一些 不安全 函数的标识, 
     def get_Config(self, event: EventContext,  **kwargs):
         from Event import GetConfig__
         # 此处除了主线程必须项必然出现, 其余项可能在程序第一次运行后才创建
-        # 故此处强烈建议动态导入
-        config = self.emit(GetConfig__)  # `emit`返回值请看`Events.py`中的注解
+        # 故此处强烈建议动态导入所需变量。否则可能需要多次`关闭-启动`项目才可导入所有变量
+        # 另外的, 如果有两个或更多插件之间的变量相互引用, 相互触发, 会导致完全无法读取变量
+        # 目前如果删去Events.py中除主线程必须项以外所有变量, 程序大约会在`关闭-启动`四次左右完全读取所有变量
+        # `关闭-启动`是指主线程进入到while True: time.sleep(0xFF)后关闭程序, 启动程序等待主线程进入while True: time.sleep(0xFF)
+        config = self.emit(GetConfig__)  # `emit`返回值请看`Events.py`中对应的注解
         # `emit`后续参数只接受`**kwargs`, 且在响应插件内打包为`kawrgs`参数
         # 优点是响应插件内必解包`kwargs`, 可做类型声明
 
     def on_reload(self):
         self.set_reload_config("config", self.config)
-        # 此处会将配置写入`Plugin.__reload_config__`字典, 此字典将在热重载完成后才清空。
+        # 此处会将配置写入`Plugin.__reload_config__`字典, 此字典将在热重载完成后才清空
         # 故如果有配置不需要热重载, 可在此暂存
         # 同时在`def __init__`中判断`self.is_first_init()`来决定设置配置或读取配置
 

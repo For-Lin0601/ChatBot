@@ -69,12 +69,11 @@ class Config(Plugin):
 
         暂存到 __config.config 中, 不写入 config.py
 
-        热重载可能丢失, 请谨慎使用
+        热重载后丢失, 请谨慎使用
         """
         event.prevent_postorder()
         for item in kwargs["config"]:
-            if not hasattr(self.config, item):
-                setattr(self.config, item, kwargs["config"][item])
+            setattr(self.config, item, kwargs["config"][item])
 
     def on_reload(self):
         pass

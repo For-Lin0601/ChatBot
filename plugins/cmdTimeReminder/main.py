@@ -79,10 +79,10 @@ class TimeReminderCommand(Plugin):
         config = self.emit(Events.GetConfig__)
         if len(params) == 0:
             reply = "[bot] 欢迎使用定时提醒~"
-            reply += "\n-> 标准格式:\n时间 [重复间隔 重复次数] #内容"
+            reply += "\n-> 标准格式:\n时间 [重复间隔 重复次数]  #内容"
             reply += "\n-------------"
-            reply += "\n!a 2000/1/1 7:00:00 #早安"
-            reply += "\n!a 2000/1/1 7:00:00 每天 5次 #早安"
+            reply += "\n!a 2000/1/1 7:00:00  #早安"
+            reply += "\n!a 2000/1/1 7:00:00 每天 5次  #早安"
             reply += "\n-------------"
             reply += "\n- 间隔单位: 年月日时分秒"
             reply += "\n- 次数单位: ？次/无限"
@@ -145,23 +145,23 @@ class TimeReminderCommand(Plugin):
                 lines = file.readlines()
                 for index, line in enumerate(lines):
                     split_data = line.split()
-                    qq_number = split_data[11] # QQ号
+                    qq_number = split_data[11]  # QQ号
                     if not (int(qq_number) == sender_id or params_admin):
                         continue
 
-                    event_id = split_data[0] # 编号
-                    event_date_describe = split_data[1] # 日期
-                    event_time = split_data[2] # 时间
-                    time_delta = [int(split_data[i]) for i in range(3, 9)] # 重复步频
+                    event_id = split_data[0]  # 编号
+                    event_date_describe = split_data[1]  # 日期
+                    event_time = split_data[2]  # 时间
+                    time_delta = [int(split_data[i]) for i in range(3, 9)]  # 重复步频
                     if time_delta[1] != 0:
                         split_date = event_date_describe.split('/')
                         event_date1 = min(int(split_date[2]), calendar.monthrange(int(split_date[0]), int(split_date[1]))[1])
                         event_date = "{}/{}/{}".format(split_date[0], split_date[1], event_date1)
                     else:
                         event_date = event_date_describe
-                    repeat_count = int(split_data[9]) # 重复次数
-                    qq_name = split_data[10] # QQ名字
-                    message = ' '.join(split_data[12:]) # 定时提醒内容
+                    repeat_count = int(split_data[9])  # 重复次数
+                    qq_name = split_data[10]  # QQ名字
+                    message = ' '.join(split_data[12:])  # 定时提醒内容
 
                     if repeat_count > 0:
                         reply_continue = "\n重复: 剩余 [{}] 次~".format(repeat_count + 1)
@@ -344,9 +344,9 @@ class TimeReminderCommand(Plugin):
                         split_data = first_line.split()
 
                         # 判断是否到达时间
-                        event_date_describe = split_data[1] # 日期
-                        event_time = split_data[2] # 时间
-                        time_delta = [int(split_data[i]) for i in range(3, 9)] # 重复步频
+                        event_date_describe = split_data[1]  # 日期
+                        event_time = split_data[2]  # 时间
+                        time_delta = [int(split_data[i]) for i in range(3, 9)]  # 重复步频
                         if time_delta[1] != 0:
                             split_date = event_date_describe.split("/")
                             event_date1 = min(int(split_date[2]), calendar.monthrange(int(split_date[0]), int(split_date[1]))[1])
@@ -356,11 +356,11 @@ class TimeReminderCommand(Plugin):
                         date_time = time.strptime(event_date + ' ' + event_time, "%Y/%m/%d %H:%M:%S")
 
                         if current_time >= date_time:
-                            event_id = split_data[0] # 编号
-                            repeat_count = int(split_data[9]) # 重复次数
-                            qq_name = split_data[10] # QQ名字
-                            qq_number = int(split_data[11]) # QQ号
-                            message = ' '.join(split_data[12:]) # 定时提醒内容
+                            event_id = split_data[0]  # 编号
+                            repeat_count = int(split_data[9])  # 重复次数
+                            qq_name = split_data[10]  # QQ名字
+                            qq_number = int(split_data[11])  # QQ号
+                            message = ' '.join(split_data[12:])  # 定时提醒内容
 
                             sleep = False
                             time_diff = (time.mktime(current_time) - time.mktime(date_time)) // 60
@@ -432,7 +432,7 @@ class TimeReminderCommand(Plugin):
 
                             # 重新设置此定时提醒并插入文件合适位置
                             else:
-                                pd_continue = False # 过期的申请是否删除
+                                pd_continue = False  # 过期的申请是否删除
                                 new_datetime = get.add_datetime(date_time, *time_delta)
                                 if repeat_count > 0:
                                     repeat_count -= 1
@@ -492,35 +492,28 @@ class TimeReminderCommand(Plugin):
                                         weather_reply = "[bot]err: ~~~天气查询~~~\n服务器请求错误!"
                                     cqhttp.sendPersonMessage(qq_number, weather_reply)
 
-                                    for i in range(5):
-                                        try:
-                                            # 查询每日推荐
-                                            if qq_number in self.emit(GetConfig__).admin_list:
-                                                message = get_list + innermost + copywriting + news
-                                            else:
-                                                message_innermost = [innermost[0] if 3 < current_time.tm_hour < 15 else innermost[1]]
-                                                if len(copywriting) > 5:
-                                                    message_copywriting = random.sample(copywriting, random.randint(3, 5))
-                                                elif copywriting:
-                                                    message_copywriting = copywriting
-                                                else:
-                                                    message_copywriting = ["[bot]err: 今日语录抓取错误!"]
-                                                if news:
-                                                    new_news = [random.choice(news)]
-                                                else:
-                                                    new_news = ["[bot]err: 今日热点抓取错误!"]
-                                                message = message_innermost + message_copywriting + new_news
-
-                                            # 在这里添加翻译语言
-                                            # if repeat_count == -3:
-                                            #     message = [get.fanyi(item) for item in message]
-                                            message = self.emit(ForwardMessage__, message=message)
-                                            if cqhttp.sendPersonForwardMessage(qq_number, message):
-                                                break
-                                            time.sleep(0.2)
-                                        except:
-                                            pass
+                                    # 查询每日推荐
+                                    if qq_number in self.emit(GetConfig__).admin_list:
+                                        message = get_list + innermost + copywriting + news
                                     else:
+                                        message_innermost = [innermost[0] if 3 < current_time.tm_hour < 15 else innermost[1]]
+                                        if len(copywriting) > 5:
+                                            message_copywriting = random.sample(copywriting, random.randint(3, 5))
+                                        elif copywriting:
+                                            message_copywriting = copywriting
+                                        else:
+                                            message_copywriting = ["[bot]err: 今日语录抓取错误!"]
+                                        if news:
+                                            new_news = [random.choice(news)]
+                                        else:
+                                            new_news = ["[bot]err: 今日热点抓取错误!"]
+                                        message = message_innermost + message_copywriting + new_news
+
+                                    # 在这里添加翻译语言
+                                    # if repeat_count == -3:
+                                    #     message = [get.fanyi(item) for item in message]
+                                    message = self.emit(ForwardMessage__, message=message)
+                                    if not cqhttp.sendPersonForwardMessage(qq_number, message):
                                         cqhttp.sendPersonMessage(qq_number, "[bot]err: 每日推荐发送错误!")
                                         cqhttp.NotifyAdmin(f"err: [{qq_name}][{qq_number}]每日推荐发送错误!")
 

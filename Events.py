@@ -45,17 +45,20 @@ GetConfig__ = "get_config__"
 """获取配置
 ```python
     kwargs:
-        config_name: str 配置名称(为空则返回配置字典)
+        None
 
     return:
-        config: ModuleType 配置模块(以 value = config.key 读取)
+        config: ModuleType  # 配置模块(以 value = config.key 读取)
 ```"""
 
 SetConfig__ = "set_config__"
-"""设置配置(暂存到 __config.config 中, 不写入 config.py)
+"""设置配置(暂存到 __config.config 中, 不写入 config.py, 热重载后丢失, 请谨慎使用)
 ```python
     kwargs:
-        config: dict 配置字典
+        config: dict  # 配置字典
+
+    return:
+        None  # 存在会覆盖
 ```"""
 
 
@@ -64,36 +67,36 @@ SubmitSysTask__ = "submit_sys_task__"
 """提交系统任务
 ```python
     kwargs:
-        fn: 任务
-        args: 任务参数
-        kwargs: 任务参数
+        fn: callable  # 函数名
+        args: list    # 任务参数
+        kwargs: dict  # 任务参数
 
     return:
-        Future: 返回任务
+        Future  # 返回任务
 ```"""
 
 SubmitAdminTask__ = "submit_admin_task__"
 """提交后台任务
 ```python
     kwargs:
-        fn: 任务
-        args: 任务参数
-        kwargs: 任务参数
+        fn: callable  # 函数名
+        args: list    # 任务参数
+        kwargs: dict  # 任务参数
 
     return:
-        Future: 返回任务
+        Future  # 返回任务
 ```"""
 
 SubmitUserTask__ = "submit_user_task__"
 """提交用户任务
 ```python
     kwargs:
-        fn: 任务
-        args: 任务参数
-        kwargs: 任务参数
+        fn: callable  # 函数名
+        args: list    # 任务参数
+        kwargs: dict  # 任务参数
 
     return:
-        Future: 返回任务
+        Future  # 返回任务
 ```"""
 
 
@@ -359,7 +362,7 @@ GetOpenAi__ = "get_openai__"
         None
 
     return:
-        openai: pkg.openai.OpenAI
+        openai  # pkg.openai.OpenAI 实例(`return self`)
 ```"""
 
 
@@ -394,20 +397,20 @@ BanWordCheck__ = "ban_word_check__"
 """检查是否包含敏感词
 ```python
     kwargs:
-        message: str 消息
+        message: str  # 消息
 
     return:
-        bool 是否包含敏感词
+        bool  # 是否包含敏感词
 ```"""
 
 BanWordProcess__ = "ban_word_process__"
 """处理敏感词
 ```python
     kwargs:
-        message: str 消息
+        message: str  # 消息
 
     return:
-        str 处理后的消息
+        str  # 处理后的消息
 ```"""
 
 
@@ -435,11 +438,11 @@ GetQQPersonCommand = "get_qq_person_command"
 """收到好友命令
 ```python
     kwargs:
-        message: str    # 好友命令文本(去除了前置感叹号)
+        message: str      # 好友命令文本(去除了前置感叹号)
         message_chain: PersonMessage  # 数据存储类, 详情请看 plugins.gocqOnQQ.QQevents.MessageEvent.py
-        launcher_id: int(此处与sender_id相等)
-        sender_id: int  # 发送者ID
-        is_admin: bool  # 是否为管理员
+        launcher_id: int  # 此处与sender_id相等
+        sender_id: int    # 发送者ID
+        is_admin: bool    # 是否为管理员
 
     return:
         None

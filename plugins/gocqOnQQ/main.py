@@ -22,7 +22,7 @@ class RunningFlag:
     version="1.0.0",
     author="For_Lin0601",
     priority=1,
-    # enabled=False  # TODO 注释掉这行, 默认启用
+    # enabled=False  # TODO 取消注释这行即可关闭qq链接, 但强烈建议qq保持常开
 )
 class QQbot(Plugin):
 
@@ -80,11 +80,10 @@ class QQbot(Plugin):
                     "go-cqhttp", "go-cqhttp_windows_amd64.exe")
                 os.system(f'"{executable_path}" -faststart')
 
-            # 调试的时候可以注释掉这行, 运行主线程后在新命令行开启go-cqhttp
-            # 这样重启或热重载机器人不影响go-cqhttp运行, 大大减少机器人被风控的概率
-
             # 启用新线程运行go-cqhttp
             self.emit(Events.SubmitSysTask__, fn=run_gocq_exe)
+            # 调试的时候可以注释掉这行, 运行主线程后在新命令行开启go-cqhttp
+            # 这样重启或热重载机器人不影响go-cqhttp运行, 大大减少机器人被风控的概率
 
             self.emit(Events.SubmitSysTask__, fn=self._run)
         else:

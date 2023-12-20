@@ -5,5 +5,5 @@ GetOpenAi__ = "get_openai__"
         None
 
     return:
-        openai: pkg.openai.OpenAI
+        openai  # pkg.openai.OpenAI 实例(`return self`)
 ```"""

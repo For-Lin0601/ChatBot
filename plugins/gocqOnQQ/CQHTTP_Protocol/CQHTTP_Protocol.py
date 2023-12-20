@@ -2,6 +2,7 @@
 import json
 import logging
 import threading
+import time
 import typing as T
 
 import requests
@@ -96,13 +97,15 @@ class CQHTTP_Protocol(Plugin):
         for i in range(len(messages)):
             if isinstance(messages[i], Node):
                 messages[i] = messages[i].toDict()
-        result = self._sent_post(f"{self.http_url}/send_private_forward_msg", {
-            "user_id": user_id,
-            "messages": messages
-        })
-        if result["status"] == "ok":
-            logging.info(f"发送合并消息[person_{user_id}]: {messages}")
-            return BotMessage.model_validate(result["data"])
+        for _ in range(5):
+            result = self._sent_post(f"{self.http_url}/send_private_forward_msg", {
+                "user_id": user_id,
+                "messages": messages
+            })
+            if result["status"] == "ok":
+                logging.info(f"发送合并消息[person_{user_id}]: {messages}")
+                return BotMessage.model_validate(result["data"])
+            time.sleep(0.2)
         return False
 
     def sendGroupForwardMessage(self,
@@ -111,13 +114,15 @@ class CQHTTP_Protocol(Plugin):
         for i in range(len(messages)):
             if isinstance(messages[i], Node):
                 messages[i] = messages[i].toDict()
-        result = self._sent_post(f"{self.http_url}/send_group_forward_msg", {
-            "group_id": group_id,
-            "messages": messages
-        })
-        if result["status"] == "ok":
-            logging.info(f"发送合并消息[group_{group_id}]: {messages}")
-            return BotMessage.model_validate(result["data"])
+        for _ in range(5):
+            result = self._sent_post(f"{self.http_url}/send_group_forward_msg", {
+                "group_id": group_id,
+                "messages": messages
+            })
+            if result["status"] == "ok":
+                logging.info(f"发送合并消息[group_{group_id}]: {messages}")
+                return BotMessage.model_validate(result["data"])
+            time.sleep(0.2)
         return False
 
     def recall(self, message_id: int) -> bool:
