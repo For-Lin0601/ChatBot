@@ -240,7 +240,7 @@ class TextMessageEventPlugin(Plugin):
             return
         self.processing.add(session_name)
         try:
-            tmp_msg = "[bot]收到消息, " + \
+            tmp_msg = "[bot] 收到消息, " + \
                 (f"当前{len(self.processing)-1}人正在排队" if len(self.processing)
                  > 1 else "当前无人排队, 消息处理中")
             if check_length:
@@ -274,12 +274,10 @@ class TextMessageEventPlugin(Plugin):
                 self.cqhttp.NotifyAdmin(
                     f"[bot]err: [{session_name}]处理消息出现错误:\n{e}")
                 self.cqhttp.sendPersonMessage(
-                    sender_id, str(e),
+                    sender_id, f"[bot]err: 处理消息出现错误, 请尝试联系管理员解决:\n{e}",
                     group_id=launcher_id if launcher_id != sender_id else None,
                     auto_escape=True)
         finally:
             self.processing.remove(session_name)
-        try:
-            self.cqhttp.recall(tmp_id)
-        except:
+        if not self.cqhttp.recall(tmp_id):
             logging.warning(f"{session_name}: {tmp_id}消息撤回失败")

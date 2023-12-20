@@ -194,17 +194,17 @@ class OpenAiInteract(Plugin):
                     del conversation[2]
                 return self.request_completion(session_name, message)
 
-            logging.warning(f"OpenAi API error: {str_e}")
+            logging.error(f"OpenAi API error: {str_e}")
             self.api_key_index += 1
             # 递归调用, 使用下一个 API Key
             if self.api_key_index < len(config.openai_api_keys):
                 self.emit(Events.GetCQHTTP__).NotifyAdmin(
-                    f"[bot]err: [{session_name}]调用 API 失败!API Key:{self.openai_api_keys[self.api_key_index]}\n" +
-                    f"切换第 {self.api_key_index + 1} 个 API Key:{self.openai_api_keys[self.api_key_index+1]}\n{str_e}")
+                    f"[bot]err: [{session_name}]调用 API 失败!API Key:{self.openai_api_keys[self.api_key_index-1]}\n" +
+                    f"切换至第 {self.api_key_index} 个 API Key:{self.openai_api_keys[self.api_key_index]}\n{str_e}")
                 return self.request_completion(session_name, message)
             else:
                 self.emit(Events.GetCQHTTP__).NotifyAdmin(
-                    f"[bot]err: [{session_name}]调用 API 失败!API Key:{self.openai_api_keys[self.api_key_index]}\n" +
+                    f"[bot]err: [{session_name}]调用 API 失败!API Key:{self.openai_api_keys[self.api_key_index-1]}\n" +
                     f"无可用的 API Key\n{str_e}")
                 return "[bot]err: 无可用的 OpenAi API Key, 等待管理员处理"
         except Exception as e:
