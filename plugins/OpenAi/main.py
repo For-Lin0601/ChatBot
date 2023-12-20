@@ -200,7 +200,7 @@ class OpenAiInteract(Plugin):
             if self.api_key_index < len(config.openai_api_keys):
                 self.emit(Events.GetCQHTTP__).NotifyAdmin(
                     f"[bot]err: [{session_name}]调用 API 失败!API Key:{self.openai_api_keys[self.api_key_index-1]}\n" +
-                    f"切换至第 {self.api_key_index} 个 API Key:{self.openai_api_keys[self.api_key_index]}\n{str_e}")
+                    f"切换至第 {self.api_key_index+1} 个 API Key:{self.openai_api_keys[self.api_key_index]}\n{str_e}")
                 return self.request_completion(session_name, message)
             else:
                 self.emit(Events.GetCQHTTP__).NotifyAdmin(
