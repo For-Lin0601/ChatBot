@@ -67,8 +67,10 @@ class HistoryCommand(Plugin):
             else:
                 reply.append(f"assistant:\n{_session['content']}")
 
+        is_plus = session.params_name if session.is_plus and not session._plus_once else "default"
         reply[1] = "user:\n" + config.command_reset_name_message + \
-            "{}".format(session.role_name)
+            "{}".format(session.role_name) + \
+            f"\n当前配置: {is_plus}"
 
         logging.debug(f"微信[{sender}]查看历史记录: {reply}")
         wcf.send_text("\n\n".join(reply), sender)
@@ -104,8 +106,10 @@ class HistoryCommand(Plugin):
                 name_list.append("bot")
             message_list.append(_session["content"])
 
+        is_plus = session.params_name if session.is_plus and not session._plus_once else "default"
         message_list[0] = config.command_reset_name_message + \
-            "{}".format(session.role_name)
+            "{}".format(session.role_name) + \
+            f"\n当前配置: {is_plus}"
 
         reply = self.emit(
             ForwardMessage__,

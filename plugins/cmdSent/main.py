@@ -4,6 +4,7 @@ import re
 
 import Events
 from Models.Plugins import *
+from plugins.gocqOnQQ.QQevents.MessageEvent import PersonMessage
 from ..gocqOnQQ.CQHTTP_Protocol.CQHTTP_Protocol import CQHTTP_Protocol
 
 
@@ -58,7 +59,8 @@ class SentCommand(Plugin):
 
         # 发起者为管理员
         if kwargs["is_admin"]:
-            self.sent_from_admin(message, sender_id, cqhttp)
+            self.sent_from_admin(
+                message, sender_id, cqhttp, kwargs["message_chain"])
             return
 
         reply = "[bot] 已向管理员发送信息[{}]".format(
@@ -94,7 +96,13 @@ class SentCommand(Plugin):
         sender = kwargs["roomid"] if kwargs["roomid"] else kwargs["sender"]
         self.emit(Events.GetWCF__).send_text("[bot] 微信暂不支持此命令", sender)
 
-    def sent_from_admin(self, message, sender_id, cqhttp: CQHTTP_Protocol):
+    def sent_from_admin(
+            self,
+            message,
+            sender_id,
+            cqhttp: CQHTTP_Protocol,
+            message_chain: PersonMessage = None  # 只有在管理员发送命令的时候用一下, 目前只兼容了PersonMessage
+    ) -> None:
         """以管理员身份发起对话"""
         params = message.split()
 
@@ -306,24 +314,29 @@ class SentCommand(Plugin):
                 answer = ' '.join(params)
 
             # 判断信息是否为命令
-            if answer.startswith("!") or answer.startswith("！"):
-                try:
-                    # 以对方身份执行命令
-                    self.emit(
-                        GetQQPersonCommand,
-                        message=answer.replace("!", "").replace("！", ""),
-                        message_chain=None,
-                        launcher_id=self.launcherId_history,
-                        sender_id=self.launcherId_history,
-                        is_admin=self.launcherId_history in self.emit(GetConfig__).admin_list)
+            if (answer.startswith("!") or answer.startswith("！")):
+                if self.launcherId_history in [friend.user_id for friend in friends_list]:
+                    try:
+                        message_chain.user_id = self.launcherId_history
+                        message_chain.message[0].text = message_chain.message[0].text[1:].strip()
+                        # 以对方身份执行命令
+                        self.emit(
+                            GetQQPersonCommand,
+                            message=answer.replace("!", "").replace("！", ""),
+                            message_chain=message_chain,
+                            launcher_id=self.launcherId_history,
+                            sender_id=self.launcherId_history,
+                            is_admin=self.launcherId_history in self.emit(GetConfig__).admin_list)
 
-                    cqhttp.sendPersonMessage(
-                        self.launcherId_history, "[admin]\n管理员以你的身份发起了命令:\n[{}]".format(answer))
+                        cqhttp.sendPersonMessage(
+                            self.launcherId_history, "[admin]\n管理员以你的身份发起了命令:\n[{}]".format(answer))
 
-                    reply = "[bot] 成功以[{}][{}]的身份执行命令:\n[{}]".format(
-                        _find(self.launcherId_history), self.launcherId_history, answer)
-                except Exception as e:
-                    reply = f"[bot]err: {e}"
+                        reply = "[bot] 成功以[{}][{}]的身份执行命令:\n[{}]".format(
+                            _find(self.launcherId_history), self.launcherId_history, answer)
+                    except Exception as e:
+                        reply = f"[bot]err: {e}"
+                else:
+                    reply = "[bot]err: 暂不支持将命令发送到群组"
 
             else:
                 import re

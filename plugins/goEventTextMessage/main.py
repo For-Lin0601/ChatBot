@@ -61,7 +61,7 @@ class TextMessageEventPlugin(Plugin):
         # 若有附加消息, 给出警告
         check_length = len(message.message) != 1
 
-        msg: str = message.message[0].text
+        msg: str = message.message[0].text.strip()
 
         if len(msg.replace(" ", "")) == 0:
             self.cqhttp.sendPersonMessage(
@@ -78,7 +78,7 @@ class TextMessageEventPlugin(Plugin):
                     def _time_crtl():
                         self.process_message(
                             "person", message.temp_source if message.temp_source else message.user_id,
-                            msg, message.message, message.user_id, check_length
+                            msg, message, message.user_id, check_length
                         )
                     _time_crtl()
                     break
@@ -147,7 +147,7 @@ class TextMessageEventPlugin(Plugin):
         # 若有附加消息, 给出警告
         check_length = len(message.message) != 1
 
-        msg: str = message.message[0].text
+        msg: str = message.message[0].text.strip()
 
         if len(msg.replace(" ", "")) == 0:
             self.cqhttp.sendGroupMessage(
@@ -166,7 +166,7 @@ class TextMessageEventPlugin(Plugin):
                     def _time_crtl():
                         self.process_message(
                             "group", message.group_id,
-                            msg, message.message, message.user_id, check_length
+                            msg, message, message.user_id, check_length
                         )
                     _time_crtl()
                     break
@@ -208,7 +208,7 @@ class TextMessageEventPlugin(Plugin):
         :param launcher_type: 发起对象类型
         :param launcher_id: 发起对象ID(可能为群号, 或临时会话)
         :param text_message: 消息文本
-        :param message_chain: 消息链
+        :param message_chain: 消息原文
         :param sender_id: 发送者ID
         :param check_length: 是否为纯文本消息
 

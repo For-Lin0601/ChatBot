@@ -10,6 +10,10 @@
 # 3.（非必要选择！）现已支持网络代理，格式："http_proxy": "http://127.0.0.1:7890"   其中7890是你代理软件打开的端口，一般开全局则无需设置
 # 4.（非必要选择！）现已支持反向代理，可以添加reverse_proxy字段以使用反向代理，使用反向代理可以在国内使用OpenAI的API，反向代理的配置请参考 ，https://github.com/Ice-Hazymoon/openai-scf-proxy , 格式为： "reverse_proxy": "http://example.com:12345/v1"
 
+# 此处为默认配置, 即启用此api key后默认启用此配置
+# 但支持用`!reset -<键值>`切换单个session的配置, 或者仅用`!talk`切换单轮对话的配置
+# 具体请看`!cmd reset`和`!cmd talk`
+
 openai_config = {
     # "example1": "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",  # 全为默认配置, 填写字符串即可
 
@@ -41,11 +45,20 @@ openai_config = {
 #    'text-davinci-002'
 #    'code-davinci-002' | 'code-cushman-001' | 'text-curie-001' | 'text-babbage-001' | 'text-ada-001'   ....等等、还有一些你可能用不到的模型
 completion_api_params = {
-    "model": "gpt-3.5-turbo",
-    "temperature": 0.8,  # 数值越低得到的回答越理性, 取值范围[0, 1]
-    "top_p": 1,  # 生成的文本的文本与要求的符合度, 取值范围[0, 1]
-    "frequency_penalty": 0.3,
-    "presence_penalty": 1.0,
+    "default": {  # 默认配置
+        "model": "gpt-3.5-turbo",
+        "temperature": 0.8,  # 数值越低得到的回答越理性, 取值范围[0, 1]
+        "top_p": 1,  # 生成的文本的文本与要求的符合度, 取值范围[0, 1]
+        "frequency_penalty": 0.3,
+        "presence_penalty": 1.0,
+    },
+    "gpt4": {  # 在`!cmd reset`或者`!cmd talk`中查看用法
+        "model": "gpt-4-0314",
+        "temperature": 0.8,
+        "top_p": 1,
+        "frequency_penalty": 0.3,
+        "presence_penalty": 1.0,
+    },
 }
 
 
@@ -55,6 +68,7 @@ process_message_timeout = 180
 
 # 每次向OpenAI接口发送对话记录上下文的字符数
 # 注意: 较大的prompt_submit_length会导致OpenAI账户额度消耗更快
+# 3.5模型只支持到4096
 prompt_submit_length = 4096
 
 

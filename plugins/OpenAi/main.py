@@ -40,7 +40,7 @@ class OpenAiInteract(Plugin):
         self.completion_api_params = self.config.completion_api_params
         self.keys_manager = OpenAiKeysManager(
             self.openai_config,
-            self.completion_api_params
+            self.completion_api_params["default"]
         )
 
     def on_reload(self):
@@ -105,9 +105,16 @@ class OpenAiInteract(Plugin):
             # 配置API Key
             openai.api_key = session_config["api_key"]
 
+            # 如果该session有自己的配置
+            if session.params_name and session.params_name in self.completion_api_params:
+                params = self.completion_api_params[session.params_name]
+            else:
+                params = session_config["params"]
+            flag_prefix = not session.params_name or session.params_name in self.completion_api_params
+
             gpt_response = openai.ChatCompletion.create(
-                messages=self.sessions_dict[session_name].sessions,
-                **(self.sessions_dict[session_name].params if self.sessions_dict[session_name].params else session_config["params"]),
+                messages=session.sessions,
+                **params,
             )
 
             response_content = gpt_response['choices'][0]['message']['content']
@@ -120,9 +127,10 @@ class OpenAiInteract(Plugin):
                 Events.BanWordProcess__, message=response_content)
 
             # 如果成功, 添加助手的回复到会话中
-            session.add_assistant(response_content)
             logging.debug(f"{session_name}: {session.sessions}")
-            return session.prefix + response_content
+            reply = (session.prefix if flag_prefix else "") + response_content
+            session.add_assistant(response_content)
+            return reply
         except openai.OpenAIError as e:
             # 如果是 OpenAIError, 尝试使用下一个 API Key
             session = self.sessions_dict[session_name]

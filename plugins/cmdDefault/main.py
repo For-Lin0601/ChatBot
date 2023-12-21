@@ -24,9 +24,11 @@ class DefalutCommand(Plugin):
                 "!default\n"
                 " - 查看所有情景预设\n"
                 "!default ls\n"
-                " - [管理员]查看通过password的好友列表\n"
+                " - [管理员]查看高级权限好友列表\n"
                 "!default all\n"
-                " - [管理员]查看所有情景预设"
+                " - [管理员]查看所有情景预设\n"
+                "!default [密码]\n"
+                " - 切换高级权限"
             ),
             "description": "- password 请前往`config.py`中配置`default_prompt_permission_password`字段"
         }
@@ -58,16 +60,17 @@ class DefalutCommand(Plugin):
         default_prompt_permission_password = config.default_prompt_permission_password
         prompts = config.default_prompt
         openai = self.emit(Events.GetOpenAi__)
-        session_name = openai.sessions_dict.get(f'person_{sender_id}')
-        if session_name is None:
+        session = openai.sessions_dict.get(f'person_{sender_id}')
+        if session is None:
             session_name = "default"
+            is_plus = "default"
         else:
-            session_name = session_name.role_name
-        reply_str = "[bot] 当前情景预设：{}\n".format(session_name)
-        reply_str += "默认情景预设:{}\n\n".format("default")
-        reply_str += "用户请使用 !<reset/r> <情景预设名称> 来设置当前情景预设\n\n"
-        reply_str += "用户也可使用 !<reset/r> <名称编号> 来设置当前情景预设\n\n"
-        reply_str += "\n\n情景预设名称列表:\n"
+            session_name = session.role_name
+            is_plus = session.params_name if session.is_plus and not session._plus_once else "default"
+        reply_str = f"[bot] 当前情景预设：{session_name}\n"
+        reply_str += f"当前配置: {is_plus}\n"
+        reply_str += "场景预设和配置详情请看`!cmd reset`\n\n"
+        reply_str += "\n情景预设名称列表:\n"
         default_password_path = os.path.join(os.path.dirname(
             os.path.abspath(__file__)), 'default_password.txt')
 
@@ -86,7 +89,7 @@ class DefalutCommand(Plugin):
                             friend_name = friend.remark
                             break
                     cqhttp.sendPersonMessage(
-                        sender_id, "[{}][{}]通过default_password验证".format(friend_name, sender_id))
+                        sender_id, "[{}]通过default_password验证".format(sender_id))
                     cqhttp.NotifyAdmin(
                         "[{}][{}]通过default_password验证".format(friend_name, sender_id))
                     file.write('{}\n'.format(sender_id))
@@ -200,16 +203,17 @@ class DefalutCommand(Plugin):
         default_prompt_permission_password = config.default_prompt_permission_password
         prompts = config.default_prompt
         openai = self.emit(Events.GetOpenAi__)
-        session_name = openai.sessions_dict.get(f'wx_{sender}')
-        if session_name is None:
+        session = openai.sessions_dict.get(f'wx_{sender}')
+        if session is None:
             session_name = "default"
+            is_plus = "default"
         else:
-            session_name = session_name.role_name
-        reply_str = "[bot] 当前情景预设：{}\n".format(session_name)
-        reply_str += "默认情景预设:{}\n\n".format("default")
-        reply_str += "用户请使用 !<reset/r> <情景预设名称> 来设置当前情景预设\n\n"
-        reply_str += "用户也可使用 !<reset/r> <名称编号> 来设置当前情景预设\n\n"
-        reply_str += "\n\n情景预设名称列表:\n"
+            session_name = session.role_name
+            is_plus = session.params_name if session.is_plus and not session._plus_once else "default"
+        reply_str = f"[bot] 当前情景预设：{session_name}\n"
+        reply_str += f"当前配置: {is_plus}\n"
+        reply_str += "场景预设和配置详情请看`!cmd reset`\n\n"
+        reply_str += "\n情景预设名称列表:\n"
         default_password_path = os.path.join(os.path.dirname(
             os.path.abspath(__file__)), 'default_password_wx.txt')
 
@@ -231,7 +235,7 @@ class DefalutCommand(Plugin):
                             friend_name = friend["remark"] if friend["remark"] else friend["name"]
                             break
                     wcf.send_text(
-                        "[{}][{}]通过default_password验证".format(friend_name, sender), sender)
+                        "[{}]通过default_password验证".format(sender), sender)
                     self.emit(Events.GetCQHTTP__).NotifyAdmin(
                         "微信[{}][{}]通过default_password验证".format(friend_name, sender))
                     file.write('{}\n'.format(sender))

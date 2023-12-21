@@ -26,7 +26,7 @@ class RecalleEventPlugin(Plugin):
         cqhttp: CQHTTP_Protocol = self.emit(Events.GetCQHTTP__)
         text = cqhttp.getMessage(message.message_id)
         cqhttp.sendPersonMessage(
-            message.user_id, f"{config.message_recall_tip}\n{text.message}")
+            message.user_id, f"{config.message_recall_message}\n{text.message}")
 
     @on(QQ_group_recall)
     def on_qq_group_recall(self, event: EventContext,  **kwargs):
@@ -41,4 +41,4 @@ class RecalleEventPlugin(Plugin):
         cqhttp: CQHTTP_Protocol = self.emit(Events.GetCQHTTP__)
         text = cqhttp.getMessage(message.message_id)
         cqhttp.sendGroupMessage(
-            message.group_id, f"{config.message_recall_tip}\n{text.message}")
+            message.group_id, f"{config.message_recall_message}\n{text.message}")

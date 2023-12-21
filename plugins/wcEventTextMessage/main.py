@@ -63,7 +63,7 @@ class WxChatTextMessageEventPlugin(Plugin):
 
             if not (response_rules["at"] and
                     message.is_at(self.wcf.self_wxid)):  # 符合at响应规则
-                msg = message.content
+                msg = message.content.strip()
                 for prefix in response_rules["prefix"]:
                     if msg.startswith(prefix):  # 符合prefix响应规则
                         break
@@ -81,7 +81,7 @@ class WxChatTextMessageEventPlugin(Plugin):
             logging.debug(f"根据插件忽略[{message.sender}]的消息")
             return
 
-        msg: str = message.content
+        msg: str = message.content.strip()
 
         if len(msg.replace(" ", "")) == 0:
             self.wcf.send_text(
