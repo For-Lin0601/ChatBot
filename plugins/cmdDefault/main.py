@@ -223,7 +223,7 @@ class DefalutCommand(Plugin):
         account_list = [account.strip() for account in account_list]  # 删除末尾换行符
         permission = True if sender in account_list else False  # False表示只能查看部分
         if params[0] == default_prompt_permission_password and not sender in account_list:
-            if sender.endswith("@chatroom"):
+            if kwargs["message"].from_group():
                 wcf.send_text(
                     "[bot] 群聊暂不支持无限制模式~", sender)
                 return
