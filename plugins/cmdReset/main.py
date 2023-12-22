@@ -119,22 +119,29 @@ class ResetCommand(Plugin):
         permission = check_permission(sender_id)
         if params[0] == "all":
             if permission:
-                reply = "[bot] 可用配置:\n-" + \
-                    "\n-".join(config.completion_api_params.keys())
-                return reply
+                reply = "[bot] 可用配置:\n"
+                reply += "模型倍率与分组倍率与账单成比例, 请按需自取\n\n"
+                for index, (key, value) in enumerate(config.completion_api_params.items()):
+                    reply += f"[{index+1}] -{key}:\n"
+                    reply += f"  描述: {value['description']}\n" if "description" in value else ""
+                    reply += f"  最大token: {value['max_tokens']}\n" if "max_tokens" in value else ""
+                    reply += f"  训练数据截止: {value['traning_data']}\n" if "traning_data" in value else ""
+                    reply += f"  模型倍率: {value['model_multi']}\n" if "model_multi" in value else ""
+                    reply += f"  分组倍率: {value['group_multi']}\n" if "group_multi" in value else ""
+                    reply += "\n"
+                return reply.strip()
             return "[bot] 权限不足"
 
         if params[0] == "ls":
             if is_admin:
-                reply = []
+                reply = "[bot] 当前所有人配置:"
                 # plus写在前面
-                for session_name, session in open_ai.sessions_dict.items():
-                    if session.is_plus and not session._plus_once:
-                        reply.insert(
-                            0, f"[{session_name}]: {session.role_name} (gpt4)")
-                    else:
-                        reply.append(f"[{session_name}]: {session.role_name}")
-                reply = "[bot] 当前所有人配置:\n" + "\n".join(reply)
+                open_ai.sessions_dict = dict(sorted(
+                    open_ai.sessions_dict.items(),
+                    key=lambda x: (x[1].is_plus, x[0])
+                ))
+                for index, (session_name, session) in enumerate(open_ai.sessions_dict.items()):
+                    reply += f"\n\n[{index+1}]{session.statistical_usage()}"
                 return reply
             return "[bot] 权限不足"
 
@@ -161,11 +168,17 @@ class ResetCommand(Plugin):
                     reply += f"\n[启用配置{text}]warning: 权限不足, 启用默认配置"
                 else:
                     if text in config.completion_api_params:
-                        open_ai.sessions_dict[session_name]\
-                            .set_plus_params(text)
-                        reply += f"\n[启用配置{text}]: success"
-                        if len(prompts[params[0]]) > 100:
-                            reply += "\n当前预设长度较长, 请注意api key消耗!!!"
+                        if "is_plus" in config.completion_api_params[text] and \
+                                config.completion_api_params[text]["is_plus"]:
+                            open_ai.sessions_dict[session_name]\
+                                .set_plus_params(text)
+                            reply += f"\n[启用GPT4配置{text}]: success"
+                            if len(prompts[params[0]]) > 100:
+                                reply += "\n当前预设长度较长, 请注意api key消耗!!!"
+                        else:
+                            open_ai.sessions_dict[session_name]\
+                                .set_params(text)
+                            reply += f"\n[启用配置{text}]: success"
                     else:
                         reply += f"\n无效的配置名[{text}], 启用默认配置"
         except Exception as e:

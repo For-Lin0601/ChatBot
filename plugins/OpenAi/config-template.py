@@ -44,21 +44,101 @@ openai_config = {
 #    'text-davinci-003'             -->这个是原来的3.0接口, 人格相对好设置, 但是token收费会更高
 #    'text-davinci-002'
 #    'code-davinci-002' | 'code-cushman-001' | 'text-curie-001' | 'text-babbage-001' | 'text-ada-001'   ....等等、还有一些你可能用不到的模型
+# 模型倍率与分组倍率大致与计费规则相同, 但不保证时效性。在此文档书写时(2023/12/23)此处模型倍率为官网实测倍率, 与账单成比例
 completion_api_params = {
-    "default": {  # 默认配置
-        "model": "gpt-3.5-turbo",
-        "temperature": 0.8,  # 数值越低得到的回答越理性, 取值范围[0, 1]
-        "top_p": 1,  # 生成的文本的文本与要求的符合度, 取值范围[0, 1]
-        "frequency_penalty": 0.3,
-        "presence_penalty": 1.0,
+    "default": {
+        "is_plus": False,
+        "describe": "3.5默认配置",     # 描述
+        "max_tokens": "16,385",       # 最大字符数
+        "traning_data": "2021年9月",  # 训练数据截止日期
+        "model_multi": "0.50",        # 模型倍率
+        "group_multi": "5.00",        # 分组倍率
+        # 除`params`外的其它参数可省略, `is_plus`默认为False
+        "params": {
+            # 测试版
+            "model": "gpt-3.5-turbo-1106",
+            "temperature": 0.8,  # 数值越低得到的回答越理性, 取值范围[0, 1]
+            "top_p": 1,  # 生成的文本的文本与要求的符合度, 取值范围[0, 1]
+            "frequency_penalty": 0.3,
+            "presence_penalty": 1.0,
+        }
     },
-    "gpt4": {  # 在`!cmd reset`或者`!cmd talk`中查看用法
-        "model": "gpt-4-0314",
-        "temperature": 0.8,
-        "top_p": 1,
-        "frequency_penalty": 0.3,
-        "presence_penalty": 1.0,
+    # 在`!cmd reset`或者`!cmd talk`中查看用法
+    "gpt4": {
+        "is_plus": True,
+        "describe": "4.0默认配置",
+        "max_tokens": "128,000",
+        "traning_data": "2023年4月",
+        "model_multi": "5.00",
+        "group_multi": "5.00",
+        "params": {
+            "model": "gpt-4-1106-preview",
+            "temperature": 0.4,
+            "top_p": 0.8,
+            "frequency_penalty": 0.3,
+            "presence_penalty": 0.8,
+        }
     },
+    # "gpt4vision": {
+    #     "is_plus": True,
+    #     "describe": "4.0可看图片, 暂未兼容",  # TODO qq消息链与微信不同, 没想好怎么做
+    #     "max_tokens": "128,000",
+    #     "traning_data": "2023年4月",
+    #     "model_multi": "5.00",
+    #     "group_multi": "5.00",
+    #     "params": {
+    #         "model": "gpt-4-vision-preview",
+    #         "temperature": 0.4,
+    #         "top_p": 0.8,
+    #         "frequency_penalty": 0.3,
+    #         "presence_penalty": 0.8,
+    #     }
+    # },
+    "gpt4turbo": {
+        "is_plus": True,
+        "describe": "4.0稳定版",
+        "max_tokens": "8,192",
+        "traning_data": "2021年9月",
+        "model_multi": "15.00",
+        "group_multi": "5.00",
+        "params": {
+            "model": "gpt-4",
+            "temperature": 0.4,
+            "top_p": 0.8,
+            "frequency_penalty": 0.3,
+            "presence_penalty": 0.8,
+        }
+    },
+    "turbo": {
+        "is_plus": False,
+        "describe": "3.5稳定版",
+        "max_tokens": "4,096",
+        "traning_data": "2021年9月",
+        "model_multi": "0.75",
+        "group_multi": "5.00",
+        "params": {
+            "model": "gpt-3.5-turbo",
+            "temperature": 0.4,
+            "top_p": 0.8,
+            "frequency_penalty": 0.3,
+            "presence_penalty": 0.8,
+        }
+    },
+    # "gpt16k": {
+    #     "is_plus": False,
+    #     "describe": "3.5大文本处理, 暂未兼容",  # TODO 可能可以读取文件?
+    #     "max_tokens": "16,385",
+    #     "traning_data": "2029年9月",
+    #     "model_multi": "1.50",
+    #     "group_multi": "5.00",
+    #     "params": {
+    #         "model": "gpt-3.5-turbo-16k",
+    #         "temperature": 0.4,
+    #         "top_p": 0.8,
+    #         "frequency_penalty": 0.3,
+    #         "presence_penalty": 0.8,
+    #     }
+    # },
 }
 
 
@@ -73,7 +153,7 @@ prompt_submit_length = 4096
 
 
 # 每个会话的过期时间, 单位为秒, 原默认值20分钟, 即 1200 ,注意这里的数字只能是整数
-session_expire_time = 600000
+session_expire_time = 86400
 
 
 # 消息超时提示

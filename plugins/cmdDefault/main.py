@@ -64,11 +64,14 @@ class DefalutCommand(Plugin):
         if session is None:
             session_name = "default"
             is_plus = "default"
+            use_gpt4 = "否"
         else:
             session_name = session.role_name
-            is_plus = session.params_name if session.is_plus and not session._plus_once else "default"
+            is_plus = session.params_name if session.params_name else "default"
+            use_gpt4 = '是' if session.is_plus else '否'
         reply_str = f"[bot] 当前情景预设：{session_name}\n"
         reply_str += f"当前配置: {is_plus}\n"
+        reply_str += f"是否启用GPT4: {use_gpt4}\n\n"
         reply_str += "场景预设和配置详情请看`!cmd reset`\n\n"
         reply_str += "\n情景预设名称列表:\n"
         default_password_path = os.path.join(os.path.dirname(
@@ -207,11 +210,14 @@ class DefalutCommand(Plugin):
         if session is None:
             session_name = "default"
             is_plus = "default"
+            use_gpt4 = "否"
         else:
             session_name = session.role_name
-            is_plus = session.params_name if session.is_plus and not session._plus_once else "default"
+            is_plus = session.params_name if session.params_name else "default"
+            use_gpt4 = '是' if session.is_plus else '否'
         reply_str = f"[bot] 当前情景预设：{session_name}\n"
         reply_str += f"当前配置: {is_plus}\n"
+        reply_str += f"是否启用GPT4: {use_gpt4}\n\n"
         reply_str += "场景预设和配置详情请看`!cmd reset`\n\n"
         reply_str += "\n情景预设名称列表:\n"
         default_password_path = os.path.join(os.path.dirname(

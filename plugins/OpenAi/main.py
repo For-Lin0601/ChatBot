@@ -40,7 +40,7 @@ class OpenAiInteract(Plugin):
         self.completion_api_params = self.config.completion_api_params
         self.keys_manager = OpenAiKeysManager(
             self.openai_config,
-            self.completion_api_params["default"]
+            self.completion_api_params["default"]["params"],
         )
 
     def on_reload(self):
@@ -63,7 +63,7 @@ class OpenAiInteract(Plugin):
             else:
                 # 会话未过期, 检查长度
                 conversation = session.sessions
-                total_length = sum(len(msg["content"]) for msg in conversation)
+                total_length = session.get_content_length()
 
                 if total_length > self.config.prompt_submit_length:
                     # 长度超过限制, 从头开始暴力删除, 每次删除两个记录
@@ -107,7 +107,7 @@ class OpenAiInteract(Plugin):
 
             # 如果该session有自己的配置
             if session.params_name and session.params_name in self.completion_api_params:
-                params = self.completion_api_params[session.params_name]
+                params = self.completion_api_params[session.params_name]["params"]
             else:
                 params = session_config["params"]
             flag_prefix = not session.params_name or session.params_name in self.completion_api_params
