@@ -95,6 +95,7 @@ class ResetCommand(Plugin):
         self.emit(Events.GetWCF__).send_text(reply, sender)
 
     def set_reset(self, sender_id, session_name, params, is_admin) -> str:
+        """统一接口"""
         config = self.emit(Events.GetConfig__)
         open_ai: OpenAiInteract = self.emit(GetOpenAi__)
         if len(params) == 0 or params[0].startswith("-"):
@@ -102,11 +103,11 @@ class ResetCommand(Plugin):
                 session_name, "default", config.default_prompt["default"], config.session_expire_time)
             reply = config.command_reset_message
 
-            if params:
-                if params[0] == "-":
-                    reply += "\n[配置名为空]"
+            if params and params[0].startswith("-"):
+                text = params[0][1:]
+                if not check_permission(sender_id):
+                    reply += f"\n[启用配置{text}]warning: 权限不足, 启用默认配置"
                 else:
-                    text = params[0][1:]
                     if text in config.completion_api_params:
                         open_ai.sessions_dict[session_name]\
                             .set_plus_params(text)
@@ -151,20 +152,22 @@ class ResetCommand(Plugin):
                 return "[bot]会话重置失败: 没有找到场景预设: {}".format(params[0])
             open_ai.sessions_dict[session_name] = Session(
                 session_name, params[0], prompts[params[0]], config.session_expire_time)
-            reply = config.command_reset_name_message + \
-                "{}".format(params[0])
+            reply = config.command_reset_name_message + "{}".format(params[0])
             reply += f"\n当前预设长度: {len(prompts[params[0]])}字符, 请注意api key消耗"
 
             if len(params) > 1 and params[1].startswith("-"):
                 text = params[1][1:]
-                if text in config.completion_api_params:
-                    open_ai.sessions_dict[session_name]\
-                        .set_plus_params(text)
-                    reply += f"\n[启用配置{text}]: success"
-                    if len(prompts[params[0]]) > 100:
-                        reply += "\n当前预设长度较长, 请注意api key消耗!!!"
+                if not permission:
+                    reply += f"\n[启用配置{text}]warning: 权限不足, 启用默认配置"
                 else:
-                    reply += f"\n无效的配置名[{text}], 启用默认配置"
+                    if text in config.completion_api_params:
+                        open_ai.sessions_dict[session_name]\
+                            .set_plus_params(text)
+                        reply += f"\n[启用配置{text}]: success"
+                        if len(prompts[params[0]]) > 100:
+                            reply += "\n当前预设长度较长, 请注意api key消耗!!!"
+                    else:
+                        reply += f"\n无效的配置名[{text}], 启用默认配置"
         except Exception as e:
             reply = "[bot]会话重置失败: {}".format(e)
 

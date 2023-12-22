@@ -124,16 +124,16 @@ class WaterMarkCommand(Plugin):
 
     @on(QQ_private_message)
     def picture_for_add_watermark(self, event: EventContext, **kwargs):
-        config = self.emit(Events.GetConfig__)
         message: PersonMessage = kwargs["QQevents"]
-
-        # 忽略自身消息
-        if message.sender == config.qq:
-            return
 
         # 此处只处理图片消息
         if not (message.message[0].type == "Image" and
                 message.message[0].url):
+            return
+
+        # 忽略自身消息
+        config = self.emit(Events.GetConfig__)
+        if message.sender == config.qq:
             return
 
         event.prevent_postorder()
@@ -181,18 +181,18 @@ class WaterMarkCommand(Plugin):
     @on(Wx_msg)
     def picture_for_add_watermark(self, event: EventContext, **kwargs):
         message: WxMsg = kwargs["Wx_msg"]
-        wcf: Wcf = self.emit(Events.GetWCF__)
 
         # 此处只处理图片消息
         if message.type != 3:
             return
 
-        # 忽略自身消息
-        if message.sender == wcf.self_wxid:
-            return
-
         # 忽略群消息
         if message.from_group():
+            return
+
+        # 忽略自身消息
+        wcf: Wcf = self.emit(Events.GetWCF__)
+        if message.sender == wcf.self_wxid:
             return
 
         event.prevent_postorder()
@@ -202,12 +202,11 @@ class WaterMarkCommand(Plugin):
             message.extra,
             os.path.join(os.path.dirname(__file__), "cache")
         )
-        wcf.send_text(
-            "[PictureForAddWatermark] 获取到图片, 正在为图片添加水印…\n可用以下命令设置预留水印(信息数≤3):\n[!水印 <信息1> <信息2> <信息3>]", sender)
-        logging.debug(
-            f"插件[PictureForAddWatermark]获取到图片, 正在为图片添加水印…[用户: {sender}][图片链接: {image_path}]")
-
         try:
+            wcf.send_text(
+                "[PictureForAddWatermark] 获取到图片, 正在为图片添加水印…\n可用以下命令设置预留水印(信息数≤3):\n[!水印 <信息1> <信息2> <信息3>]", sender)
+            logging.debug(
+                f"插件[PictureForAddWatermark]获取到图片, 正在为图片添加水印…[用户: {sender}][图片链接: {image_path}]")
             # 从本地路径读取图像文件成字节码
             with open(image_path, 'rb') as f:
                 image_content = f.read()
