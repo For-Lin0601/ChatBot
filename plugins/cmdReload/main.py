@@ -34,12 +34,12 @@ class ReloadCommand(Plugin):
             return
         event.prevent_postorder()
         if not kwargs["is_admin"]:
-            if kwargs["launcher_id"] == kwargs["sender_id"]:  # 私聊
+            if kwargs["group_id"] == kwargs["sender_id"]:  # 私聊
                 self.emit(Events.GetCQHTTP__).sendPersonMessage(
                     kwargs["sender_id"], "[bot] 权限不足")
             else:
                 self.emit(Events.GetCQHTTP__).sendGroupMessage(
-                    kwargs["launcher_id"], [
+                    kwargs["group_id"], [
                         Plain(text="[bot]warning: "),
                         At(qq=kwargs["sender_id"]),
                         Plain(text="权限不足")

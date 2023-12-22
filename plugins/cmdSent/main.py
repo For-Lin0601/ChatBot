@@ -324,7 +324,7 @@ class SentCommand(Plugin):
                             GetQQPersonCommand,
                             message=answer.replace("!", "").replace("！", ""),
                             message_chain=message_chain,
-                            launcher_id=self.launcherId_history,
+                            group_id=self.launcherId_history,
                             sender_id=self.launcherId_history,
                             is_admin=self.launcherId_history in self.emit(GetConfig__).admin_list)
 

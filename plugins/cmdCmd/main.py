@@ -112,7 +112,7 @@ class CmdCommand(Plugin):
         event.prevent_postorder()
         reply = self.get_cmd_reply(message)
         self.emit(Events.GetCQHTTP__).sendGroupMessage(
-            group_id=kwargs["launcher_id"],
+            group_id=kwargs["group_id"],
             message=reply
         )
 

@@ -30,7 +30,7 @@ class HelpCommand(Plugin):
             return
         event.prevent_postorder()
         self.emit(Events.GetCQHTTP__).sendPersonMessage(
-            user_id=kwargs["sender_id"],
+            user_id=kwargs["group_id"],
             message=self.emit(Events.GetConfig__).help_message
         )
 

@@ -91,7 +91,7 @@ class TextMessageEventPlugin(Plugin):
             else:
                 for id_ in tmp_id:
                     self.cqhttp.recall(id_)
-        if self.is_admin(launcher_id=message.user_id):
+        if self.is_admin(group_id=message.user_id):
             self.emit(Events.SubmitAdminTask__, fn=time_ctrl_wrapper)
         else:
             self.emit(Events.SubmitUserTask__, fn=time_ctrl_wrapper)
@@ -179,25 +179,25 @@ class TextMessageEventPlugin(Plugin):
             else:
                 for id_ in tmp_id:
                     self.cqhttp.recall(id_)
-        if self.is_admin(launcher_id=message.user_id):
+        if self.is_admin(group_id=message.user_id):
             self.emit(Events.SubmitAdminTask__, fn=time_ctrl_wrapper)
         else:
             self.emit(Events.SubmitUserTask__, fn=time_ctrl_wrapper)
 
-    def is_admin(self, launcher_id: int):
+    def is_admin(self, group_id: int):
         """检查发送方是否为管理员"""
-        return launcher_id in self.config.admin_list
+        return group_id in self.config.admin_list
 
-    def is_banned(self, launcher_type: str, launcher_id: int):
+    def is_banned(self, launcher_type: str, group_id: int):
         """检查发送方是否被禁用"""
         if launcher_type == "group":
-            return launcher_id in self.config.banned_group_list
-        return launcher_id in self.config.banned_person_list
+            return group_id in self.config.banned_group_list
+        return group_id in self.config.banned_person_list
 
     def process_message(
             self,
             launcher_type: str,
-            launcher_id: int,
+            group_id: int,
             text_message: str,
             message_chain: list,
             sender_id: int,
@@ -206,7 +206,7 @@ class TextMessageEventPlugin(Plugin):
         """处理消息
 
         :param launcher_type: 发起对象类型
-        :param launcher_id: 发起对象ID(可能为群号, 或临时会话)
+        :param group_id: 发起对象ID(可能为群号, 或临时会话)
         :param text_message: 消息文本
         :param message_chain: 消息原文
         :param sender_id: 发送者ID
@@ -214,7 +214,7 @@ class TextMessageEventPlugin(Plugin):
 
         :return: None
         """
-        session_name = "{}_{}".format(launcher_type, launcher_id)
+        session_name = "{}_{}".format(launcher_type, group_id)
 
         logging.info(f"收到消息[{session_name}]: {text_message}")
 
@@ -223,7 +223,7 @@ class TextMessageEventPlugin(Plugin):
             self.emit(GetQQPersonCommand if launcher_type == "person" else GetQQGroupCommand,
                       message=text_message[1:],
                       message_chain=message_chain,
-                      launcher_id=launcher_id,
+                      group_id=group_id,
                       sender_id=sender_id,
                       is_admin=self.is_admin(sender_id)
                       )
@@ -235,7 +235,7 @@ class TextMessageEventPlugin(Plugin):
             if launcher_type == "person":
                 self.cqhttp.sendPersonMessage(
                     sender_id, self.config.message_drop_message,
-                    group_id=launcher_id if launcher_id != sender_id else None,
+                    group_id=group_id if group_id != sender_id else None,
                     auto_escape=True)
             return
         self.processing.add(session_name)
@@ -248,10 +248,10 @@ class TextMessageEventPlugin(Plugin):
             if launcher_type == "person":
                 tmp_id = self.cqhttp.sendPersonMessage(
                     sender_id,  tmp_msg,
-                    group_id=launcher_id if launcher_id != sender_id else None,
+                    group_id=group_id if group_id != sender_id else None,
                     auto_escape=True).message_id
             else:
-                tmp_id = self.cqhttp.sendGroupMessage(launcher_id, [
+                tmp_id = self.cqhttp.sendGroupMessage(group_id, [
                     At(qq=sender_id), Plain(text=tmp_msg)
                 ]).message_id
 
@@ -262,10 +262,10 @@ class TextMessageEventPlugin(Plugin):
             if launcher_type == "person":
                 self.cqhttp.sendPersonMessage(
                     sender_id, reply,
-                    group_id=launcher_id if launcher_id != sender_id else None,
+                    group_id=group_id if group_id != sender_id else None,
                     auto_escape=True)
             else:
-                self.cqhttp.sendGroupMessage(launcher_id, [
+                self.cqhttp.sendGroupMessage(group_id, [
                     At(qq=sender_id), Plain(text=reply)
                 ])
         except Exception as e:
@@ -275,7 +275,7 @@ class TextMessageEventPlugin(Plugin):
                     f"[bot]err: [{session_name}]处理消息出现错误:\n{e}")
                 self.cqhttp.sendPersonMessage(
                     sender_id, f"[bot]err: 处理消息出现错误, 请尝试联系管理员解决:\n{e}",
-                    group_id=launcher_id if launcher_id != sender_id else None,
+                    group_id=group_id if group_id != sender_id else None,
                     auto_escape=True)
         finally:
             self.processing.remove(session_name)

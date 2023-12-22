@@ -78,8 +78,9 @@ class RandomPictureCommand(Plugin):
 
             cqhttp.sendPersonMessage(sender_id, replay)
         finally:
-            if time.time() - start_time > 0.5:
-                time.sleep(0.5 - (time.time() - start_time))
+            stop_time = time.time()
+            if stop_time - start_time < 0.5:
+                time.sleep(0.5 - (stop_time - start_time))
             cqhttp.recall(tmp_id)
 
     @on(GetQQGroupCommand)
@@ -93,12 +94,12 @@ class RandomPictureCommand(Plugin):
         params = re.sub(
             r'^照片|图片|壁纸|ranimg|闪照', '', message
         ).strip().split()
-        launcher_id = kwargs["launcher_id"]
+        group_id = kwargs["group_id"]
         cqhttp: CQHTTP_Protocol = self.emit(Events.GetCQHTTP__)
 
         logging.debug("发送提示消息: 收到图片获取请求, 网络请求中")
         tmp_id = cqhttp.sendGroupMessage(
-            launcher_id, "[bot] 收到图片获取请求, 网络请求中"
+            group_id, "[bot] 收到图片获取请求, 网络请求中"
         ).message_id
 
         start_time = time.time()
@@ -113,7 +114,7 @@ class RandomPictureCommand(Plugin):
                 replay = "[bot]err: 网络波动, 稍后重试~"
 
             if isinstance(replay, str):
-                cqhttp.sendGroupMessage(launcher_id, replay)
+                cqhttp.sendGroupMessage(group_id, replay)
                 return
 
             replay = replay.toString()
@@ -126,10 +127,11 @@ class RandomPictureCommand(Plugin):
             elif config.include_image_description and program not in [['随机'], ['']]:
                 replay = replay + ' '.join(program)
 
-            cqhttp.sendGroupMessage(launcher_id, replay)
+            cqhttp.sendGroupMessage(group_id, replay)
         finally:
-            if time.time() - start_time < 0.5:
-                time.sleep(0.5 - (time.time() - start_time))
+            stop_time = time.time()
+            if stop_time - start_time < 0.5:
+                time.sleep(0.5 - (stop_time - start_time))
             cqhttp.recall(tmp_id)
 
     @on(GetWXCommand)

@@ -78,7 +78,7 @@ class WaterMarkCommand(Plugin):
 
         cqhttp.sendPersonMessage(sender_id, reply)
 
-    @on(GetQQPersonCommand)
+    @on(GetQQGroupCommand)
     def add_watermark(self, event: EventContext, **kwargs):
         message: str = kwargs["message"].strip()
         if not message.startswith("水印"):

@@ -26,7 +26,7 @@ class EndCommand(Plugin):
         message: str = kwargs["message"]
         event.prevent_postorder()
         self.emit(Events.GetCQHTTP__).sendGroupMessage(
-            group_id=kwargs["launcher_id"], message=f"[bot]err: 无命令响应: !{message}"
+            group_id=kwargs["group_id"], message=f"[bot]err: 无命令响应: !{message}"
         )
 
     @on(GetWXCommand)

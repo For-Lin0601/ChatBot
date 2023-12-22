@@ -72,7 +72,7 @@ class ResetCommand(Plugin):
             return
         event.prevent_postorder()
         cqhttp = self.emit(Events.GetCQHTTP__)
-        cqhttp.sendGroupMessage(kwargs["launcher_id"], "[bot] 群聊暂不支持此命令")
+        cqhttp.sendGroupMessage(kwargs["group_id"], "[bot] 群聊暂不支持此命令")
 
     @on(GetWXCommand)
     def cmd_reset(self, event: EventContext, **kwargs):

@@ -174,7 +174,7 @@ class DefalutCommand(Plugin):
         event.prevent_postorder()
         cqhttp: CQHTTP_Protocol = self.emit(Events.GetCQHTTP__)
         cqhttp.sendGroupMessage(
-            kwargs["launcher_id"], "[bot] 群聊暂不支持此命令")
+            kwargs["group_id"], "[bot] 群聊暂不支持此命令")
 
     @on(GetWXCommand)
     def cmd_default(self, event: EventContext, **kwargs):

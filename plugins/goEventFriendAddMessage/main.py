@@ -98,22 +98,14 @@ class QQFriendAddPlugin(Plugin):
             return
         config = self.emit(GetConfig__)
         cqhttp: CQHTTP_Protocol = self.emit(GetCQHTTP__)
-        sender_id = kwargs["sender_id"]
+        sender_id = kwargs["sender_id"] 
         event.prevent_postorder()
 
         if not kwargs["is_admin"]:
-            if kwargs["launcher_id"] == sender_id:  # 私聊
-                cqhttp.sendPersonMessage(sender_id, "[bot] 权限不足")
-            else:
-                cqhttp.sendGroupMessage(
-                    kwargs["launcher_id"], [
-                        Plain(text="[bot]warning: "),
-                        At(qq=sender_id),
-                        Plain(text="权限不足")
-                    ])
+            cqhttp.sendPersonMessage(sender_id, "[bot] 权限不足")
             return
-        params = message[3:].split()
 
+        params = message[3:].split()
         if len(params) == 0:
             if not self.friend_add_list:
                 cqhttp.sendPersonMessage(sender_id, "[bot] 暂无好友申请")
@@ -166,7 +158,7 @@ class QQFriendAddPlugin(Plugin):
             return
         event.prevent_postorder()
         self.emit(GetCQHTTP__).sendGroupMessage(
-            group_id=kwargs["launcher_id"], message=f"[bot] 群聊暂不支持此命令"
+            group_id=kwargs["group_id"], message=f"[bot] 群聊暂不支持此命令"
         )
 
     @on(GetWXCommand)

@@ -30,9 +30,9 @@ class HistoryCommand(Plugin):
         if message != "history":
             return
         event.prevent_postorder()
-        launcher_id = kwargs["launcher_id"]
-        session_name = f"person_{launcher_id}"
-        self._qq_cmd_history(session_name, kwargs["sender_id"], launcher_id)
+        sender_id = kwargs["sender_id"]
+        session_name = f"person_{sender_id}"
+        self._qq_cmd_history(session_name, kwargs["sender_id"], sender_id)
 
     @on(GetQQGroupCommand)
     def wx_cmd_history(self, event: EventContext, **kwargs):
@@ -40,9 +40,9 @@ class HistoryCommand(Plugin):
         if message != "history":
             return
         event.prevent_postorder()
-        launcher_id = kwargs["launcher_id"]
-        session_name = f"group_{launcher_id}"
-        self._qq_cmd_history(session_name, kwargs["sender_id"], launcher_id)
+        group_id = kwargs["group_id"]
+        session_name = f"group_{group_id}"
+        self._qq_cmd_history(session_name, kwargs["sender_id"], group_id)
 
     @on(GetWXCommand)
     def wx_cmd_history(self, event: EventContext, **kwargs):
