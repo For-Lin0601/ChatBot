@@ -546,7 +546,16 @@ def web_logs(cqhttp: CQHTTP_Protocol, my_qq_number):
     return
 
 
-def check_internet_status(plugin_host: CQHTTP_Protocol, my_qq_number: int) -> None:
+def sent_api_daily_notes(cqhttp: CQHTTP_Protocol, my_qq_number: int):
+    """发送api简报"""
+    file_path = os.path.join(os.path.dirname(
+        os.path.abspath(__file__)), "api_daily_notes.txt")
+    with open(file_path, 'r', encoding="utf-8") as file:
+        content = file.read().strip()
+    cqhttp.sendPersonMessage(my_qq_number, content)
+
+
+def check_internet_status(cqhttp: CQHTTP_Protocol, my_qq_number: int) -> None:
     """检测寝室电脑联网状态"""
     file_path = os.path.join(os.path.dirname(
         os.path.abspath(__file__)), "morning_internet_status.txt")
@@ -557,9 +566,10 @@ def check_internet_status(plugin_host: CQHTTP_Protocol, my_qq_number: int) -> No
 
         current_date = datetime.now().strftime('%Y-%m-%d')
         if content == current_date:
-            plugin_host.sendPersonMessage(my_qq_number, "[bot] 机革成功连接到互联网~")
+            cqhttp.sendPersonMessage(my_qq_number, "[bot] 机革成功连接到互联网~")
+            sent_api_daily_notes(cqhttp, my_qq_number)
         else:
-            plugin_host.sendPersonMessage(
+            cqhttp.sendPersonMessage(
                 my_qq_number, "[bot]err: 机革未自动连接到互联网！！！")
             try:
                 from Models.Plugins import Plugin
@@ -573,7 +583,7 @@ def check_internet_status(plugin_host: CQHTTP_Protocol, my_qq_number: int) -> No
                 logging.error(f"机革未自动连接到互联网时发生错误：{e}")
 
     except Exception as e:
-        plugin_host.sendPersonMessage(
+        cqhttp.sendPersonMessage(
             my_qq_number, f"[bot]err: 寝室电脑联网检测错误！！！{e}")
 
     return
