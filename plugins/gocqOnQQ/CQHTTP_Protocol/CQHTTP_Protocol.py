@@ -55,6 +55,7 @@ class CQHTTP_Protocol(Plugin):
         elif isinstance(message, str) and len(message) > 1000:
             message = self.emit(ForwardMessage__, message=message)
             return self.sendPersonForwardMessage(user_id, message)
+        logging.info(f"发送消息[person_{user_id}]: {message}")
         payload = {
             "user_id": user_id,
             "message": message,
@@ -65,7 +66,6 @@ class CQHTTP_Protocol(Plugin):
         result = self._sent_post(
             f"{self.http_url}/send_private_msg", payload)
         if result["status"] == "ok":
-            logging.info(f"发送消息[person_{user_id}]: {message}")
             return BotMessage.model_validate(result["data"])
         return False
 
@@ -81,13 +81,13 @@ class CQHTTP_Protocol(Plugin):
         elif isinstance(message, str) and len(message) > 1000:
             message = self.emit(ForwardMessage__, message=message)
             return self.sendGroupForwardMessage(group_id, message)
+        logging.info(f"发送消息[group_{group_id}]: {message}")
         result = self._sent_post(f"{self.http_url}/send_group_msg", {
             "group_id": group_id,
             "message": message,
             "auto_escape": auto_escape
         })
         if result["status"] == "ok":
-            logging.info(f"发送消息[group_{group_id}]: {message}")
             return BotMessage.model_validate(result["data"])
         return False
 
@@ -97,13 +97,13 @@ class CQHTTP_Protocol(Plugin):
         for i in range(len(messages)):
             if isinstance(messages[i], Node):
                 messages[i] = messages[i].toDict()
+        logging.info(f"发送合并消息[person_{user_id}]: {messages}")
         for _ in range(5):
             result = self._sent_post(f"{self.http_url}/send_private_forward_msg", {
                 "user_id": user_id,
                 "messages": messages
             })
             if result["status"] == "ok":
-                logging.info(f"发送合并消息[person_{user_id}]: {messages}")
                 return BotMessage.model_validate(result["data"])
             time.sleep(0.2)
         return False
@@ -114,13 +114,13 @@ class CQHTTP_Protocol(Plugin):
         for i in range(len(messages)):
             if isinstance(messages[i], Node):
                 messages[i] = messages[i].toDict()
+        logging.info(f"发送合并消息[group_{group_id}]: {messages}")
         for _ in range(5):
             result = self._sent_post(f"{self.http_url}/send_group_forward_msg", {
                 "group_id": group_id,
                 "messages": messages
             })
             if result["status"] == "ok":
-                logging.info(f"发送合并消息[group_{group_id}]: {messages}")
                 return BotMessage.model_validate(result["data"])
             time.sleep(0.2)
         return False

@@ -163,6 +163,7 @@ class Session:
         self.prefix = f"[{name}] "
         self.params_name = name
 
+    @update_out_time
     def set_params_for_once(self, name):
         """切换到3.5模型(在一轮对话后销毁)
 
@@ -197,9 +198,38 @@ class Session:
         self.prefix = f"[{name}](剩余0次) "
         self.params_name = name
 
+    def try_get_nickname(self) -> str:
+        """尝试获取昵称, 格式`[xx] `, 失败返回空字符串"""
+        try:
+            if self.session_name.startswith("person_"):
+                from Models.Plugins import Plugin
+                from Events import GetCQHTTP__
+                cqhttp = Plugin.emit(GetCQHTTP__)
+                return "[" + cqhttp.getStrangerInfo(
+                    int(self.session_name.replace("person_", ""))
+                ).nickname + "] "
+            elif self.session_name.startswith("group_"):
+                from Models.Plugins import Plugin
+                from Events import GetCQHTTP__
+                cqhttp = Plugin.emit(GetCQHTTP__)
+                return "[" + cqhttp.getGroupInfo(
+                    int(self.session_name.replace("group_", ""))
+                ).group_name + "] "
+            elif self.session_name.startswith("wx_") and \
+                    not self.session_name.endswith("@chatroom"):
+                from Models.Plugins import Plugin
+                from Events import GetWCF__
+                wcf = Plugin.emit(GetWCF__)
+                return "[" + wcf.get_info_by_wxid(
+                    self.session_name.replace("wx_", "")
+                )["name"] + "] "
+        except:
+            pass
+        return ""
+
     def statistical_usage(self) -> str:
         """统计api调用次数"""
-        reply = f"{self.session_name}:\n"
+        reply = f"{self.try_get_nickname()}{self.session_name}:\n"
         reply += f"  场景预设: {self.role_name}\n"
         if self._is_plus:
             reply += f"  启用GPT4: 是\n"
@@ -228,31 +258,12 @@ class Session:
     def __del__(self):
         """只是简单的通知, 如果不喜欢直接删了这个函数就行"""
         reply = self.statistical_usage()
-        logging.info(f"检测到对话销毁: {reply}")
+        logging.info(f"检测到对话销毁:\n{reply}")
         if self.plus_user_length > 0 or self.user_length > 10000:
             try:
                 from Models.Plugins import Plugin
-                from Events import GetCQHTTP__, GetWCF__
+                from Events import GetCQHTTP__
                 cqhttp = Plugin.emit(GetCQHTTP__)
-                if self.session_name.startswith("person_"):
-                    nickname = "[" + cqhttp.getStrangerInfo(
-                        int(self.session_name.replace("person_", ""))
-                    ).nickname + "] "
-                elif self.session_name.startswith("group_"):
-                    nickname = "[" + cqhttp.getGroupInfo(
-                        int(self.session_name.replace("group_", ""))
-                    ).group_name + "] "
-                elif self.session_name.startswith("wx_") and \
-                        not self.session_name.endswith("@chatroom"):
-                    wcf = Plugin.emit(GetWCF__)
-                    nickname = "[" + wcf.get_info_by_wxid(
-                        self.session_name.replace("wx_", "")
-                    )["name"] + "] "
-                else:
-                    nickname = ""
-                cqhttp.NotifyAdmin(
-                    f"[bot] 检测到对话销毁:\n" +
-                    nickname + reply
-                )
+                cqhttp.NotifyAdmin(f"[bot] 检测到对话销毁:\n" + reply)
             except:
                 pass

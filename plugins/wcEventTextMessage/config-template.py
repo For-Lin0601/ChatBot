@@ -19,7 +19,7 @@ quote_wx_group = False
 # 群内响应规则, 符合此消息的群内消息即使不包含at机器人也会响应
 # 支持消息前缀匹配及正则表达式匹配
 # 注意每个规则的优先级为: 消息前缀 > 正则表达式 > 随机响应
-# 且字典不能缺失字段, 若不需要, 可为空
+# 字典允许缺失字段, 自动补充为空
 # 正则表达式简明教程: https://www.runoob.com/regexp/regexp-tutorial.html
 wx_response_rules = {
     "default": {  # 默认, 若未特殊标注则引用此处规则

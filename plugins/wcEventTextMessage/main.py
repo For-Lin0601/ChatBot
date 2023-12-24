@@ -56,24 +56,24 @@ class WxChatTextMessageEventPlugin(Plugin):
             if not self.config.quote_wx_group:
                 logging.debug(f"忽略群消息[{message.roomid}]")
                 return
-            if message.roomid not in self.config.wx_response_rules:
-                response_rules = self.config.wx_response_rules["default"]
-            else:
-                response_rules = self.config.wx_response_rules[message.roomid]
+            response_rules = self.config.wx_response_rules.get(
+                message.roomid,
+                self.config.wx_response_rules["default"]
+            )
 
-            if not (response_rules["at"] and
+            if not (response_rules.get("at", False) and
                     message.is_at(self.wcf.self_wxid)):  # 符合at响应规则
                 msg = message.content.strip()
-                for prefix in response_rules["prefix"]:
+                for prefix in response_rules.get("prefix", []):
                     if msg.startswith(prefix):  # 符合prefix响应规则
                         break
                 else:
-                    for regexp in response_rules["regexp"]:
+                    for regexp in response_rules.get("regexp", []):
                         if re.search(regexp, msg):  # 符合regexp响应规则
                             break
                     else:
                         # ramdom_rate字段随机值0.0-1.0
-                        if random.random() >= response_rules["random_rate"]:
+                        if random.random() >= response_rules.get("ramdom_rate", 0.0):
                             logging.debug(f"根据规则忽略 {message.sender}: {msg}")
                             return
 
@@ -174,6 +174,6 @@ class WxChatTextMessageEventPlugin(Plugin):
             self.wcf.send_text(
                 f"[bot]err: [{session_name}]处理消息出现错误:\n{e}"), roomid if roomid else sender
             self.emit(Events.GetCQHTTP__).NotifyAdmin(
-                 f"[bot]err: 微信[{session_name}]处理消息出现错误:\n{e}")
+                f"[bot]err: 微信[{session_name}]处理消息出现错误:\n{e}")
         finally:
             self.processing.remove(session_name)

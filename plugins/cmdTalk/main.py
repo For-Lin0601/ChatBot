@@ -81,8 +81,7 @@ class TalkCommand(Plugin):
         if session_name not in open_ai.sessions_dict:
             open_ai.sessions_dict[session_name] = Session(
                 session_name, "default", config.default_prompt["default"], config.session_expire_time)
-        if "is_plus" in config.completion_api_params[text] and \
-                config.completion_api_params[text]["is_plus"]:
+        if config.completion_api_params[text].get("is_plus"):
             open_ai.sessions_dict[session_name].set_plus_params_for_once(text)
         else:
             open_ai.sessions_dict[session_name].set_params_for_once(text)
@@ -164,8 +163,7 @@ class TalkCommand(Plugin):
         if session_name not in open_ai.sessions_dict:
             open_ai.sessions_dict[session_name] = Session(
                 session_name, "default", config.default_prompt["default"], config.session_expire_time)
-        if "is_plus" in config.completion_api_params[text] and \
-                config.completion_api_params[text]["is_plus"]:
+        if config.completion_api_params[text].get("is_plus"):
             open_ai.sessions_dict[session_name].set_plus_params_for_once(text)
         else:
             open_ai.sessions_dict[session_name].set_params_for_once(text)

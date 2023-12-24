@@ -118,27 +118,27 @@ class TextMessageEventPlugin(Plugin):
         self.cqhttp: CQHTTP_Protocol = self.emit(Events.GetCQHTTP__)
 
         # 判断群是否符合响应规则
-        if str(message.group_id) not in self.config.response_rules:
-            response_rules = self.config.response_rules["default"]
-        else:
-            response_rules = self.config.response_rules[str(message.group_id)]
+        response_rules = self.config.response_rules.get(
+            str(message.group_id),
+            self.config.response_rules["default"]
+        )
 
-        if response_rules["at"] and \
+        if response_rules.get("at", False) and \
             message.message[0].type == "At" and \
                 message.message[0].qq == str(self.config.qq):  # 符合at响应规则
             message.message = message.message[1:]
         elif message.message[0].type == "Plain":
             msg = message.message[0].text
-            for prefix in response_rules["prefix"]:
+            for prefix in response_rules.get("prefix", []):
                 if msg.startswith(prefix):  # 符合prefix响应规则
                     break
             else:
-                for regexp in response_rules["regexp"]:
+                for regexp in response_rules.get("regexp", []):
                     if re.search(regexp, msg):  # 符合regexp响应规则
                         break
                 else:
                     # ramdom_rate字段随机值0.0-1.0
-                    if random.random() >= response_rules["random_rate"]:
+                    if random.random() >= response_rules.get("ramdom_rate", 0.0):
                         logging.debug(f"根据规则忽略 {message.user_id}: {msg}")
                         return
         else:

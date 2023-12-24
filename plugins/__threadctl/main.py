@@ -132,8 +132,8 @@ class ThreadCtlPlugin(Plugin):
         logging.debug(f"提交系统任务: {kwargs}")
         event.prevent_postorder()
         fn = kwargs["fn"]
-        args = kwargs["args"] if "args" in kwargs else ()
-        kwargs = kwargs["kwargs"] if "kwargs" in kwargs else {}
+        args = kwargs.get("args", ())
+        kwargs = kwargs.get("kwargs", {})
         event.return_value = self.ctl.submit_sys_task(fn, *args, **kwargs)
 
     @on(SubmitAdminTask__)
@@ -141,8 +141,8 @@ class ThreadCtlPlugin(Plugin):
         logging.debug(f"提交管理员任务: {kwargs}")
         event.prevent_postorder()
         fn = kwargs["fn"]
-        args = kwargs["args"] if "args" in kwargs else ()
-        kwargs = kwargs["kwargs"] if "kwargs" in kwargs else {}
+        args = kwargs.get("args", ())
+        kwargs = kwargs.get("kwargs", {})
         event.return_value = self.ctl.submit_admin_task(fn, *args, **kwargs)
 
     @on(SubmitUserTask__)
@@ -150,8 +150,8 @@ class ThreadCtlPlugin(Plugin):
         logging.debug(f"提交用户任务: {kwargs}")
         event.prevent_postorder()
         fn = kwargs["fn"]
-        args = kwargs["args"] if "args" in kwargs else ()
-        kwargs = kwargs["kwargs"] if "kwargs" in kwargs else {}
+        args = kwargs.get("args", ())
+        kwargs = kwargs.get("kwargs", {})
         event.return_value = self.ctl.submit_user_task(fn, *args, **kwargs)
 
     def on_reload(self):

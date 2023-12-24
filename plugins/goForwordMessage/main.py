@@ -22,8 +22,8 @@ class ForwardMessageUtil(Plugin):
         if "qq" not in kwargs or "name" not in kwargs:
             cqhttp = self.emit(Events.GetCQHTTP__)
             bot = cqhttp.getLoginInfo()
-            qq = kwargs["qq"] if "qq" in kwargs else bot.user_id
-            name = kwargs["name"] if "name" in kwargs else bot.nickname
+            qq = kwargs.get("qq", bot.user_id)
+            name = kwargs.get("name", bot.nickname)
         else:
             qq = kwargs["qq"]
             name = kwargs["name"]

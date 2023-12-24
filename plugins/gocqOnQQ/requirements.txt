@@ -1,2 +1,2 @@
-Flask==3.0.0
+Flask==1.1.2
 websockets==12.0

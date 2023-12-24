@@ -77,27 +77,25 @@ def create_event(json: dict):
     ```"""
     if json["post_type"] not in ws_event_dict:
         return None
+
     post_type = json["post_type"]
     if post_type in ["message", "message_sent"]:
-        return f'QQ_{json["message_type"]}_message', \
-            ws_MessageEvent_dict[json["message_type"]](**json)
+        return f'QQ_{json["message_type"]}_message', ws_MessageEvent_dict[json["message_type"]](**json)
+
     elif post_type == "request":
-        return f'QQ_{json["request_type"]}_add_event', \
-            ws_RequestEvent_dict[json["request_type"]](**json)
+        return f'QQ_{json["request_type"]}_add_event', ws_RequestEvent_dict[json["request_type"]](**json)
+
     elif post_type == "notice":
-        if json["notice_type"] == "notify":
-            if json["sub_type"] == "poke":
-                if "group_id" in json:
-                    return 'QQ_group_poke', \
-                        ws_NoticeEvent_dict["notify"]["poke"]["group_poke"](
-                            **json)
-                return f'QQ_person_poke', \
-                    ws_NoticeEvent_dict["notify"]["poke"]["friend_poke"](
-                        **json)
-            return f'QQ_{json["sub_type"]}', \
-                ws_NoticeEvent_dict["notify"][json["sub_type"]](**json)
-        return f'QQ_{json["notice_type"]}', \
-            ws_NoticeEvent_dict[json["notice_type"]](**json)
+        if json["notice_type"] != "notify":
+            return f'QQ_{json["notice_type"]}', ws_NoticeEvent_dict[json["notice_type"]](**json)
+
+        if json["sub_type"] != "poke":
+            return f'QQ_{json["sub_type"]}', ws_NoticeEvent_dict["notify"][json["sub_type"]](**json)
+
+        if "group_id" not in json:
+            return f'QQ_person_poke', ws_NoticeEvent_dict["notify"]["poke"]["friend_poke"](**json)
+
+        return 'QQ_group_poke', ws_NoticeEvent_dict["notify"]["poke"]["group_poke"](**json)
+
     elif post_type == "meta_event":
-        return f'QQ_{json["meta_event_type"]}', \
-            ws_MetaEvent_dict[json["meta_event_type"]](**json)
+        return f'QQ_{json["meta_event_type"]}', ws_MetaEvent_dict[json["meta_event_type"]](**json)

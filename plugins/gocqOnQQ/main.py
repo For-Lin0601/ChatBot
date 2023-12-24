@@ -82,8 +82,9 @@ class QQbot(Plugin):
 
             # 启用新线程运行go-cqhttp
             self.emit(Events.SubmitSysTask__, fn=run_gocq_exe)
-            # 调试的时候可以注释掉这行, 运行主线程后在新命令行开启go-cqhttp
-            # 这样重启或热重载机器人不影响go-cqhttp运行, 大大减少机器人被风控的概率
+            # 调试的时候可以在新命令行开启 go-cqhttp, 此行会抛出一个`The process connot access the file because it is being used by another process`错误
+            # 不用理他, 没得问题
+            # 这样重启或热重载机器人不影响 go-cqhttp 运行, 大大减少机器人被风控的概率
 
             self.emit(Events.SubmitSysTask__, fn=self._run)
         else:

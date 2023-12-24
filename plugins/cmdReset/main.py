@@ -98,24 +98,40 @@ class ResetCommand(Plugin):
         """统一接口"""
         config = self.emit(Events.GetConfig__)
         open_ai: OpenAiInteract = self.emit(GetOpenAi__)
+        prompts = config.default_prompt
+
+        def try_set_params(flag: bool, name: str, is_default: bool = False) -> str:
+            """尝试设置plus"""
+            if not flag:
+                return f"\n[启用配置{name}]warning: 权限不足, 启用默认配置"
+
+            if name not in config.completion_api_params:
+                return f"\n无效的配置名[{name}], 启用默认配置"
+
+            reply = ""
+            if config.completion_api_params[name].get("is_plus"):
+                open_ai.sessions_dict[session_name].set_plus_params(name)
+                reply += f"\n请注意api key消耗: 已开启GPT4"
+                if is_default and len(prompts[params[0]]) > 100:
+                    reply += "\n请注意api key消耗: 当前预设长度较长"
+            else:
+                open_ai.sessions_dict[session_name].set_params(name)
+            reply += f"\n[启用配置{name}]: success"
+            return reply
+
+        # 无场景预设
         if len(params) == 0 or params[0].startswith("-"):
             open_ai.sessions_dict[session_name] = Session(
                 session_name, "default", config.default_prompt["default"], config.session_expire_time)
             reply = config.command_reset_message
 
             if params and params[0].startswith("-"):
-                text = params[0][1:]
-                if not check_permission(sender_id):
-                    reply += f"\n[启用配置{text}]warning: 权限不足, 启用默认配置"
-                else:
-                    if text in config.completion_api_params:
-                        open_ai.sessions_dict[session_name]\
-                            .set_plus_params(text)
-                        reply += f"\n[启用配置{text}]: success"
-                    else:
-                        reply += f"\n无效的配置名[{text}], 启用默认配置"
+                reply += try_set_params(
+                    check_permission(sender_id), params[0][1:]
+                )
             return reply
 
+        # 查看所有模型
         permission = check_permission(sender_id)
         if params[0] == "all":
             if permission:
@@ -132,6 +148,7 @@ class ResetCommand(Plugin):
                 return reply.strip()
             return "[bot] 权限不足"
 
+        # 查看所有人配置
         if params[0] == "ls":
             if is_admin:
                 reply = "[bot] 当前所有人配置:"
@@ -145,42 +162,30 @@ class ResetCommand(Plugin):
                 return reply
             return "[bot] 权限不足"
 
+        # 有场景预设
         try:
-            prompts = config.default_prompt
             key_list = list(prompts.keys())
 
             if not permission:
                 key_list = [
                     key for key in key_list if key in config.default_prompt_permission]
+
             if params[0].isdigit() and int(params[0]) <= len(key_list):
                 index = int(params[0])-1
                 params[0] = key_list[index]
+
             if not permission and params[0] not in key_list:
                 return "[bot]会话重置失败: 没有找到场景预设: {}".format(params[0])
+
             open_ai.sessions_dict[session_name] = Session(
                 session_name, params[0], prompts[params[0]], config.session_expire_time)
             reply = config.command_reset_name_message + "{}".format(params[0])
             reply += f"\n当前预设长度: {len(prompts[params[0]])}字符, 请注意api key消耗"
 
             if len(params) > 1 and params[1].startswith("-"):
-                text = params[1][1:]
-                if not permission:
-                    reply += f"\n[启用配置{text}]warning: 权限不足, 启用默认配置"
-                else:
-                    if text in config.completion_api_params:
-                        if "is_plus" in config.completion_api_params[text] and \
-                                config.completion_api_params[text]["is_plus"]:
-                            open_ai.sessions_dict[session_name]\
-                                .set_plus_params(text)
-                            reply += f"\n[启用GPT4配置{text}]: success"
-                            if len(prompts[params[0]]) > 100:
-                                reply += "\n当前预设长度较长, 请注意api key消耗!!!"
-                        else:
-                            open_ai.sessions_dict[session_name]\
-                                .set_params(text)
-                            reply += f"\n[启用配置{text}]: success"
-                    else:
-                        reply += f"\n无效的配置名[{text}], 启用默认配置"
+                reply += try_set_params(
+                    permission, params[1][1:], is_default=True
+                )
         except Exception as e:
             reply = "[bot]会话重置失败: {}".format(e)
 
