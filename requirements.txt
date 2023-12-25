@@ -6,7 +6,7 @@ pydantic~=2.5.2
 
 
 ########## plugin.name='QQbot' plugin.path='//plugins//gocqOnQQ//main' ##########
-Flask==1.1.2
+Flask==3.0.0
 websockets==12.0
 
 
