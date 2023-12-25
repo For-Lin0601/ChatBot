@@ -28,3 +28,4 @@ func_timeout~=4.3.5
 
 ########## plugin.name='WeChatbot' plugin.path='//plugins//wcferry//main' ##########
 wcferry~=39.0.10.0
+sniffio==1.3.0
