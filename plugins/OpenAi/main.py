@@ -56,10 +56,11 @@ class OpenAiInteract(Plugin):
 
         # 删除过期的对话
         current_time = datetime.now()
+        del_list = []
         for session in self.sessions_dict.values():
             if session.time_out < current_time:
                 logging.info("删除过期的对话: " + session.session_name)
-                del self.sessions_dict[session.session_name]
+                del_list.append(session.session_name)
             else:
                 # 会话未过期, 检查长度
                 conversation = session.sessions
@@ -79,6 +80,9 @@ class OpenAiInteract(Plugin):
                         if len(conversation) < 3 and total_length > self.config.prompt_submit_length:
                             return "[bot]err: 对话长度超过限制, 当前场景预设过长, 请用`!r`重置会话"
 
+        if del_list:
+            for session_name in del_list:
+                del self.sessions_dict[session_name]
         if session_name not in self.sessions_dict:
             self.sessions_dict[session_name] = Session(
                 session_name, "default", self.config.default_prompt["default"], self.config.session_expire_time)

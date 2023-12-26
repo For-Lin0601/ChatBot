@@ -465,9 +465,90 @@ def add_datetime(converted_datetime, years=0, months=0, days=0, hours=0, minutes
     return new_datetime.timetuple()
 
 
+def web_logs_old(cqhttp: CQHTTP_Protocol, my_qq_number):
+    """老服务器网站日志检测, 服务器过期后可删除此函数"""
+    old_log_file_path = os.path.join(os.path.dirname(
+        os.path.abspath(__file__)), "old_logs.txt")
+    old_today_log_file_path = os.path.join(os.path.dirname(
+        os.path.abspath(__file__)), "old_today_logs.txt")
+
+    fields_to_extract = ['date', 'time', 'c-ip']  # 定义要提取的字段
+
+    extracted_list_dict = []  # 存放字典形式的提取信息
+
+    extracted_list = []  # 存放字符串形式的提取信息
+
+    try:
+        with open(old_log_file_path, 'r', encoding="utf-8") as file:
+            for line in file:
+                if line.startswith('#Fields'):
+                    # 如果遇到以'#Fields'开头的行, 则解析出字段名称并跳过该行
+                    fields = line.strip().split(':')[1].strip().split(' ')
+                elif not line.startswith('#'):
+                    # 如果不是以'#'开头的注释行, 则解析出对应字段的值, 并存入extracted_data字典中
+                    extracted_data = {}
+                    values = line.strip().split(' ')
+                    for field, value in zip(fields, values):
+                        if field in fields_to_extract:
+                            extracted_data[field] = value
+                    extracted_data['time'] = extracted_data['time'][:7] + '0'
+                    if extracted_data not in extracted_list_dict:
+                        extracted_list_dict.append(extracted_data)
+                        extracted_list.append(
+                            ' '.join(extracted_data.values()))
+    except:
+        return
+
+    if extracted_list == []:
+        return
+    else:
+        extracted_list_read = extracted_list[::]
+
+    with open(old_today_log_file_path, 'r+', encoding="utf-8") as file:
+        lines = file.readlines()
+        lines = [line.strip() for line in lines]
+        if lines == extracted_list_read:
+            return
+        for i in range(len(extracted_list)-1, -1, -1):
+            if extracted_list[i] in lines:
+                extracted_list_dict.pop(i)
+        file.seek(0)
+        file.write('\n'.join(extracted_list_read))
+        file.truncate()
+
+    if extracted_list_dict:
+        ip = ''
+        reply = "[bot]旧网站: 检测到有新访客~"
+        i = 0
+        for item in extracted_list_dict:
+            if ip != item['c-ip']:
+                area = get_area(item['c-ip'])
+                if area != '-2':
+                    i += 1
+                    ip = item['c-ip']
+                    reply += f"\n\n编号: [{i}]"
+                    if area == '-1':
+                        area = f"[warning]\nIP: {item['c-ip']}\n地区: [查询失败!!!]"
+                    reply += f"\n{area}"
+
+            if area != '-2':
+                reply_time = time.strptime(
+                    item['date'] + ' ' + item['time'], "%Y-%m-%d %H:%M:%S")
+                reply_time = add_datetime(reply_time, hours=8)
+                reply_time = datetime.strptime(
+                    datetime(*reply_time[:6]).strftime("%Y-%m-%d %H:%M:%S"), "%Y-%m-%d %H:%M:%S")
+                reply += f"\n时间: [{str(reply_time).replace('-', '/')}]"
+
+        if reply != "[bot]旧网站: 检测到有新访客~":
+            cqhttp.sendPersonMessage(my_qq_number, reply)
+
+    return
+
+
 def web_logs(cqhttp: CQHTTP_Protocol, my_qq_number):
     """网站日志检测"""
-    log_file_path = r"C:\BtSoft\wwwlogs\W3SVC4\u_ex{date}.log"
+    web_logs_old(cqhttp, my_qq_number)
+    log_file_path = r"C:\ProgramFiles\BtSoft\wwwlogs\W3SVC4\u_ex{date}.log"
     log_file_path = log_file_path.format(
         date=datetime.now().strftime("%y%m%d"))
     today_log_file_path = os.path.join(os.path.dirname(
