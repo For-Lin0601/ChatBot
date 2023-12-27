@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 
 from plugins.gocqOnQQ.CQHTTP_Protocol.CQHTTP_Protocol import CQHTTP_Protocol
 from Models.headers import get_random_ua
-from typing import List
 from functools import wraps
 
 try:
