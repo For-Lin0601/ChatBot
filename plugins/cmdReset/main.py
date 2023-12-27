@@ -5,8 +5,6 @@ import Events
 from Models.Plugins import *
 from ..cmdDefault.CheckPermission import check_permission
 from ..OpenAi.main import Session, OpenAiInteract
-from ..gocqOnQQ.CQHTTP_Protocol.CQHTTP_Protocol import CQHTTP_Protocol
-from wcferry import Wcf
 
 
 @register(
@@ -32,6 +30,8 @@ class ResetCommand(Plugin):
                 " - 前两者命令结合\n"
                 "!reset ls\n"
                 " - [管理员]查看当前所有人配置\n"
+                "!reset ls <qq号\wxid>\n"
+                " - [管理员]模糊查询\n"
                 "!reset all\n"
                 " - 查看当前配置可选项"
             ),
@@ -150,17 +150,24 @@ class ResetCommand(Plugin):
 
         # 查看所有人配置
         if params[0] == "ls":
-            if is_admin:
+            if not is_admin:
+                return "[bot] 权限不足"
+            # plus写在前面
+            open_ai.sessions_dict = dict(sorted(
+                open_ai.sessions_dict.items(),
+                key=lambda x: (x[1].is_plus, x[0])
+            ))
+            if len(params) == 1:
                 reply = "[bot] 当前所有人配置:"
-                # plus写在前面
-                open_ai.sessions_dict = dict(sorted(
-                    open_ai.sessions_dict.items(),
-                    key=lambda x: (x[1].is_plus, x[0])
-                ))
                 for index, (session_name, session) in enumerate(open_ai.sessions_dict.items()):
                     reply += f"\n\n[{index+1}]{session.statistical_usage()}"
                 return reply
-            return "[bot] 权限不足"
+            params = " ".join(params[1:])
+            reply = f"[bot] 模糊搜索: {params}"
+            for index, (session_name, session) in enumerate(open_ai.sessions_dict.items()):
+                if params in session_name:
+                    reply += f"\n\n[{index+1}]{session.statistical_usage()}"
+            return reply
 
         # 有场景预设
         try:

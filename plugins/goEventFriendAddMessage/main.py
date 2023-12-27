@@ -1,7 +1,6 @@
 
 from Models.Plugins import *
 from plugins.gocqOnQQ.QQevents.RequestEvent import FriendAdd
-from plugins.gocqOnQQ.QQmessage.components import At, Plain
 
 from ..gocqOnQQ.CQHTTP_Protocol.CQHTTP_Protocol import CQHTTP_Protocol
 

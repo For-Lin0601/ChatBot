@@ -4,7 +4,7 @@ import time
 import requests
 from datetime import datetime, timedelta
 
-from plugins.gocqOnQQ.CQHTTP_Protocol.CQHTTP_Protocol import CQHTTP_Protocol
+from ..gocqOnQQ.CQHTTP_Protocol.CQHTTP_Protocol import CQHTTP_Protocol
 from Models.headers import get_random_ua
 from functools import wraps
 
@@ -411,7 +411,7 @@ def get_area(area: str) -> str:
     """获取ip对应物理地址, 若报错则返回 '-1', 若为阿里云则返回'-2'"""
     area_url = f"https://apis.tianapi.com/ipquery/index?key={tian_jv_shu_xing_api3}&ip={area}"
     try:
-        area_result = requests.get(area_url).json()
+        area_result = requests.get(area_url, headers=get_random_ua()).json()
         area_result = area_result['result']
         if area_result['isp'] == "阿里云":
             return "-2"
@@ -427,12 +427,17 @@ def get_area(area: str) -> str:
     except:
         area_url = f"http://whois.pconline.com.cn/ipJson.jsp?ip={area}&json=true"
         try:
-            area_result = requests.get(area_url).json()
-            area_content = "[warning] 接口1报错！\n"
-            area_content += f"IP: {area}\n"
+            area_result = requests.get(
+                area_url, headers=get_random_ua()).json()
+            area_content = f"IP: {area}\n"
             if area_result['pro'] != "":
                 area_content += f"地区: {area_result['pro']} {area_result['city']}\n"
-            area_content += f"网络提供商: {area_result['addr'].replace(area_result['pro'], '').replace(area_result['city'], '').strip()}"
+            network_provider = area_result['addr']\
+                .replace(area_result['pro'], '')\
+                .replace(area_result['city'], '').strip()
+            if network_provider == "中国阿里云":
+                return "-2"
+            area_content += f"运营商: {network_provider}"
 
         except:
             return '-1'
@@ -547,45 +552,57 @@ def web_logs_old(cqhttp: CQHTTP_Protocol, my_qq_number):
 def web_logs(cqhttp: CQHTTP_Protocol, my_qq_number):
     """网站日志检测"""
     web_logs_old(cqhttp, my_qq_number)
-    log_file_path = r"C:\ProgramFiles\BtSoft\wwwlogs\W3SVC4\u_ex{date}.log"
-    log_file_path = log_file_path.format(
+    bt_log_path = r"C:\ProgramFiles\BtSoft\wwwlogs\W3SVC4\u_ex{date}.log"
+    today_bt_log_path = bt_log_path.format(
         date=datetime.now().strftime("%y%m%d"))
-    today_log_file_path = os.path.join(os.path.dirname(
+    yesterday_bt_log_path = bt_log_path.format(
+        date=(datetime.now() - timedelta(days=1)).strftime("%y%m%d"))
+    today_logs_path = os.path.join(os.path.dirname(
         os.path.abspath(__file__)), "today_logs.txt")
 
-    fields_to_extract = ['date', 'time', 'c-ip']  # 定义要提取的字段
+    fields_to_extract = ['date', 'time', 'c-ip']
+    """定义要提取的字段"""
 
-    extracted_list_dict = []  # 存放字典形式的提取信息
+    extracted_list_dict = []
+    """存放字典形式的提取信息"""
 
-    extracted_list = []  # 存放字符串形式的提取信息
+    extracted_list = []
+    """存放字符串形式的提取信息"""
 
-    try:
-        with open(log_file_path, 'r', encoding="utf-8") as file:
-            for line in file:
-                if line.startswith('#Fields'):
-                    # 如果遇到以'#Fields'开头的行, 则解析出字段名称并跳过该行
-                    fields = line.strip().split(':')[1].strip().split(' ')
-                elif not line.startswith('#'):
-                    # 如果不是以'#'开头的注释行, 则解析出对应字段的值, 并存入extracted_data字典中
-                    extracted_data = {}
-                    values = line.strip().split(' ')
-                    for field, value in zip(fields, values):
-                        if field in fields_to_extract:
-                            extracted_data[field] = value
-                    extracted_data['time'] = extracted_data['time'][:7] + '0'
-                    if extracted_data not in extracted_list_dict:
-                        extracted_list_dict.append(extracted_data)
-                        extracted_list.append(
-                            ' '.join(extracted_data.values()))
-    except:
-        return
+    merged_log_content = []
+    """文件内容"""
+
+    if os.path.exists(yesterday_bt_log_path):
+        with open(yesterday_bt_log_path, 'r', encoding="utf-8") as yesterday_file:
+            merged_log_content += yesterday_file.readlines()
+
+    if os.path.exists(today_bt_log_path):
+        with open(today_bt_log_path, 'r', encoding="utf-8") as today_file:
+            merged_log_content += today_file.readlines()
+
+    for line in merged_log_content:
+        if line.startswith('#Fields'):
+            # 如果遇到以'#Fields'开头的行, 则解析出字段名称并跳过该行
+            fields = line.strip().split(':')[1].strip().split(' ')
+        elif not line.startswith('#'):
+            # 如果不是以'#'开头的注释行, 则解析出对应字段的值, 并存入extracted_data字典中
+            extracted_data = {}
+            values = line.strip().split(' ')
+            for field, value in zip(fields, values):
+                if field in fields_to_extract:
+                    extracted_data[field] = value
+            extracted_data['time'] = extracted_data['time'][:7] + '0'
+            if extracted_data not in extracted_list_dict:
+                extracted_list_dict.append(extracted_data)
+                extracted_list.append(
+                    ' '.join(extracted_data.values()))
 
     if extracted_list == []:
         return
     else:
         extracted_list_read = extracted_list[::]
 
-    with open(today_log_file_path, 'r+', encoding="utf-8") as file:
+    with open(today_logs_path, 'r+', encoding="utf-8") as file:
         lines = file.readlines()
         lines = [line.strip() for line in lines]
         if lines == extracted_list_read:
@@ -646,7 +663,7 @@ def check_internet_status(cqhttp: CQHTTP_Protocol, my_qq_number: int) -> None:
 
         current_date = datetime.now().strftime('%Y-%m-%d')
         if content == current_date:
-            cqhttp.sendPersonMessage(my_qq_number, "[bot] 机革成功连接到互联网~")
+            # cqhttp.sendPersonMessage(my_qq_number, "[bot] 机革成功连接到互联网~")
             sent_api_daily_notes(cqhttp, my_qq_number)
         else:
             cqhttp.sendPersonMessage(

@@ -265,5 +265,5 @@ class Session:
                 from Events import GetCQHTTP__
                 cqhttp = Plugin.emit(GetCQHTTP__)
                 cqhttp.NotifyAdmin(f"[bot] 检测到对话销毁:\n" + reply)
-            except:
-                pass
+            except Exception as e:
+                logging.error(f"对话销毁通知管理员失败:\n{e}")
