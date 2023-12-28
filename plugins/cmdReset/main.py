@@ -149,20 +149,22 @@ class ResetCommand(Plugin):
             return "[bot] 权限不足"
 
         # 查看所有人配置
-        if params[0] == "ls":
+        if params[0].startswith("ls"):
             if not is_admin:
                 return "[bot] 权限不足"
+            params[0] = params[0][2:]
+            params = [param for param in params if param]
             # plus写在前面
             open_ai.sessions_dict = dict(sorted(
                 open_ai.sessions_dict.items(),
                 key=lambda x: (x[1].is_plus, x[0])
             ))
-            if len(params) == 1:
+            if len(params) == 0:
                 reply = "[bot] 当前所有人配置:"
                 for index, (session_name, session) in enumerate(open_ai.sessions_dict.items()):
                     reply += f"\n\n[{index+1}]{session.statistical_usage()}"
                 return reply
-            params = " ".join(params[1:])
+            params = " ".join(params)
             reply = f"[bot] 模糊搜索: {params}"
             for index, (session_name, session) in enumerate(open_ai.sessions_dict.items()):
                 if params in session_name:
