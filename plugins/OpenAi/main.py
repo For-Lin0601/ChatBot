@@ -81,8 +81,8 @@ class OpenAiInteract(Plugin):
                             return "[bot]err: 对话长度超过限制, 当前场景预设过长, 请用`!r`重置会话"
 
         if del_list:
-            for session_name in del_list:
-                del self.sessions_dict[session_name]
+            for _session_name in del_list:
+                del self.sessions_dict[_session_name]
         if session_name not in self.sessions_dict:
             self.sessions_dict[session_name] = Session(
                 session_name, "default", self.config.default_prompt["default"], self.config.session_expire_time)
