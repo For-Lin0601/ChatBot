@@ -23,14 +23,14 @@ class DefalutCommand(Plugin):
             "usage": (
                 "!default\n"
                 " - 查看所有情景预设\n"
+                "!default [密码]\n"
+                " - 获取高级权限\n"
                 "!default ls\n"
                 " - [管理员]查看高级权限好友列表\n"
                 "!default all\n"
-                " - [管理员]查看所有情景预设\n"
-                "!default [密码]\n"
-                " - 切换高级权限"
+                " - [管理员]查看所有情景预设"
             ),
-            "description": "- password 请前往`config.py`中配置`default_prompt_permission_password`字段"
+            "description": "- 密码请询问管理员, 管理员可前往`config.py`中配置`default_prompt_permission_password`字段"
         }
 
     @on(GetQQPersonCommand)
