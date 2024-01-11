@@ -1,5 +1,8 @@
 import calendar
+import hashlib
+import json
 import os
+from pprint import pformat
 import time
 import requests
 from datetime import datetime, timedelta
@@ -408,15 +411,12 @@ def fanyi(text: str, to: str = 'jp') -> str:
 
 @cache_with_time_limit
 def get_area(area: str) -> str:
-    """获取ip对应物理地址, 若报错则返回 '-1', 若为阿里云则返回'-2'"""
+    """获取ip对应物理地址, 若报错则返回 '-1'"""
     area_url = f"https://apis.tianapi.com/ipquery/index?key={tian_jv_shu_xing_api3}&ip={area}"
     try:
         area_result = requests.get(area_url, headers=get_random_ua()).json()
         area_result = area_result['result']
-        if area_result['isp'] == "阿里云":
-            return "-2"
-        area_content = f"IP: {area_result['ip']}\n"
-        area_content += f"地区: {area_result['continent']} {area_result['country']} {area_result['province']}"
+        area_content = f"地区: {area_result['continent']} {area_result['country']} {area_result['province']}"
         if area_result['province'] != area_result['city']:
             area_content += f" {area_result['city']}"
         area_content += "\n"
@@ -429,14 +429,12 @@ def get_area(area: str) -> str:
         try:
             area_result = requests.get(
                 area_url, headers=get_random_ua()).json()
-            area_content = f"IP: {area}\n"
+            area_content = ""
             if area_result['pro'] != "":
                 area_content += f"地区: {area_result['pro']} {area_result['city']}\n"
             network_provider = area_result['addr']\
                 .replace(area_result['pro'], '')\
                 .replace(area_result['city'], '').strip()
-            if network_provider == "中国阿里云":
-                return "-2"
             area_content += f"运营商: {network_provider}"
 
         except:
@@ -469,178 +467,117 @@ def add_datetime(converted_datetime, years=0, months=0, days=0, hours=0, minutes
     return new_datetime.timetuple()
 
 
-def web_logs_old(cqhttp: CQHTTP_Protocol, my_qq_number):
-    """老服务器网站日志检测, 服务器过期后可删除此函数"""
-    old_log_file_path = os.path.join(os.path.dirname(
-        os.path.abspath(__file__)), "old_logs.txt")
-    old_today_log_file_path = os.path.join(os.path.dirname(
-        os.path.abspath(__file__)), "old_today_logs.txt")
+def get_file_hash(file_path):
+    """计算文件的哈希值"""
+    hash_md5 = hashlib.md5()
+    with open(file_path, "rb") as f:
+        for chunk in iter(lambda: f.read(), b""):
+            hash_md5.update(chunk)
+    return hash_md5.hexdigest()
 
-    fields_to_extract = ['date', 'time', 'c-ip']  # 定义要提取的字段
 
-    extracted_list_dict = []  # 存放字典形式的提取信息
-
-    extracted_list = []  # 存放字符串形式的提取信息
-
-    try:
-        with open(old_log_file_path, 'r', encoding="utf-8") as file:
-            for line in file:
-                if line.startswith('#Fields'):
-                    # 如果遇到以'#Fields'开头的行, 则解析出字段名称并跳过该行
-                    fields = line.strip().split(':')[1].strip().split(' ')
-                elif not line.startswith('#'):
-                    # 如果不是以'#'开头的注释行, 则解析出对应字段的值, 并存入extracted_data字典中
-                    extracted_data = {}
-                    values = line.strip().split(' ')
-                    for field, value in zip(fields, values):
-                        if field in fields_to_extract:
-                            extracted_data[field] = value
-                    extracted_data['time'] = extracted_data['time'][:7] + '0'
-                    if extracted_data not in extracted_list_dict:
-                        extracted_list_dict.append(extracted_data)
-                        extracted_list.append(
-                            ' '.join(extracted_data.values()))
-    except:
-        return
-
-    if extracted_list == []:
-        return
+def remove_empty_paths(paths):
+    """嵌套列表/字典去重"""
+    if isinstance(paths, list):
+        return [remove_empty_paths(path) for path in paths if remove_empty_paths(path)]
+    elif isinstance(paths, dict):
+        return {key: remove_empty_paths(value) for key, value in paths.items() if remove_empty_paths(value)}
     else:
-        extracted_list_read = extracted_list[::]
-
-    with open(old_today_log_file_path, 'r+', encoding="utf-8") as file:
-        lines = file.readlines()
-        lines = [line.strip() for line in lines]
-        if lines == extracted_list_read:
-            return
-        for i in range(len(extracted_list)-1, -1, -1):
-            if extracted_list[i] in lines:
-                extracted_list_dict.pop(i)
-        file.seek(0)
-        file.write('\n'.join(extracted_list_read))
-        file.truncate()
-
-    if extracted_list_dict:
-        ip = ''
-        reply = "[bot]旧网站: 检测到有新访客~"
-        i = 0
-        for item in extracted_list_dict:
-            if ip != item['c-ip']:
-                area = get_area(item['c-ip'])
-                if area != '-2':
-                    i += 1
-                    ip = item['c-ip']
-                    reply += f"\n\n编号: [{i}]"
-                    if area == '-1':
-                        area = f"[warning]\nIP: {item['c-ip']}\n地区: [查询失败!!!]"
-                    reply += f"\n{area}"
-
-            if area != '-2':
-                reply_time = time.strptime(
-                    item['date'] + ' ' + item['time'], "%Y-%m-%d %H:%M:%S")
-                reply_time = add_datetime(reply_time, hours=8)
-                reply_time = datetime.strptime(
-                    datetime(*reply_time[:6]).strftime("%Y-%m-%d %H:%M:%S"), "%Y-%m-%d %H:%M:%S")
-                reply += f"\n时间: [{str(reply_time).replace('-', '/')}]"
-
-        if reply != "[bot]旧网站: 检测到有新访客~":
-            cqhttp.sendPersonMessage(my_qq_number, reply)
-
-    return
+        return paths
 
 
-def web_logs(cqhttp: CQHTTP_Protocol, my_qq_number):
+def web_logs():
     """网站日志检测"""
-    web_logs_old(cqhttp, my_qq_number)
-    bt_log_path = r"C:\ProgramFiles\BtSoft\wwwlogs\W3SVC4\u_ex{date}.log"
-    today_bt_log_path = bt_log_path.format(
-        date=datetime.now().strftime("%y%m%d"))
-    yesterday_bt_log_path = bt_log_path.format(
-        date=(datetime.now() - timedelta(days=1)).strftime("%y%m%d"))
-    today_logs_path = os.path.join(os.path.dirname(
-        os.path.abspath(__file__)), "today_logs.txt")
+    root_log_path = r"C:\wwwroot\backend\logs\{date}.json"
+    today_bt_log_path = root_log_path.format(
+        date=datetime.now().strftime("%Y-%m-%d"))
+    yesterday_bt_log_path = root_log_path.format(
+        date=(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d"))
+    today_hash_logs_path = os.path.join(os.path.dirname(
+        os.path.abspath(__file__)), "today_hash_logs.txt")
 
-    fields_to_extract = ['date', 'time', 'c-ip']
-    """定义要提取的字段"""
+    # 计算本地文件的哈希值
+    if os.path.exists(today_bt_log_path):
+        local_hash = get_file_hash(today_bt_log_path)
+    else:
+        local_hash = get_file_hash(yesterday_bt_log_path)
 
-    extracted_list_dict = []
-    """存放字典形式的提取信息"""
+    # 通过哈希值比较文件是否发生改变
+    with open(today_hash_logs_path, "r") as tmp_file:
+        today_hash = tmp_file.read().strip()
 
-    extracted_list = []
-    """存放字符串形式的提取信息"""
+    # 如果哈希值没有发生改变，直接返回
+    if local_hash == today_hash:
+        return
+    with open(today_hash_logs_path, "w") as tmp_file:
+        tmp_file.write(local_hash)
 
-    merged_log_content = []
-    """文件内容"""
-
+    merged_json = []
+    """今天和昨天文件内容"""
     if os.path.exists(yesterday_bt_log_path):
         with open(yesterday_bt_log_path, 'r', encoding="utf-8") as yesterday_file:
-            merged_log_content += yesterday_file.readlines()
-
+            merged_json += json.loads(yesterday_file.read())
     if os.path.exists(today_bt_log_path):
         with open(today_bt_log_path, 'r', encoding="utf-8") as today_file:
-            merged_log_content += today_file.readlines()
-
-    for line in merged_log_content:
-        if line.startswith('#Fields'):
-            # 如果遇到以'#Fields'开头的行, 则解析出字段名称并跳过该行
-            fields = line.strip().split(':')[1].strip().split(' ')
-        elif not line.startswith('#'):
-            # 如果不是以'#'开头的注释行, 则解析出对应字段的值, 并存入extracted_data字典中
-            extracted_data = {}
-            values = line.strip().split(' ')
-            for field, value in zip(fields, values):
-                if field in fields_to_extract:
-                    extracted_data[field] = value
-            extracted_data['time'] = extracted_data['time'][:7] + '0'
-            if extracted_data not in extracted_list_dict:
-                extracted_list_dict.append(extracted_data)
-                extracted_list.append(
-                    ' '.join(extracted_data.values()))
-
-    if extracted_list == []:
+            merged_json += json.loads(today_file.read())
+    # 无内容直接返回
+    if not merged_json:
         return
-    else:
-        extracted_list_read = extracted_list[::]
 
+    today_json = []
+    """暂存文件内容(即已经上报过的内容)"""
+    today_logs_path = os.path.join(os.path.dirname(
+        os.path.abspath(__file__)), "today_logs.json")
     with open(today_logs_path, 'r+', encoding="utf-8") as file:
-        lines = file.readlines()
-        lines = [line.strip() for line in lines]
-        if lines == extracted_list_read:
-            return
-        for i in range(len(extracted_list)-1, -1, -1):
-            if extracted_list[i] in lines:
-                extracted_list_dict.pop(i)
-        file.seek(0)
-        file.write('\n'.join(extracted_list_read))
-        file.truncate()
+        today_json = json.loads(file.read())
 
-    if extracted_list_dict:
-        ip = ''
-        reply = "[bot] 检测到网站有新访客~"
-        i = 0
-        for item in extracted_list_dict:
-            if ip != item['c-ip']:
-                area = get_area(item['c-ip'])
-                if area != '-2':
-                    i += 1
-                    ip = item['c-ip']
-                    reply += f"\n\n编号: [{i}]"
-                    if area == '-1':
-                        area = f"[warning]\nIP: {item['c-ip']}\n地区: [查询失败!!!]"
-                    reply += f"\n{area}"
+    reply = []
+    has_new_visitor = '\n全部访客已离开'  # 如果有新访客，给出提示语
+    today_json_length = len(today_json)
+    for index in range(len(merged_json)):
+        if index >= today_json_length or not (  # 大于下标的一定需要报
+            # 相同不需要报
+            merged_json[index] == today_json[index]
+            # 新访客只报一次
+            or (not merged_json[index]['logoutTime'] and today_json[index].get('isNew') == 'no')
+        ):
+            log = merged_json[index]
+            tmp_rep = f"IP: {log['ip']}\n"
+            tmp = get_area(log['ip'])
+            if tmp == '-1':
+                tmp = "地区: 查询失败!!!\n"
+            else:
+                tmp += "\n"
+            tmp_rep += tmp
+            if len(log['password']) > 3:
+                tmp_rep += f"密码: {log['password'][:2] + '*' * (len(log['password']) - 3) + log['password'][-1]}\n"
+            else:
+                tmp_rep += f"密码: {log['password']}\n"
+            tmp_rep += f"登入时间: [{log['loginTime']}]"
+            if not log['logoutTime']:
+                tmp = "访客进入\n"
+                tmp += tmp_rep
+                reply.append(tmp)
+                merged_json[index]['isNew'] = 'no'  # 已经上报，但访客未离开
+                has_new_visitor = '\n有访客游览中...'
+            else:
+                tmp = "访客已离开\n"
+                tmp += tmp_rep
+                tmp += f"\n离开时间: [{log['logoutTime']}]\n"
+                tmp += f"浏览路线: {pformat(remove_empty_paths(log['visitedPaths']), width=10)}"
+                reply.append(tmp)
 
-            if area != '-2':
-                reply_time = time.strptime(
-                    item['date'] + ' ' + item['time'], "%Y-%m-%d %H:%M:%S")
-                reply_time = add_datetime(reply_time, hours=8)
-                reply_time = datetime.strptime(
-                    datetime(*reply_time[:6]).strftime("%Y-%m-%d %H:%M:%S"), "%Y-%m-%d %H:%M:%S")
-                reply += f"\n时间: [{str(reply_time).replace('-', '/')}]"
+    # 存在访客在但已经上报过的情况 导致哈希改变，故此处可能不需要上报
+    with open(today_logs_path, 'w', encoding="utf-8") as file:
+        file.write(json.dumps(merged_json))
+    if len(reply) == 0:
+        return
 
-        if reply != "[bot] 检测到网站有新访客~":
-            cqhttp.sendPersonMessage(my_qq_number, reply)
+    for i in range(len(reply)):
+        reply[i] = f"编号: [{i+1}] {reply[i]}"
+    reply[0] = f"[bot] 检测到网站有新访客~{has_new_visitor}\n\n{reply[0]}"
 
-    return
+    return reply
 
 
 def sent_api_daily_notes(cqhttp: CQHTTP_Protocol, my_qq_number: int):

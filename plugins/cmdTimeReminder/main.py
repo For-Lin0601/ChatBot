@@ -534,7 +534,11 @@ class TimeReminderCommand(Plugin):
                     previous_minute = current_time.tm_min
                     cqhttp = self.emit(GetCQHTTP__)
                     my_qq_number = self.emit(GetConfig__).my_qq_number
-                    get.web_logs(cqhttp, my_qq_number)
+                    web_logs_reply = get.web_logs()
+                    if web_logs_reply:
+                        web_logs_reply_forward = self.emit(
+                            Events.ForwardMessage__, message=web_logs_reply)
+                        cqhttp.sendPersonForwardMessage(my_qq_number, web_logs_reply_forward)
             except Exception as e:
                 cqhttp = self.emit(GetCQHTTP__)
                 my_qq_number = self.emit(GetConfig__).my_qq_number
