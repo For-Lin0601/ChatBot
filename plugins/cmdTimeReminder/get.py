@@ -549,7 +549,7 @@ def web_logs():
             else:
                 tmp += "\n"
             tmp_rep += tmp
-            if len(log['password']) > 3:
+            if len(log['password']) > 4:  # 排除null的情况
                 tmp_rep += f"密码: {log['password'][:2] + '*' * (len(log['password']) - 3) + log['password'][-1]}\n"
             else:
                 tmp_rep += f"密码: {log['password']}\n"
@@ -566,10 +566,13 @@ def web_logs():
                 tmp += f"\n离开时间: [{log['logoutTime']}]\n"
                 tmp += f"浏览路线: {pformat(remove_empty_paths(log['visitedPaths']), width=10)}"
                 reply.append(tmp)
+        elif index < today_json_length and not merged_json[index]['logoutTime'] and today_json[index].get('isNew') == 'no':
+            merged_json[index]['isNew'] = 'no'  # 同步之前的数据
+            has_new_visitor = '\n有访客游览中...'
 
     # 存在访客在但已经上报过的情况 导致哈希改变，故此处可能不需要上报
     with open(today_logs_path, 'w', encoding="utf-8") as file:
-        file.write(json.dumps(merged_json))
+        file.write(json.dumps(merged_json, indent=2, ensure_ascii=False))
     if len(reply) == 0:
         return
 
