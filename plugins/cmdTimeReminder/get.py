@@ -489,10 +489,11 @@ def remove_empty_paths(paths):
 def web_logs():
     """网站日志检测"""
     root_log_path = r"C:\wwwroot\backend\logs\{date}.json"
-    today_bt_log_path = root_log_path.format(
-        date=datetime.now().strftime("%Y-%m-%d"))
-    yesterday_bt_log_path = root_log_path.format(
-        date=(datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d"))
+    today_date_string = datetime.now().strftime("%Y-%m-%d")
+    yesterday_date_string = (
+        datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+    today_bt_log_path = root_log_path.format(date=today_date_string)
+    yesterday_bt_log_path = root_log_path.format(date=yesterday_date_string)
     today_hash_logs_path = os.path.join(os.path.dirname(
         os.path.abspath(__file__)), "today_hash_logs.txt")
 
@@ -516,10 +517,17 @@ def web_logs():
     """今天和昨天文件内容"""
     if os.path.exists(yesterday_bt_log_path):
         with open(yesterday_bt_log_path, 'r', encoding="utf-8") as yesterday_file:
-            merged_json += json.loads(yesterday_file.read())
+            tmp_json = json.loads(yesterday_file.read())
+            for tmp in tmp_json:
+                tmp['check_status'] = yesterday_date_string
+            merged_json += tmp_json
     if os.path.exists(today_bt_log_path):
         with open(today_bt_log_path, 'r', encoding="utf-8") as today_file:
-            merged_json += json.loads(today_file.read())
+            tmp_json += json.loads(today_file.read())
+            for tmp in tmp_json:
+                tmp['check_status'] = today_date_string
+            merged_json += tmp_json
+
     # 无内容直接返回
     if not merged_json:
         return
@@ -530,6 +538,8 @@ def web_logs():
         os.path.abspath(__file__)), "today_logs.json")
     with open(today_logs_path, 'r+', encoding="utf-8") as file:
         today_json = json.loads(file.read())
+    today_json = [tmp for tmp in today_json
+                  if tmp.get('check_status') in [today_date_string, yesterday_date_string]]
 
     reply = []
     has_new_visitor = '\n全部访客已离开'  # 如果有新访客，给出提示语
