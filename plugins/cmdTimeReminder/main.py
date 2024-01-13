@@ -1,6 +1,7 @@
 
 
 import calendar
+import json
 import msvcrt
 import random
 import re
@@ -610,5 +611,17 @@ class TimeReminderCommand(Plugin):
         innermost = [self.emit(BanWordProcess__, message=reply) for reply in innermost]
         copywriting = [self.emit(BanWordProcess__, message=reply) for reply in copywriting]
         news = [self.emit(BanWordProcess__, message=reply) for reply in news]
+
+        # TODO 上传到网页, 此处也可注释掉
+        daily_reminder_path = r"C:\wwwroot\backend\public\home\dailyReminder.json"
+        if os.path.exists(daily_reminder_path):
+            daily_reminder_content = {
+                "updateTime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+                "innermost": innermost,
+                "copywriting": copywriting,
+                "news": news
+            }
+            with open(daily_reminder_path, 'w', encoding='utf-8') as f:
+                f.write(json.dumps(daily_reminder_content, ensure_ascii=False))
 
         return innermost, copywriting, news, get_list
