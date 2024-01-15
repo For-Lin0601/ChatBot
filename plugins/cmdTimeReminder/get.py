@@ -486,6 +486,20 @@ def remove_empty_paths(paths):
         return paths
 
 
+def equals(a: dict, b: dict):
+    """检查两个日志是否相等, 忽略`check_status`和`isNew`字段"""
+    keys_to_ignore = ['check_status', 'isNew']
+
+    for key, value_a in a.items():
+        if key in keys_to_ignore:
+            continue
+        value_b = b.get(key)
+        if value_a != value_b:
+            return False
+
+    return True
+
+
 def web_logs():
     """网站日志检测"""
     root_log_path = r"C:\wwwroot\backend\logs\{date}.json"
@@ -547,7 +561,7 @@ def web_logs():
     for index in range(len(merged_json)):
         if index >= today_json_length or not (  # 大于下标的一定需要报
             # 相同不需要报
-            merged_json[index] == today_json[index]
+            equals(merged_json[index], today_json[index])
             # 新访客只报一次
             or (not merged_json[index]['logoutTime'] and today_json[index].get('isNew') == 'no')
         ):
