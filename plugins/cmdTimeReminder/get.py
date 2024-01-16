@@ -477,7 +477,7 @@ def get_file_hash(file_path):
 
 
 def remove_empty_paths(paths):
-    """嵌套列表/字典去重"""
+    """嵌套列表/字典去空"""
     if isinstance(paths, list):
         return [remove_empty_paths(path) for path in paths if remove_empty_paths(path)]
     elif isinstance(paths, dict):
@@ -537,7 +537,7 @@ def web_logs():
             merged_json += tmp_json
     if os.path.exists(today_bt_log_path):
         with open(today_bt_log_path, 'r', encoding="utf-8") as today_file:
-            tmp_json += json.loads(today_file.read())
+            tmp_json = json.loads(today_file.read())
             for tmp in tmp_json:
                 tmp['check_status'] = today_date_string
             merged_json += tmp_json
@@ -562,7 +562,7 @@ def web_logs():
         if index >= today_json_length or not (  # 大于下标的一定需要报
             # 相同不需要报
             equals(merged_json[index], today_json[index])
-            # 新访客只报一次
+            # 新访客只报第一次
             or (not merged_json[index]['logoutTime'] and today_json[index].get('isNew') == 'no')
         ):
             log = merged_json[index]
@@ -592,7 +592,8 @@ def web_logs():
                 reply.append(tmp)
         elif index < today_json_length and not merged_json[index]['logoutTime'] and today_json[index].get('isNew') == 'no':
             merged_json[index]['isNew'] = 'no'  # 同步之前的数据
-            has_new_visitor = '\n有访客游览中...'
+            if merged_json[index]['check_status'] == today_date_string:
+                has_new_visitor = '\n有访客游览中...'
 
     # 存在访客在但已经上报过的情况 导致哈希改变，故此处可能不需要上报
     with open(today_logs_path, 'w', encoding="utf-8") as file:
