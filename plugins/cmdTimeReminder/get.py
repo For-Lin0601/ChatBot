@@ -514,8 +514,10 @@ def web_logs():
     # 计算本地文件的哈希值
     if os.path.exists(today_bt_log_path):
         local_hash = get_file_hash(today_bt_log_path)
-    else:
+    elif os.path.exists(yesterday_bt_log_path):
         local_hash = get_file_hash(yesterday_bt_log_path)
+    else:
+        return
 
     # 通过哈希值比较文件是否发生改变
     with open(today_hash_logs_path, "r") as tmp_file:
