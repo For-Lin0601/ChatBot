@@ -590,7 +590,7 @@ def web_logs():
                 tmp = "访客已离开\n"
                 tmp += tmp_rep
                 tmp += f"\n离开时间: [{log['logoutTime']}]\n"
-                tmp += f"浏览路线: {pformat(remove_empty_paths(log['visitedPaths']), width=40)}"
+                tmp += f"浏览路线: {pformat(remove_empty_paths(log['visitedPaths']), width=80)}"
                 reply.append(tmp)
         elif index < today_json_length and not merged_json[index]['logoutTime'] and today_json[index].get('isNew') == 'no':
             merged_json[index]['isNew'] = 'no'  # 同步之前的数据
