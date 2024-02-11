@@ -176,18 +176,28 @@ def wrapper_tian_jv_shu_xing(func):
 def get_news() -> list[str]:
     """获取当日新闻摘要, 若报错则返回 '-1'"""
     function_urls = [
-        f"https://api.1314.cool/getbaiduhot/",
+        # f"https://api.1314.cool/getbaiduhot/",
+        f"https://apis.tianapi.com/nethot/index?key={tian_jv_shu_xing_api3}",
         f"https://api.qqsuu.cn/api/dm-weibohot",
         f"https://apis.tianapi.com/bulletin/index?key={tian_jv_shu_xing_api1}",
     ]
 
+    # api失效
+    # @wrapper_tian_jv_shu_xing
+    # def getbaiduhot(result: str) -> str:
+    #     """1.百度热搜 每三分钟实时更新"""
+    #     getbaiduhot_content = "~~~1.今日热点~~~" + \
+    #         ''.join([f'\n{i+1}. {item["word"]}'
+    #                  for i, item in enumerate(result['data'][:15])])
+    #     return getbaiduhot_content
+
     @wrapper_tian_jv_shu_xing
-    def getbaiduhot(result: str) -> str:
-        """1.百度热搜 每三分钟实时更新"""
-        getbaiduhot_content = "~~~1.今日热点~~~" + \
-            ''.join([f'\n{i+1}. {item["word"]}' for i,
-                    item in enumerate(result['data'][:15])])
-        return getbaiduhot_content
+    def nethot(result: str) -> str:
+        """1.天聚数行 百度热搜榜"""
+        nethot_content = "~~~1.今日热点~~~" + \
+            ''.join([f'\n\n{i+1}. {item["keyword"]}' + (f'\n  ->{item["brief"].replace("查看更多&gt;", "").strip()}' if item["brief"] != "查看更多&gt;" else "")
+                     for i, item in enumerate(result['result']['list'][:15])])
+        return nethot_content
 
     @wrapper_tian_jv_shu_xing
     def api(result: str) -> str:
