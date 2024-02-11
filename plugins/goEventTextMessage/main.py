@@ -1,6 +1,7 @@
 
 import random
 import re
+import time
 from func_timeout import FunctionTimedOut, func_set_timeout
 
 
@@ -21,15 +22,29 @@ from ..gocqOnQQ.QQevents.MessageEvent import PersonMessage, GroupMessage
 )
 class TextMessageEventPlugin(Plugin):
 
+    miss_seconds_dict: dict
+    """由于go-cq内部问题, 在长时间不对话后的第一次对话可能会附带历史记录的最后一条对话
+
+    故在此判断如果两条消息间隔少于1秒, 则忽略前面那条消息
+
+    `{session_name: int(time.time())}`
+    """
+
+    processing = set()
+    """排队列表"""
+
     @on(PluginsLoadingFinished)
     def first_init(self, event: EventContext,  **kwargs):
+        self.miss_seconds_dict = {}
         self.processing = set()
 
     @on(PluginsReloadFinished)
     def get_config(self, event: EventContext,  **kwargs):
+        self.miss_seconds_dict = self.get_reload_config("miss_seconds_dict")
         self.processing = self.get_reload_config("processing")
 
     def on_reload(self):
+        self.set_reload_config("miss_seconds_dict", self.miss_seconds_dict)
         self.set_reload_config("processing", self.processing)
 
     @on(QQ_private_message)
@@ -217,6 +232,18 @@ class TextMessageEventPlugin(Plugin):
         session_name = "{}_{}".format(launcher_type, group_id)
 
         logging.info(f"收到消息[{session_name}]: {text_message}")
+
+        if session_name in self.miss_seconds_dict:
+            logging.warning("消息疑似重复(在一秒内连续收到两条消息, 为go-cq内部错误, 在此忽略此一条)" +
+                            f"[{session_name}]: {text_message}")
+            del self.miss_seconds_dict[session_name]
+        else:
+            now = int(time.time())
+            self.miss_seconds_dict[session_name] = now
+            time.sleep(0.5)
+            if session_name not in self.miss_seconds_dict:
+                return
+            del self.miss_seconds_dict[session_name]
 
         # 触发命令
         if text_message[0] in ["!", "！"]:
