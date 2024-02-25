@@ -34,7 +34,7 @@ class OpenAiInteract(Plugin):
         if self.is_first_init():
             self.sessions_dict = {}
         else:
-            self.sessions_dict = self.get_reload_config("session")
+            self.sessions_dict = self.get_reload_config("session", default={})
         self.config = self.emit(Events.GetConfig__)
         self.openai_config = self.config.openai_config
         self.completion_api_params = self.config.completion_api_params

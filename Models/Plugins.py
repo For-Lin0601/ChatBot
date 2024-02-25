@@ -311,14 +311,14 @@ class Plugin:
         else:
             Plugin.__reload_config__[tmp_cls_name] = {key: value}
 
-    def get_reload_config(self, key=None):
+    def get_reload_config(self, key=None, default=None):
         """每个插件拥有自己的 kwargs 字典, 有key返回值, 无key返回整个字典"""
         tmp_cls_name = f"{self.name=} {self.path=}"
         if tmp_cls_name not in Plugin.__reload_config__:
             return None
         if key:
             if key not in Plugin.__reload_config__[tmp_cls_name]:
-                return None
+                return default
             return Plugin.__reload_config__[tmp_cls_name][key]
         return Plugin.__reload_config__[tmp_cls_name]
 

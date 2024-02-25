@@ -34,7 +34,7 @@ class Log(Plugin):
         """为此次运行生成日志文件
         格式: chatbot-yyyy-MM-dd-HH-mm-ss.log
         """
-        if self.is_first_init():
+        if self.is_first_init() or self.get_reload_config("log_file_name") is None:
             try:
                 import log_start
                 self.log_file_name = log_start.LogStart.log_file_name

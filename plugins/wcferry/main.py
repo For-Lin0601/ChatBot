@@ -18,7 +18,7 @@ class RunningFlag:
     version="1.0.0",
     author="For_Lin0601",
     priority=2,
-    enabled=False  # TODO 有需要请打开
+    enabled=False  # TODO 有需要请打开, 此处不支持热重载
 )
 class WeChatbot(Plugin):
 
@@ -72,8 +72,10 @@ class WeChatbot(Plugin):
         # wechatpy 文档建议预留五秒以加载微信数据
         time.sleep(5)
         self.wcf.enable_receiving_msg()
-        while not self.wcf.is_receiving_msg():
+        i = 0
+        while not self.wcf.is_receiving_msg() and i < 10:
             time.sleep(1)
+            i += 1
         logging.critical(
             f'微信程序启动完成,如长时间未显示 "wcferry version: xx.xx.xx.xx" 请检查配置')
         self.emit(WXClientSuccess)

@@ -12,7 +12,7 @@ GetWXCommand = "get_wx_command"
         None
 ```"""
 
-WXMessageReceived = "qq_person_message_received"
+WXPersonMessageReceived = "wx_message_received"
 """收到私聊消息时, 在判断是否应该响应前触发
 ```python
     kwargs:

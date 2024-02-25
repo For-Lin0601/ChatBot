@@ -118,7 +118,7 @@ class ThreadCtlPlugin(Plugin):
     @on(PluginsReloadFinished)
     def get_config(self, event: EventContext, **kwargs):
         self.config = self.emit(Events.GetConfig__)
-        if self.is_first_init():
+        if self.is_first_init() or self.get_reload_config("ctl") is None:
             self.ctl = ThreadCtl(
                 sys_pool_num=self.config.sys_pool_num,
                 admin_pool_num=self.config.admin_pool_num,

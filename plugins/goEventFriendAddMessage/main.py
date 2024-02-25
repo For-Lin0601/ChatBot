@@ -23,7 +23,8 @@ class QQFriendAddPlugin(Plugin):
 
     @on(PluginsReloadFinished)
     def get_config(self, event: EventContext,  **kwargs):
-        self.friend_add_list = self.get_reload_config("friend_add_list")
+        self.friend_add_list = self.get_reload_config(
+            "friend_add_list", default=[])
 
     def on_reload(self):
         self.set_reload_config("friend_add_list", self.friend_add_list)
@@ -97,7 +98,7 @@ class QQFriendAddPlugin(Plugin):
             return
         config = self.emit(GetConfig__)
         cqhttp: CQHTTP_Protocol = self.emit(GetCQHTTP__)
-        sender_id = kwargs["sender_id"] 
+        sender_id = kwargs["sender_id"]
         event.prevent_postorder()
 
         if not kwargs["is_admin"]:

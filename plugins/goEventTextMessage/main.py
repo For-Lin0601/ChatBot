@@ -40,8 +40,9 @@ class TextMessageEventPlugin(Plugin):
 
     @on(PluginsReloadFinished)
     def get_config(self, event: EventContext,  **kwargs):
-        self.miss_seconds_dict = self.get_reload_config("miss_seconds_dict")
-        self.processing = self.get_reload_config("processing")
+        self.miss_seconds_dict = self.get_reload_config(
+            "miss_seconds_dict", default={})
+        self.processing = self.get_reload_config("processing", default=set())
 
     def on_reload(self):
         self.set_reload_config("miss_seconds_dict", self.miss_seconds_dict)

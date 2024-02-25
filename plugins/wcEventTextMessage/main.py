@@ -16,7 +16,8 @@ from wcferry import Wcf, WxMsg
     description="微信文本消息监听",
     version="1.0.0",
     author="For_Lin0601",
-    priority=150
+    priority=150,
+    # enabled=False
 )
 class WxChatTextMessageEventPlugin(Plugin):
 
@@ -26,7 +27,7 @@ class WxChatTextMessageEventPlugin(Plugin):
 
     @on(PluginsReloadFinished)
     def get_config(self, event: EventContext,  **kwargs):
-        self.processing = self.get_reload_config("processing")
+        self.processing = self.get_reload_config("processing", default=set())
 
     def on_reload(self):
         self.set_reload_config("processing", self.processing)
