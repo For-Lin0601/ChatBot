@@ -159,7 +159,7 @@ class OpenAiInteract(Plugin):
                 # "[bot]err: OpenAi API 连接超时, 请稍后重试"
                 logging.warning(f"OpenAi API 连接超时: {str_e}")
                 self.emit(Events.GetCQHTTP__).NotifyAdmin(
-                    f"[bot]err: [{session_name}]OpenAi API 连接超时"
+                    f"[bot]err: [{session_name}]OpenAi API 连接超时\n{str_e}"
                 )
                 return self.config.reply_timeout_message
             elif "maximum context length" in str_e:
@@ -176,6 +176,20 @@ class OpenAiInteract(Plugin):
                     total_length -= len(conversation[2]["content"])
                     del conversation[2]
                 return self.request_completion(session_name, message)
+            elif "The server is overloaded or not ready yet." in str_e:
+                # "[bot]err: OpenAi API 连接超时, 请稍后重试"
+                logging.warning(f"OpenAi API 连接超时: {str_e}")
+                self.emit(Events.GetCQHTTP__).NotifyAdmin(
+                    f"[bot]err: [{session_name}]OpenAi API 连接超时\n{str_e}"
+                )
+                return self.config.reply_timeout_message
+            elif "当前分组上游负载已饱和" in str_e:
+                # 当前分组上游负载已饱和，请稍后再试
+                logging.warning(f"当前分组上游负载已饱和，请稍后再试：{str_e}")
+                self.emit(Events.GetCQHTTP__).NotifyAdmin(
+                    f"[bot]err: [{session_name}]负载饱和：\n{str_e}"
+                )
+                return self.config.reply_timeout_message
 
             logging.error(f"OpenAi API error: {str_e}")
             tmp_index = tmp_api_key_index if tmp_api_key_index else self.keys_manager.get_index(

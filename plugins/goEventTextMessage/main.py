@@ -99,9 +99,12 @@ class TextMessageEventPlugin(Plugin):
                     _time_crtl()
                     break
                 except FunctionTimedOut:
-                    logging.warning(f"{message.user_id}: 超时, 重试中({_})")
+                    session_name = "{}_{}".format(
+                        "person", message.temp_source if message.temp_source else message.user_id)
+                    self.processing.discard(session_name)
+                    logging.warning(f"{message.user_id}: 超时, 重试中(第{_+1}次)")
                     tmp_id.append(self.cqhttp.sendPersonMessage(
-                        message.user_id, f"[bot]warinig: 超时, 重试中({_})",
+                        message.user_id, f"[bot]warinig: 超时, 重试中(第{_+1}次)",
                         auto_escape=True
                     ).message_id)
             else:
@@ -187,9 +190,11 @@ class TextMessageEventPlugin(Plugin):
                     _time_crtl()
                     break
                 except FunctionTimedOut:
-                    logging.warning(f"{message.user_id}: 超时, 重试中({_})")
+                    session_name = "{}_{}".format("group", message.group_id)
+                    self.processing.discard(session_name)
+                    logging.warning(f"{message.user_id}: 超时, 重试中(第{_+1}次)")
                     tmp_id.append(self.cqhttp.sendPersonMessage(
-                        message.user_id, f"[bot]warinig: 超时, 重试中({_})",
+                        message.user_id, f"[bot]warinig: 超时, 重试中(第{_+1}次)",
                         auto_escape=True
                     ).message_id)
             else:
@@ -306,6 +311,7 @@ class TextMessageEventPlugin(Plugin):
                     group_id=group_id if group_id != sender_id else None,
                     auto_escape=True)
         finally:
-            self.processing.remove(session_name)
+            self.processing.discard(session_name)
+
         if not self.cqhttp.recall(tmp_id):
             logging.warning(f"{session_name}: {tmp_id}消息撤回失败")

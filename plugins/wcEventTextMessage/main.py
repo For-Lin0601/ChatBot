@@ -100,9 +100,12 @@ class WxChatTextMessageEventPlugin(Plugin):
                     _time_crtl()
                     break
                 except FunctionTimedOut:
-                    logging.warning(f"{message.sender}: 超时, 重试中({_})")
+                    session_name = "wx_{}".format(
+                        message.roomid if message.roomid else message.sender)
+                    self.processing.discard(session_name)
+                    logging.warning(f"{message.sender}: 超时, 重试中(第{_+1}次)")
                     self.wcf.send_text(
-                        f"[bot]warinig: 超时, 重试中({_})", message.sender)
+                        f"[bot]warinig: 超时, 重试中(第{_+1}次)", message.sender)
         if kwargs["is_admin"]:
             self.emit(Events.SubmitAdminTask__, fn=time_ctrl_wrapper)
         else:
@@ -177,4 +180,4 @@ class WxChatTextMessageEventPlugin(Plugin):
             self.emit(Events.GetCQHTTP__).NotifyAdmin(
                 f"[bot]err: 微信[{session_name}]处理消息出现错误:\n{e}")
         finally:
-            self.processing.remove(session_name)
+            self.processing.discard(session_name)
