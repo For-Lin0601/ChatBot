@@ -71,8 +71,17 @@ class ResetCommand(Plugin):
         if not (re.search(pattern_reset, message) or message == "r" or message.startswith("reset")):
             return
         event.prevent_postorder()
-        cqhttp = self.emit(Events.GetCQHTTP__)
-        cqhttp.sendGroupMessage(kwargs["group_id"], "[bot] 群聊暂不支持此命令")
+        if message.startswith("reset"):
+            message = message[5:].strip()
+        else:
+            message = message[1:].strip()
+        params = message.replace("-", " -").split()
+        params = [param for param in params if param.strip() != ""]
+        sender_id = kwargs["sender_id"]
+        session_name = f"group_{kwargs['group_id']}"
+        reply = self.set_reset(
+            sender_id, session_name, params, kwargs["is_admin"])
+        self.emit(Events.GetCQHTTP__).sendGroupMessage(kwargs["group_id"], reply)
 
     @on(GetWXCommand)
     def cmd_reset(self, event: EventContext, **kwargs):

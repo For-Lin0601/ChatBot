@@ -492,4 +492,13 @@ command_reset_name_message = "【已检测到重置, 那就让我们再次相遇
 include_image_description = True
 
 
+########## plugin.name='DiaryCommand' plugin.path='//plugins//cmdDiary//main' ##########
+
+# 个人日记等绝对权限会写在这里
+my_qq_number = 1636708665
+
+# 微信绝对权限
+my_wx_id = "wxid_mwlbigzntcjk22"
+
+
 
