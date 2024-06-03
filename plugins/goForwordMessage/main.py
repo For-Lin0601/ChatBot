@@ -1,4 +1,6 @@
 
+from typing import Union
+from ..gocqOnQQ.CQHTTP_Protocol.CQHTTP_Protocol import CQHTTP_Protocol
 from ..gocqOnQQ.entities.components import Node, Plain
 
 import Events
@@ -14,19 +16,36 @@ from Models.Plugins import *
 )
 class ForwardMessageUtil(Plugin):
 
+    def getNames(self, cqhttp: CQHTTP_Protocol, qq_number: Union[int, list]):
+        if isinstance(qq_number, int):
+            nickname = cqhttp.getStrangerInfo(qq_number).nickname
+            return nickname if nickname != False else "default"
+        name_list = []
+        cache = {}
+        for qq in qq_number:
+            if qq in cache:
+                nickname = cache[qq]
+            else:
+                nickname = cqhttp.getStrangerInfo(qq).nickname
+                cache[qq] = nickname
+            name_list.append(nickname if nickname != False else "default")
+        return name_list
+
     @on(ForwardMessage__)
     def check_text(self, event: EventContext, **kwargs) -> list:
         """检查文本是否为长消息, 并转换成该使用的消息链组件"""
         event.prevent_postorder()
         message: str = kwargs["message"]
+        cqhttp: CQHTTP_Protocol = self.emit(Events.GetCQHTTP__)
         if "qq" not in kwargs or "name" not in kwargs:
-            cqhttp = self.emit(Events.GetCQHTTP__)
             bot = cqhttp.getLoginInfo()
             qq = kwargs.get("qq", bot.user_id)
             name = kwargs.get("name", bot.nickname)
         else:
             qq = kwargs["qq"]
             name = kwargs["name"]
+            if name == "default":
+                name = self.getNames(cqhttp, qq)
 
         if isinstance(name, list) or isinstance(qq, list):
             if len(name) != len(qq) != len(message):
