@@ -157,7 +157,7 @@ class Plugin:
                     cls._hooks_dict = {}
                     cls.__plugin_hooks__ = set()
                     logging.warning(
-                        f"插件重复注册, 插件{plugin_cls.__qualname__.split('.')[0]}已被注册(若为'尝试重新加载'则忽略)")
+                        f"插件重复注册, 插件{plugin_cls.__qualname__.split('.')[0]}已被注册(若为'尝试重新加载'则忽略)\nplugin_cls.path==tmp_cls.path: {plugin_cls.path}=={tmp_cls.path}")
                     return
 
             plugin_cls.cid = cls.cid
@@ -315,7 +315,7 @@ class Plugin:
         """每个插件拥有自己的 kwargs 字典, 有key返回值, 无key返回整个字典"""
         tmp_cls_name = f"{self.name=} {self.path=}"
         if tmp_cls_name not in Plugin.__reload_config__:
-            return None
+            return default
         if key:
             if key not in Plugin.__reload_config__[tmp_cls_name]:
                 return default
