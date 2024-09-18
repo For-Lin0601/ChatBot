@@ -85,9 +85,9 @@ class NoteCommand(Plugin):
 
     @on(CmdCmdHelp)
     def help(self, event: EventContext, **kwargs):
-        event.return_value["reset"] = {
+        event.return_value["note"] = {
             "is_admin": False,
-            "alias": ["r"],
+            "alias": ["n", "note"],
             "summary": "简单的备忘录",
             "usage": (
                 "!note\n"
@@ -138,7 +138,7 @@ class NoteCommand(Plugin):
                 reply = "[bot] 无备忘录"
             else:
                 reply = "\n".join(
-                    [f"[{i+1}] {k} - {v}" for i, (k, v) in enumerate(reply.items())])
+                    [f"[{i+1}] `{k}` - {v}" for i, (k, v) in enumerate(reply.items())])
         elif len(note_list) == 1:
             note_key = note_list[0]
             reply = self.get_note_by_user_and_key(note_user_id, note_key)
@@ -184,7 +184,7 @@ class NoteCommand(Plugin):
                 reply = "[bot] 无备忘录"
             else:
                 reply = "\n".join(
-                    [f"[{i+1}] {k} - {v}" for i, (k, v) in enumerate(reply.items())])
+                    [f"[{i+1}] `{k}` - {v}" for i, (k, v) in enumerate(reply.items())])
         elif len(note_list) == 1:
             note_key = note_list[0]
             reply = self.get_note_by_user_and_key(note_user_id, note_key)
