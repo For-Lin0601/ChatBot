@@ -240,7 +240,7 @@ class TextMessageEventPlugin(Plugin):
         logging.info(f"收到消息[{session_name}]: {text_message}")
 
         if session_name in self.miss_seconds_dict:
-            logging.warning("消息疑似重复(在一秒内连续收到两条消息, 为go-cq内部错误, 在此忽略此一条)" +
+            logging.warning("消息疑似重复(在一秒内连续收到两条消息, 为go-cq内部错误, 在此忽略前一条)" +
                             f"[{session_name}]: {text_message}")
             del self.miss_seconds_dict[session_name]
         else:
