@@ -69,7 +69,20 @@ class SentCommand(Plugin):
             reply = "[bot]err: 请输入要发送的信息"
 
         else:
-            cqhttp.NotifyAdmin("[{}]向你发送消息:\n{}".format(sender_id, message))
+            def _find(id: str) -> str:
+                """寻找id对应的对象昵称"""
+                qq_id = int(id)
+                friends_list = cqhttp.getFriendList()
+                for friend in friends_list:
+                    if friend.user_id == qq_id:
+                        return friend.remark
+                groups_list = cqhttp.getGroupList()
+                for group in groups_list:
+                    if group.group_id == qq_id:
+                        return f"group_{group.group_name}"
+            cqhttp.NotifyAdmin(
+                f"[{_find(sender_id)}][{sender_id}]向你发送消息:\n{message}"
+            )
             self.launcherId_history = sender_id
 
         cqhttp.sendPersonMessage(sender_id, reply)
@@ -318,7 +331,8 @@ class SentCommand(Plugin):
                 if self.launcherId_history in [friend.user_id for friend in friends_list]:
                     try:
                         message_chain.user_id = self.launcherId_history
-                        message_chain.message[0].text = message_chain.message[0].text[1:].strip()
+                        message_chain.message[0].text = message_chain.message[0].text[1:].strip(
+                        )
                         # 以对方身份执行命令
                         self.emit(
                             GetQQPersonCommand,
